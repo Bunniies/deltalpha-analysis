@@ -9,7 +9,7 @@ using HVPobs
 using PyPlot, LaTeXStrings
 using OrderedCollections
 using TimerOutputs
-using BDIO, ADerrors
+using BDIO, ADerrors, QuadGK
 
 #================ SET UP VARIABLES ===============#
 
@@ -44,14 +44,25 @@ const phi2_ph = (sqrt(8)*t0sqrt_ph * MPI_ph / hc)^2
 const phi4_ph = (sqrt(8)*t0sqrt_ph)^2 * ((MK_ph/hc)^2 + 0.5*(MPI_ph/hc)^2)
 
 const TREELEVEL = true
-const Qgev = [3., 5., 9.]
+const Qgev = [3., 5., 9.] # Q^2
+const Qmgev = 9.0 # Qm^2
 
 
 #============== READ BDIO FILES =================#
+enslist = sort(["H101", "H102", "N101", "C101", "C102", "D150",
+        "B450", "N451", "D450", "D451", "D452",
+        "N202", "N203", "N200", "D200", "D201", "E250",
+        "N300", "J303", "E300",
+        "J500", "J501"])
 
-dir_path = filter(isdir, readdir(path_bdio, join=true))
-hvp_path_s1 = vcat(filter(!isempty, [filter(x-> occursin("hvp_set1.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
-hvp_path_s2 = vcat(filter(!isempty, [filter(x-> occursin("hvp_set2.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
+
+dir_path = filter(x-> basename(x) in enslist, readdir(path_bdio, join=true))
+
+hvp_path_s1_SD = vcat(filter(!isempty, [filter(x-> occursin("hvp_set1_SD", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
+hvp_path_s1_ILD = vcat(filter(!isempty, [filter(x-> occursin("hvp_set1_ILD", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
+
+hvp_path_s2_SD = vcat(filter(!isempty, [filter(x-> occursin("hvp_set2_SD", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
+hvp_path_s2_ILD = vcat(filter(!isempty, [filter(x-> occursin("hvp_set2_ILD", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
 
 spectrum_path = vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
 
@@ -59,7 +70,6 @@ treelevel_path_s1 = vcat(filter(!isempty, [filter(x-> occursin("tree_level_set1.
 treelevel_path_s2 = vcat(filter(!isempty, [filter(x-> occursin("tree_level_set2.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
 
 
-enslist = [basename(hvp_path_s1[k])[1:4] for k in eachindex(hvp_path_s1)]
 ensinfo = EnsInfo.(enslist)
 NENS = length(ensinfo)
 
@@ -75,41 +85,36 @@ phi2 = Vector{uwreal}(undef, NENS)
 phi4 = Vector{uwreal}(undef, NENS)
 a28t0 = Vector{uwreal}(undef, NENS)
 
-# reading tree-level prediction in the continuum
+# computing the perturbative cl prediction
+
 pt_pred = []
-p = joinpath(path_bdio, string("tree_level_cl_phys_val.bdio"))
-fb = BDIO_open(p, "r")
-BDIO_seek!(fb)
-if BDIO_get_uinfo(fb) == 0
-    push!(pt_pred, read_uwreal(fb))
+for q in Qgev
+    f(x) = treelevel_continuum_correlator.(x) .* krnl_dα_qhalf_sub.(x, q*1e6/hc^2, Qmgev*1e6/hc^2) .* Window("SD")(x)
+    res, _ = quadgk(f,0,5,rtol=1e-3)
+    println(res/2)
+    push!(pt_pred, res/2)
 end
-while BDIO_seek!(fb, 2)
-    if BDIO_get_uinfo(fb) == 0 
-        push!(pt_pred, read_uwreal(fb))
-    end
-end
-BDIO_close!(fb)
+
 
 for (k, ens) in enumerate(ensinfo)
     println("- Ensemble ", ens.id)
     if TREELEVEL
-        #pt_pred = @. (1-(sqrt(Qgev)/(2*3))^2 ) * 1 / (4pi^2) * log(2)
 
-        hvp_3l_ll_s1 = value.(pt_pred) .- read_BDIO(treelevel_path_s1[k], "3level", "3l_33_ll")
-        hvp_3l_lc_s1 = value.(pt_pred) .- read_BDIO(treelevel_path_s1[k], "3level", "3l_33_lc")
-        hvp_3l_ll_s2 = value.(pt_pred) .- read_BDIO(treelevel_path_s2[k], "3level", "3l_33_ll")
-        hvp_3l_lc_s2 = value.(pt_pred) .- read_BDIO(treelevel_path_s2[k], "3level", "3l_33_lc")
+        hvp_3l_ll_s1 = pt_pred ./ (read_BDIO(treelevel_path_s1[k], "3level", "3l_33_ll")./2)
+        hvp_3l_lc_s1 = pt_pred ./ (read_BDIO(treelevel_path_s1[k], "3level", "3l_33_lc")./2)
+        hvp_3l_ll_s2 = pt_pred ./ (read_BDIO(treelevel_path_s2[k], "3level", "3l_33_ll")./2)
+        hvp_3l_lc_s2 = pt_pred ./ (read_BDIO(treelevel_path_s2[k], "3level", "3l_33_lc")./2)
     else
         hvp_3l_ll_s1, hvp_3l_lc_s1, hvp_3l_ll_s2, hvp_3l_lc_s2 = [fill(1.0, length(Qgev)) for _ in 1:4]
     end
 
     # set 1 improvement coefficients
-    pi_33_ll_s1[k] = read_BDIO(hvp_path_s1[k], "dalpha", "pi_33_ll" ) .+ hvp_3l_ll_s1
-    pi_33_lc_s1[k] = read_BDIO(hvp_path_s1[k], "dalpha", "pi_33_lc" ) .+ hvp_3l_lc_s1
+    pi_33_ll_s1[k] = read_BDIO(hvp_path_s1_SD[k], "dalpha", "pi_33_ll") .* hvp_3l_ll_s1 .+ read_BDIO(hvp_path_s1_ILD[k], "dalpha", "pi_33_ll")
+    pi_33_lc_s1[k] = read_BDIO(hvp_path_s1_SD[k], "dalpha", "pi_33_lc") .* hvp_3l_lc_s1 .+ read_BDIO(hvp_path_s1_ILD[k], "dalpha", "pi_33_lc")
 
     # set 2 improvement coefficients
-    pi_33_ll_s2[k] = read_BDIO(hvp_path_s2[k], "dalpha", "pi_33_ll" ) .+ hvp_3l_ll_s2
-    pi_33_lc_s2[k] = read_BDIO(hvp_path_s2[k], "dalpha", "pi_33_lc" ) .+ hvp_3l_lc_s2
+    pi_33_ll_s2[k] = read_BDIO(hvp_path_s2_SD[k], "dalpha", "pi_33_ll" ) .* hvp_3l_ll_s2 .+ read_BDIO(hvp_path_s2_ILD[k], "dalpha", "pi_33_ll")
+    pi_33_lc_s2[k] = read_BDIO(hvp_path_s2_SD[k], "dalpha", "pi_33_lc" ) .* hvp_3l_lc_s2 .+ read_BDIO(hvp_path_s2_ILD[k], "dalpha", "pi_33_lc")
 
     # spectrum
     m_pi  = read_BDIO(spectrum_path[k], "spectrum", "mpi")[1]
@@ -272,14 +277,14 @@ for q in 1:NMOM
                 L2D([0], [0], color="royalblue", lw=2),
                 L2D([0], [0], color="purple", lw=2),
                 L2D([0], [0], color="gold", lw=2)]
-    legend(custom_lines,  [L"$\mathrm{LL,\ set\ 1}$", L"$\mathrm{LL,\ set\ 2}$", L"$\mathrm{LC,\ set\ 1}$", L"$\mathrm{LC,\ set\ 2}$"])
-    if q == 1
-        ylim(0.0158, 0.0212)
-    elseif q ==2 
-        ylim(0.014, 0.021)
-    elseif q==3
-        ylim(0.011, 0.019)
-    end
+    legend(custom_lines,  [L"$\mathrm{LL,\ set\ 1}$", L"$\mathrm{LL,\ set\ 2}$", L"$\mathrm{LC,\ set\ 1}$", L"$\mathrm{LC,\ set\ 2}$"], ncol=2)
+    # if q == 1
+        # ylim(0.0165, 0.0205)
+    # elseif q ==2 
+        # ylim(0.015, 0.0195)
+    # elseif q==3
+        # ylim(0.0125, 0.0175)
+    # end
     xlabel(L"$a^2/(8t_0)$")
     ylabel(L"$\bar{\Pi}^{33,\mathrm{sub}}(-Q^2)$")
     tight_layout()
@@ -287,24 +292,67 @@ for q in 1:NMOM
     fname = string("cont_lim_3limp_q", q, ".pdf")
     savefig(joinpath(path_plot, fname))
     close("all")
+end          
+
+##  plot attempt - CL best fit
+for q in 1:NMOM
+    tt = ["set", "1", "LL"]
+    for k_cat in eachindex(fitcat_pi33_ll_s1[q])
+
+        xdata = fitcat_pi33_ll_s1[q][k_cat].xdata; uwerr.(xdata)
+        
+        wtot = get_w_from_fitcat(fitcat_pi33_ll_s1[q], norm=false)
+        w, widx = findmax(wtot)
+        model = f_tot_isov[widx]
+        
+        fit_par = fitcat_pi33_ll_s1[q][k_cat].fit[widx].param
+        xdata_proj = [xdata[:,1] fill(phi2_ph, length(xdata[:,1])) fill(phi4_ph, length(xdata[:,1]))]
+        ydata_proj = model(xdata_proj, fit_par); uwerr.(ydata_proj)
+
+        errorbar(value.(xdata[:,1]), xerr=err.(xdata[:,1]), value.(ydata_proj), yerr=err.(ydata_proj), fmt="p", capsize=2, color="royalblue")
+
+        # phys res
+        ph_res = model([0.0 phi2_ph phi4_ph], fit_par)[1]; uwerr(ph_res)
+        println(ph_res)
+        errorbar(0.0, value(ph_res), err(ph_res), fmt="o", capsize=2, color="red")
+        axvline(0.0, ls="dashed", color="black", lw=0.2, alpha=0.7) 
+
+        # cont lim band
+        xarr = [Float64.(range(0.00, 0.047, length=100)) fill(phi2_ph, 100)  fill(phi4_ph,100)]
+        yarr = model(xarr, fit_par); uwerr.(yarr)
+        fill_between(xarr[:,1], value.(yarr) .- err.(yarr), value.(yarr) .+ err.(yarr), alpha=0.2, color="royalblue")
+
+
+    end
+
+    legend(ncol=2, loc="lower right")
+    xlabel(L"$a^2/(8t_0)$")
+    ylabel(L"$\bar{\Pi}^{33,\mathrm{sub}}(-Q^2)$")
+    title(join(tt, " "))
+    display(gcf())
+    tight_layout()
+    fname = string("cont_lim_pi33_", join(tt,"_"), "q_$(q).pdf") 
+    savefig(joinpath(path_plot, fname ))
+    close("all")
 end
 
 ## plot attemp - chiral limit
 using Statistics
 
-#i_vec_cuts = [collect(1:length(ensinfo)), i_cutphi2]
+# i_vec_cuts = [collect(1:length(ensinfo)), i_cutall]
+# i_vec_cuts =  [i_cutall]
 for q in 1:NMOM
-    tt = ["set", "2", "LL"]
-    for k_cat in eachindex(fitcat_pi33_lc_s2[q])
+    tt = ["set", "2", "LC"]
+    for k_cat in eachindex(fitcat_pi33_ll_s2[q])
 
-        xdata = fitcat_pi33_ll_s2[q][k_cat].xdata; uwerr.(xdata)
-        ydata = fitcat_pi33_ll_s2[q][k_cat].ydata
+        xdata = fitcat_pi33_lc_s2[q][k_cat].xdata; uwerr.(xdata)
+        ydata = fitcat_pi33_lc_s2[q][k_cat].ydata
         
-        wtot = get_w_from_fitcat(fitcat_pi33_ll_s2[q], norm=false)
+        wtot = get_w_from_fitcat(fitcat_pi33_lc_s2[q], norm=false)
         w, widx = findmax(wtot)
         model = f_tot_isov[widx]
         
-        fit_par = fitcat_pi33_ll_s2[q][k_cat].fit[widx].param
+        fit_par = fitcat_pi33_lc_s2[q][k_cat].fit[widx].param
         xdata_proj = [xdata[:,1] xdata[:,2] fill(phi4_ph, length(xdata[:,1]))]
         ydata_proj = ydata - model(xdata, fit_par) + model(xdata_proj, fit_par)
 
@@ -322,6 +370,11 @@ for q in 1:NMOM
 
         fmttot = ["d", "s", "^", "h", "8"]
         for (k, b) in enumerate(sort(unique(getfield.(ensinfo, :beta))))
+            if b == 3.4
+              #  continue
+            end
+            println(b)
+            # n_ = findall(x->x.beta == b, ensinfo[i_vec_cuts[k_cat]])
             # n_ = findall(x->x.beta == b, ensinfo[i_vec_cuts[k_cat]])
             n_ = findall(x->x.beta == b, ensinfo)
             a2_aux  = mean(value.(xdata[:,1][n_]))
@@ -341,7 +394,7 @@ for q in 1:NMOM
 
 
     end
-    legend(ncol=2)
+    legend(ncol=2, loc="lower right")
     xlabel(L"$\phi_2$")
     ylabel(L"$\bar{\Pi}^{33,\mathrm{sub}}(-Q^2)$")
     title(join(tt, " "))
@@ -361,7 +414,7 @@ end
 for q in 1:NMOM
     @info "Momentum no. $(q)"
     fitcat_pi33_tot = vcat(vcat(fitcat_pi33_ll_s1[q],
-                #fitcat_pi33_ll_s2[q],
+                fitcat_pi33_ll_s2[q],
                 fitcat_pi33_lc_s1[q],
                 fitcat_pi33_lc_s2[q])...)
 

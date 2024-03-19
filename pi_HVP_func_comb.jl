@@ -13,9 +13,13 @@ a2phi4(x)    = x[:,1] .* (x[:,3] .- value.(phi4_ph))                     # (a^2/
 phi2sqr(x)   = (x[:,2].^2 .- value.(phi2_ph).^2)                          # (ϕ2^2 - (ϕ2^{ph})^2) 
 phi2log(x)   = x[:,2] .* log.(x[:,2]) .- value.(phi2_ph) .* log.(value.(phi2_ph))  #(ϕ2log(ϕ2) - ϕ2^{ph}log(ϕ2^{ph}))
 
-model_var_list  = [a3cutoff, a4cutoff, a2phi2, a3phi2, a2phi4, phi2sqr, phi2log]
-model_var_label = ["a3", "a4", "a2phi2", "a3phi2", "a2phi4", "phi2sqr", "phi2log"]
-model_map = [Bool.([i,j,k,l,m,n,z]) for i=0:1 for j=0:1 for k=0:1 for l=0:1 for m=0:1 for n=0:1 for z=0:1] 
+# model_var_list  = [a3cutoff, a4cutoff, a2phi2, a3phi2, a2phi4, phi2sqr, phi2log]
+# model_var_label = ["a3", "a4", "a2phi2", "a3phi2", "a2phi4", "phi2sqr", "phi2log"]
+# model_map = [Bool.([i,j,k,l,m,n,z]) for i=0:1 for j=0:1 for k=0:1 for l=0:1 for m=0:1 for n=0:1 for z=0:1] 
+
+model_var_list  = [a3cutoff, a2phi2, a2phi4, phi2sqr, phi2log, a3phi2]
+model_var_label = ["a3", "a2phi2", "a2phi4", "phi2sqr", "phi2log", "a3phi2"]
+model_map = [Bool.([i,j,k,l,m,n]) for i=0:1 for j=0:1 for k=0:1 for l=0:1 for m=0:1 for n=0:1] 
 
 n_par_var = length(model_var_list) # number of extra parameters
 n_par_tot_isov =  [4]

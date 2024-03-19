@@ -39,13 +39,21 @@ function tmr_integrand(cc::Vector{uwreal}, q2::Union{Float64, uwreal}, krnl::Fun
 end
 tmr_integrand(cc::Corr, q2::Union{Float64, uwreal}, krnl::Function; pl::Bool=true) = tmr_integrand(cc.obs, q2, krnl; pl=pl)
 
-function tmr_integrand(cc::Vector{uwreal}, q2::Union{Float64, uwreal}, q2m::Union{Float64, uwreal}, krnl::Function; pl::Bool=true, t0ens::Union{uwreal, Nothing}=nothing)
-    
+function tmr_integrand(cc::Vector{uwreal}, q2::Union{Float64, uwreal}, q2m::Union{Float64, uwreal}, krnl::Function; pl::Bool=true, t0ens::Union{uwreal, Nothing}=nothing, wind::Union{Nothing, Window}=nothing, data::Bool=false)
+    if isnothing(t0ens) && !isnothing(wind)
+        error("You assigned a window without passign t0ens. \n Conversion to t[fm] failed.")
+    end
     T = length(cc)
     x0 = Float64.(collect(0:T-1)) 
     k = krnl.(x0, q2, q2m) #.* value.(sqrt.(t0ens) ./ t0sqrt_ph ).^(-2)
+    
+    integrand = abs.(cc .* k)
+    x0 = x0 .* value(t0sqrt_ph / sqrt(t0ens))
+    if !isnothing(wind)
+        integrand = integrand .* wind(x0)
+    end
 
-    integrand = cc .* k
+
     Thalf = try
         Int64(T/2)
    catch
@@ -54,17 +62,21 @@ function tmr_integrand(cc::Vector{uwreal}, q2::Union{Float64, uwreal}, q2m::Unio
     if pl        
         uwerr.(integrand)
         if !isnothing(t0ens)
-            x0 = x0 .* value(t0sqrt_ph / sqrt(t0ens))
+            # x0 = x0 .* value(t0sqrt_ph / sqrt(t0ens))
+            xlabel(L"$t \ [\mathrm{fm}]$")
+        else
+            xlabel(L"$t/a$")
         end
-        errorbar(x0[1:Thalf], abs.(value.(integrand))[1:Thalf], err.(integrand)[1:Thalf], fmt="s", mfc="none", color="forestgreen", capsize=2)
-        xlabel(L"$t/a$")
+        errorbar(x0[1:Thalf], value.(integrand)[1:Thalf], err.(integrand)[1:Thalf], fmt="s", mfc="none", color="forestgreen", capsize=2)
         ylabel(L"$G(t) \cdot K(t, Q^2)$")
+        xlim(-0.05, 4)
         display(gcf())
         close("all")
     end
-    return   integrand[1:Thalf] * sign(value(integrand[5]))
+    !data ? (return sum(integrand[1:Thalf])) : (return sum(integrand[1:Thalf]), integrand[1:Thalf])
+    return   integrand[1:Thalf] 
 end
-tmr_integrand(cc::Corr, q2::Union{Float64, uwreal}, q2m::Union{Float64, uwreal}, krnl; pl::Bool=true) = tmr_integrand(cc.obs, q2, q2m, krnl; pl=pl)
+tmr_integrand(cc::Corr, q2::Union{Float64, uwreal}, q2m::Union{Float64, uwreal}, krnl; pl::Bool=true, t0ens::Union{uwreal, Nothing}=nothing, wind::Union{Nothing, Window}=nothing, data::Bool=false) = tmr_integrand(cc.obs, q2, q2m, krnl; pl=pl, t0ens=t0ens, wind=wind, data=data)
 
 
 function tmr_integrand_3l(cc::Vector{Tu}, q2::Union{Tu, Tf}, q2m::Union{Tu, Tf}, krnl::Function; pl::Bool=true, t0ens::Union{Tu, Nothing}=nothing, wind::Bool=false, d=0.4, delta=0.15 ) where {Tu, Tf}
@@ -118,6 +130,10 @@ function window_krnl(x0; d=0.4, delta=0.15)
     return w
 end
 
+function treelevel_continuum_correlator(t)
+    return 1. / (2* pi^2 * t^3)
+end
+
 function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true, 
     wpm::Union{Dict{Int64,Vector{Float64}},Dict{String,Vector{Float64}}, Nothing}=nothing, path_plt::Union{String,Nothing}=nothing, ll::LaTeXString=L"$m_{\pi}$")
    
@@ -128,19 +144,19 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
 
     
  
-    if ens.id in ["D150", "B450", "N451", "D450", "D451", "D452", "D251", "E250"]
-        taux = collect(18:54) 
+    if ens.id in ["A653", "A654", "D150", "B450", "N451", "D450", "D451", "D452", "D251", "E250"]
+        taux = collect(2:15) 
         Thalf = Int(length(corr[1].obs)/2)+1
         T = length(corr[1].obs)
         tmin = Thalf .- taux
         tmax = Thalf .+ taux
         tmax = tmax[1:2:end]
         tmin = tmin[1:2:end] 
-        #@. const_fit(x,p) = p[2] * (exp(-p[1]*(x)) + exp(-p[1]*(T-x)) )# + p[4] * (exp(-p[3]*(x)) + exp(-p[3]*(T-x)) )
+        @. const_fit(x,p) = p[2] * (exp(-p[1]*(x)) + exp(-p[1]*(T-x)) )# + p[4] * (exp(-p[3]*(x)) + exp(-p[3]*(T-x)) )
         param=2
         pbc = true
     else
-        @. const_fit(x, p) = p[1] + 0 * x
+        # @. const_fit(x, p) = p[1] + 0 * x
         param = 1 
 
         # tmin and tmax tuned on H101 and then scaled 
@@ -158,7 +174,7 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
 
     for k in eachindex(corr)
         t = string(L"$\kappa_1 = $" ,L" $\kappa_2 = $" )   
-        if ens.id in ["D150", "B450", "N451", "D450", "D451", "D452", "D251", "E250"]
+        if ens.id in ["A653", "A654","D150", "B450", "N451", "D450", "D451", "D452", "D251", "E250"]
             data = -1. .* corr[k].obs
         else
             _, data = meff(corr[k], [tmin[end-4],tmax[1]], pl=false, wpm=wpm, data=true)
@@ -205,8 +221,8 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
             ylim(value(main_res[1]) -20*err(main_res[1]), value(main_res[1]) +20*err(main_res[1]))
             twiny()
             xlim(xx[1], xx[end])
-            fm_time = round.((xx)[1:12:end] .* value(a(ens.beta)), digits=2)
-            xticks(xx[1:12:end], fm_time)
+            fm_time = round.((xx)[1:10:end] .* value(a(ens.beta)), digits=2)
+            xticks(xx[1:10:end], fm_time)
             # xticks()
             xlabel(L"$t-t_0\ [\mathrm{fm}]$", fontsize=14)
             display(fig)
@@ -229,7 +245,7 @@ function get_dec_const_BMA(corr_pp::Corr, corr_a0p::Corr, mps::uwreal, ens::EnsI
 
     
  
-    if ens.id in ["B450", "E250"]
+    if ens.id in ["A653", "A654","B450", "E250"]
         taux = collect(15:40) 
         Thalf = Int(length(corr_pp.obs)/2)+1
         T = length(corr_pp.obs)
@@ -262,7 +278,7 @@ function get_dec_const_BMA(corr_pp::Corr, corr_a0p::Corr, mps::uwreal, ens::EnsI
     t = string(L"$\kappa_1 = $" ,L" $\kappa_2 = $" )   
     name_bma = ll*"_BMA.pdf"
     isnothing(path_plt) ? tt = nothing : tt = joinpath(path_plt, name_bma)
-    if ens.id in [ "B450", "E250"]
+    if ens.id in [ "A653", "A654","B450", "E250"]
         data_pp = -1. .* corr_pp.obs
         data_a0p =  corr_a0p.obs
         idx = findall(x->x==0.0, value.(data_a0p))

@@ -40,12 +40,12 @@ path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/p
 path_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
 
 IMPR      = true
-IMPR_SET  = "2" # either "1" or "2"
+IMPR_SET  = "1" # either "1" or "2"
 RENORM    = true
-STD_DERIV = false
+STD_DERIV = true
 
 # enslist = ["H101", "B450", "N202", "N300", "J500"]
-enslist = ["J500"]
+enslist = ["H101"]
 ensinfo = EnsInfo.(enslist)
 
 Qgev = [3., 5., 9.] # Q^2
@@ -190,7 +190,7 @@ for (k, ens) in enumerate(ensinfo)
         tight_layout()
         display(gcf())
         t = "$(ens.id)_fvc_Q2_3.pdf"
-        savefig(joinpath(path_plot,t))
+        # savefig(joinpath(path_plot,t))
         close("all")
 
 end
@@ -220,7 +220,7 @@ for (k, ens) in enumerate(ensinfo)
             push!(pi_88_lc_conn, sum(tmr_integrand(g88_lc_conn[k], q,  KRNL, pl=false)))
         catch
             println("- subtracted kernel")
-            push!(pi_33_ll, sum(tmr_integrand(g33_ll[k], q, qmlat, KRNL, pl=true)))
+            push!(pi_33_ll, sum(tmr_integrand(g33_ll[k], q, qmlat, KRNL, pl=true, t0ens=obs[k]["t0"])))
             push!(pi_33_lc, sum(tmr_integrand(g33_lc[k], q, qmlat, KRNL, pl=false)))
             
             push!(pi_88_ll_conn, sum(tmr_integrand(g88_ll_conn[k], q, qmlat, KRNL, pl=false)))

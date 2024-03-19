@@ -55,8 +55,8 @@ Qmgev = 9.0 # Qm^2
 
 ##
 #============ OBSERVABLE ALLOCATIONS ============#
-g3l_ll, g3l_lc = 0.5 .* read_tree_level_v33(path_3level, cons=true)
-g3l_v3s03_ll, g3l_v3s03_lc = 0.5 .* read_tree_level_v3sig03(path_3level, cons=true, massless=true)
+g3l_ll, g3l_lc =  read_tree_level_v33(path_3level, cons=true)
+g3l_v3s03_ll, g3l_v3s03_lc = read_tree_level_v3sig03(path_3level, cons=true, massless=true)
 
 
 g3l_33_ll = [uwreal.(g3l_ll) for _ in 1:NENS]
@@ -80,14 +80,9 @@ for (k, ens) in enumerate(ensinfo)
             cv_c = cv_cons_set2(beta)
         end
     end
-    improve_corr_vkvk!(g3l_33_ll[k], -g3l_v3s03_ll, 2*cv_l, std=STD_DERIV)
-    improve_corr_vkvk_cons!(g3l_33_lc[k], -g3l_v3s03_ll, -g3l_v3s03_lc, cv_l, cv_c, std=STD_DERIV)
+    improve_corr_vkvk!(g3l_33_ll[k], g3l_v3s03_ll, 2*cv_l, std=STD_DERIV)
+    improve_corr_vkvk_cons!(g3l_33_lc[k], g3l_v3s03_ll, g3l_v3s03_lc, cv_l, cv_c, std=STD_DERIV)
 
-    if RENORM # at leading order Z=1 => no renorm. required for tree-level correlators
-        # Z3 = get_Z3(ens, impr_set=IMPR_SET)
-        # renormalize!(g3l_33_ll[k], Z3^2)
-        # renormalize!(g3l_33_lc[k], Z3)
-    end
 end
 
 
@@ -183,6 +178,7 @@ for (k,q) in enumerate(Qgev)
     # ylabel(L"$\bar{\Pi}^{33,\mathrm{sub}}(-Q^2)$")
     legend()
     # ylim(0.0115,0.02)
+    # ylim(0.0075, 0.0165)
     title("Set $(IMPR_SET)")
     tight_layout()
     xlim(-0.002, 0.05)
