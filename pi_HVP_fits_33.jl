@@ -1,6 +1,6 @@
 ######################################################################################
 # This file was created by Alessandro Conigli 
-# Here we load the finite-a HVP  stored in BDIO and perform
+# Here we load the finite-a HVP for the isovector component stored in BDIO and perform
 # the chiral-continuum extrapolations
 ########################################################################################
 

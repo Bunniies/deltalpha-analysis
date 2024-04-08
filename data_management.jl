@@ -218,6 +218,91 @@ function corr88_conn(path_data::String, ens::EnsInfo, g33_ll::Corr; g33_lc::Unio
     !cons ? (return g88_ll) : (return g88_ll, g88_lc) 
 end
 
+function corr88_disc(path_data::String, ens::EnsInfo; path_rw::Union{Nothing,String}=nothing, L::Int64=1, frw_bcwd::Bool=true, impr::Bool=true, impr_set::String="1", cons::Bool=true, std::Bool=true)
+
+    Gamma_l = ["V1V1", "V2V2", "V3V3", "V1T10", "V2T20", "V3T30"]
+    Gamma_c = ["V1V1c", "V2V2c", "V3V3c", "V1cT10", "V2cT20", "V3cT30"]
+
+    v1v1 = get_corr(path_data, ens, "88", Gamma_l[1], path_rw=path_rw, frw_bcwd=false, L=L)
+    v2v2 = get_corr(path_data, ens, "88", Gamma_l[2], path_rw=path_rw, frw_bcwd=false, L=L)
+    v3v3 = get_corr(path_data, ens, "88", Gamma_l[3], path_rw=path_rw, frw_bcwd=false, L=L)
+    
+    v1t10 = get_corr(path_data, ens, "88", Gamma_l[4], path_rw=path_rw, frw_bcwd=false, L=L)
+    v2t20 = get_corr(path_data, ens, "88", Gamma_l[5], path_rw=path_rw, frw_bcwd=false, L=L)
+    v3t30 = get_corr(path_data, ens, "88", Gamma_l[6], path_rw=path_rw, frw_bcwd=false, L=L)
+
+    if impr
+        beta = ens.beta
+        if impr_set == "1"
+            cv_l = cv_loc(beta)
+        elseif impr_set =="2"
+            cv_l = cv_loc_set2(beta)
+        end 
+        improve_corr_vkvk!(v1v1, v1t10, 2*cv_l, std=std)
+        improve_corr_vkvk!(v2v2, v2t20, 2*cv_l, std=std)
+        improve_corr_vkvk!(v3v3, v3t30, 2*cv_l, std=std)
+    end
+
+    g88_ll = Corr(1/6 .* (2 * (v1v1.obs + v2v2.obs + v3v3.obs) /3 ), v1v1.id, "G88ll") 
+    if frw_bcwd
+        frwd_bckwrd_symm!(g88_ll)
+    end
+
+    if cons
+        v1v1_c = get_corr(path_data, ens, "88", Gamma_c[1], path_rw=path_rw, frw_bcwd=false, L=L)
+        v2v2_c = get_corr(path_data, ens, "88", Gamma_c[2], path_rw=path_rw, frw_bcwd=false, L=L)
+        v3v3_c = get_corr(path_data, ens, "88", Gamma_c[3], path_rw=path_rw, frw_bcwd=false, L=L)
+    
+        v1t10_c = get_corr(path_data, ens, "88", Gamma_c[4], path_rw=path_rw, frw_bcwd=false, L=L)
+        v2t20_c = get_corr(path_data, ens, "88", Gamma_c[5], path_rw=path_rw, frw_bcwd=false, L=L)
+        v3t30_c = get_corr(path_data, ens, "88", Gamma_c[6], path_rw=path_rw, frw_bcwd=false, L=L)
+        
+        if impr
+            beta = ens.beta
+            if impr_set == "1"
+                cv_l = cv_loc(beta) 
+                cv_c = cv_cons(beta)
+            elseif impr_set == "2"
+                cv_l = cv_loc_set2(beta)
+                cv_c = cv_cons_set2(beta)
+            end
+            improve_corr_vkvk_cons!(v1v1_c, v1t10, v1t10_c, cv_l, cv_c, std=std)
+            improve_corr_vkvk_cons!(v2v2_c, v2t20, v2t20_c, cv_l, cv_c, std=std)
+            improve_corr_vkvk_cons!(v3v3_c, v3t30, v3t30_c, cv_l, cv_c, std=std)
+        end
+        g88_lc = Corr(1/6 .* ( 2 * (v1v1_c.obs + v2v2_c.obs + v3v3_c.obs) /3 ), v1v1.id, "G88lc") 
+        if frw_bcwd
+            frwd_bckwrd_symm!(g88_lc)
+        end
+    end 
+
+    !cons ? (return g88_ll) : (return g88_ll, g88_lc) 
+
+end
+
+function corr88(path_data::String, ens::EnsInfo, g33_ll::Corr; g33_lc::Union{Nothing, Corr}=nothing, path_rw::Union{Nothing,String}=nothing, L::Int64=1, frw_bcwd::Bool=true, impr::Bool=true, impr_set::String="1", cons::Bool=true, std::Bool=true)
+
+    if cons
+        ll88_conn, lc88_conn = corr88_conn(path_data, ens, g33_ll, g33_lc=g33_lc, path_rw=path_rw, L=L, frw_bcwd=frw_bcwd, impr=impr, impr_set=impr_set, cons=cons, std=std)
+        ll88_disc, lc88_disc = corr88_disc(path_data, ens, path_rw=path_rw, L=L, frw_bcwd=frw_bcwd, impr=impr, impr_set=impr_set, cons=cons, std=std)
+
+        T = length(ll88_conn.obs)
+        println(T, " ", length(ll88_disc.obs))
+        ll88_tot = Corr(ll88_conn.obs + ll88_disc.obs[1:T], ll88_conn.id, "G88ll")
+        lc88_tot = Corr(lc88_conn.obs + lc88_disc.obs[1:T], lc88_conn.id, "G88lc")
+        return ll88_tot, lc88_tot
+    else
+        ll88_conn = corr88_conn(path_data, ens, g33_ll, g33_lc=g33_lc, path_rw=path_rw, L=L, frw_bcwd=frw_bcwd, impr=impr, impr_set=impr_set, cons=cons, std=std)
+        ll88_disc = corr88_disc(path_data, ens, path_rw=path_rw, L=L, frw_bcwd=frw_bcwd, impr=impr, impr_set=impr_set, cons=cons, std=std)
+        T = length(ll88_conn.obs)
+        println(T, " ", length(ll88_disc.obs))
+        
+        ll88_tot = Corr(ll88_conn.obs + ll88_disc.obs[1:T], ll88_conn.id, "G88ll")
+        return ll88_tot
+    end
+end
+
+
 @doc raw"""
 corr08_conn(g33_ll::Corr, g88_ll::Corr; g33_lc::Union{Corr, Nothing}=nothing, g88_lc::Union{Corr, Nothing}=nothing)
 

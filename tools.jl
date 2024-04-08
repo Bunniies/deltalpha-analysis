@@ -15,29 +15,45 @@ function krnl_dα_qhalf_sub(t::Union{Float64, uwreal}, Q2::Union{Float64,uwreal}
     return K
 end
 
-function tmr_integrand(cc::Vector{uwreal}, q2::Union{Float64, uwreal}, krnl::Function; pl::Bool=true)
+function tmr_integrand(cc::Vector{uwreal}, q2::Union{Float64, uwreal}, krnl::Function; pl::Bool=true, t0ens::Union{uwreal, Nothing}=nothing, wind::Union{Nothing, Window}=nothing, data::Bool=false)
     
-    T = length(cc)
-    x0 = Float64.(collect(0:T-1)) #.* value(t0sqrt_ph / sqrt(t0ens))
-    k = krnl.(x0, q2)
-    integrand = cc .* k
-    Thalf = try
-         Int64(T/2)
-    catch
-        Int64((T+1)/2)
+    if isnothing(t0ens) && !isnothing(wind)
+        error("You assigned a window without passign t0ens. \n Conversion to t[fm] failed.")
     end
-     
+    T = length(cc)
+    x0 = Float64.(collect(0:T-1)) 
+    k = krnl.(x0, q2) #.* value.(sqrt.(t0ens) ./ t0sqrt_ph ).^(-2)
+    
+    integrand = cc .* k  #abs.(cc .* k)
+    x0 = x0 .* value(t0sqrt_ph / sqrt(t0ens))
+    if !isnothing(wind)
+        integrand = integrand .* wind(x0)
+    end
+
+
+    Thalf = try
+        Int64(T/2)
+   catch
+        Int64((T+1)/2)
+   end
     if pl        
         uwerr.(integrand)
-        errorbar(x0[1:Thalf], abs.(value.(integrand))[1:Thalf], err.(integrand)[1:Thalf], fmt="s", mfc="none", color="forestgreen", capsize=2)
-        xlabel(L"$t/a$")
+        if !isnothing(t0ens)
+            # x0 = x0 .* value(t0sqrt_ph / sqrt(t0ens))
+            xlabel(L"$t \ [\mathrm{fm}]$")
+        else
+            xlabel(L"$t/a$")
+        end
+        errorbar(x0[1:Thalf], value.(integrand)[1:Thalf], err.(integrand)[1:Thalf], fmt="s", mfc="none", color="forestgreen", capsize=2)
         ylabel(L"$G(t) \cdot K(t, Q^2)$")
+        xlim(-0.05, 4)
         display(gcf())
         close("all")
     end
-    return   integrand[1:Thalf] * sign(value(integrand[5]))
+    !data ? (return sum(integrand[1:Thalf])) : (return sum(integrand[1:Thalf]), integrand[1:Thalf])
+    return   integrand[1:Thalf]
 end
-tmr_integrand(cc::Corr, q2::Union{Float64, uwreal}, krnl::Function; pl::Bool=true) = tmr_integrand(cc.obs, q2, krnl; pl=pl)
+tmr_integrand(cc::Corr, q2::Union{Float64, uwreal}, krnl::Function; pl::Bool=true, t0ens::Union{uwreal, Nothing}=nothing, wind::Union{Nothing, Window}=nothing, data::Bool=false) = tmr_integrand(cc.obs, q2, krnl; pl=pl, t0ens=t0ens, wind=wind, data=data)
 
 function tmr_integrand(cc::Vector{uwreal}, q2::Union{Float64, uwreal}, q2m::Union{Float64, uwreal}, krnl::Function; pl::Bool=true, t0ens::Union{uwreal, Nothing}=nothing, wind::Union{Nothing, Window}=nothing, data::Bool=false)
     if isnothing(t0ens) && !isnothing(wind)

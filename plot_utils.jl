@@ -40,3 +40,196 @@ function plot_tmr_multiq(tmr::Vector{Vector{uwreal}}, ens::EnsInfo, q2::Vector{F
     end
     close("all")
 end
+
+
+@doc raw"""
+    plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", nmom::Int64=3, path_plot::Union{String,Nothing}=nothing)
+
+This function takes as input four Vector{Vector{FitCat}} (for each discretization and set of improvement coefficients) and plots
+the continuum limit extrapolations for all the sets simultaneously. The opacity of each line is associated to the 
+weights given by the model average. One plot for each value of the momenta is generated.
+"""
+function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", nmom::Int64=3, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
+    
+    for q in 1:nmom
+        for k_cat in eachindex(fc_ll_s1[q])
+
+            ww_ll_s1 = get_w_from_fitcat(fc_ll_s1[q], norm=true)
+            ww_ll_s2 = get_w_from_fitcat(fc_ll_s2[q], norm=true)
+            ww_lc_s1 = get_w_from_fitcat(fc_lc_s1[q], norm=true)
+            ww_lc_s2 = get_w_from_fitcat(fc_lc_s2[q], norm=true)
+
+            for (k_mod, model) in enumerate(f_tot_isov)
+                xarr = [Float64.(range(1e-8, 0.05, length=100)) fill(phi2_ph, 100) fill(phi4_ph, 100)]
+                
+                fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod].param
+                fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod].param
+                fit_param_lc_s1 = fc_lc_s1[q][k_cat].fit[k_mod].param
+                fit_param_lc_s2 = fc_lc_s2[q][k_cat].fit[k_mod].param
+    
+                yy_ll_s1  = model(xarr, fit_param_ll_s1)
+                yy_ll_s2  = model(xarr, fit_param_ll_s2)
+                yy_lc_s1  = model(xarr, fit_param_lc_s1)
+                yy_lc_s2  = model(xarr, fit_param_lc_s2)
+    
+                plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="forestgreen")
+                plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
+                plot(xarr[:,1], value.(yy_lc_s1),alpha=ww_lc_s1[k_mod], color="purple")
+                plot(xarr[:,1], value.(yy_lc_s2),alpha=ww_lc_s2[k_mod], color="gold")
+    
+            end
+        end
+        L2D = PyPlot.matplotlib.lines.Line2D
+        custom_lines = [L2D([0], [0], color="forestgreen", lw=2),
+                L2D([0], [0], color="royalblue", lw=2),
+                L2D([0], [0], color="purple", lw=2),
+                L2D([0], [0], color="gold", lw=2)]
+        legend(custom_lines,  [L"$\mathrm{LL,\ set\ 1}$", L"$\mathrm{LL,\ set\ 2}$", L"$\mathrm{LC,\ set\ 1}$", L"$\mathrm{LC,\ set\ 2}$"], ncol=2)
+        xlabel(L"$a^2/(8t_0)$")
+        ylabel(ylab)
+        tight_layout()
+        display(gcf())
+        if !isnothing(path_plot)
+            fname = string("cont_lim_tot_pi88_q", q, ".pdf")
+            savefig(joinpath(path_plot, "continuum-lim", fname))
+        end
+        close("all")
+    end
+end
+
+function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", tt::Union{Nothing,Vector{String}}=nothing, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
+
+    for q in 1:nmom
+        println("\n- Momentum: $(q)")
+        fccat = vcat(fc[q]...)
+        w_tot  = get_w_from_fitcat(fccat)
+        wmax, wmax_idx = findmax(w_tot)
+
+        model_idx = mod(wmax_idx, length(f_tot_isov))
+        if model_idx == 0 
+            model_idx =length(f_tot_isov)
+        end
+        cat_idx = Int((wmax_idx - model_idx ) / length(f_tot_isov))+1
+
+        println("   - highest weigth: ", wmax)
+        println("   - idx max weigth: ", wmax_idx)
+        println("   - idx best model: ", model_idx)
+        println("   - idx best cat  : ", cat_idx)
+        println("   - best χ2/χ2exp : ", fccat[cat_idx].fit[model_idx].chi2 / fccat[cat_idx].fit[model_idx].chi2exp )
+
+        xdata = fccat[cat_idx].xdata; uwerr.(xdata)
+        ydata = fccat[cat_idx].ydata; uwerr.(xdata)
+        fit_par = fccat[cat_idx].fit[model_idx].param
+        model = f_tot_isov[model_idx]
+
+        xdata_proj = [xdata[:,1] xdata[:,2] fill(phi4_ph, length(xdata[:,1]))]
+        ydata_proj = ydata - model(xdata, fit_par) + model(xdata_proj, fit_par) ; uwerr.(ydata_proj)
+
+        if maximum(value.(xdata[:,1])) > 0.04
+            betatot =  [3.4, 3.46, 3.55, 3.7, 3.85] 
+            color = ["tomato", "forestgreen", "violet", "orange", "navy"]
+            fmttot = ["d", "s", "^", "h", "8"]
+        else
+            betatot =  [3.46, 3.55, 3.7, 3.85]
+            color = ["forestgreen", "violet", "orange", "navy"]
+            fmttot = ["s", "^", "h", "8"]
+        end
+        # plot data points
+        for (k, b) in enumerate(betatot)
+            if b == 3.85
+                continue
+            end
+            n_ = findall(x->x.beta == b, ensinfo)
+            a2_aux  = mean(value.(xdata[:,1][n_]))
+            errorbar(value.(xdata[n_,2]), value.(ydata_proj[n_]), xerr=err.(xdata[n_,2]), yerr=err.(ydata_proj[n_]), fmt=fmttot[k], label=string(L"$\beta = \ $", b), color=color[k], capsize=2, ms=10, mfc="none" )
+            # dashed lines
+            xxx = [fill(a2_aux, 100) Float64.(range(0.001, 0.8, length=100)) fill(phi4_ph, 100)]
+            yy_ll = model(xxx, fit_par)
+            replace!(value.(yy_ll), Inf=>0.0)
+            uwerr.(yy_ll)
+            fill_between(xxx[:,2], value.(yy_ll)-err.(yy_ll), value.(yy_ll)+err.(yy_ll), color=color[k], alpha=0.5)
+            # plot(xxx[:,2], value.(yy_ll), ls="--", color=color[k], lw=0.5)
+        end
+
+        # cont lim band
+        xarr = [fill(1e-8, 100) Float64.(range(0.01, 0.8, length=100)) fill(phi4_ph,100)]
+        yarr = model(xarr, fit_par); uwerr.(yarr)
+        fill_between(xarr[:,2], value.(yarr) .- err.(yarr), value.(yarr) .+ err.(yarr), alpha=0.2, color="gray")
+
+        # phys res
+        ph_res = model([0.0 phi2_ph phi4_ph], fit_par)[1]; uwerr(ph_res)
+        println(ph_res)
+        errorbar(value(phi2_ph), value(ph_res), err(ph_res), fmt="o", capsize=2, color="red", ms=10, mfc="none")
+        axvline(value(phi2_ph), ls="dashed", color="black", lw=0.2, alpha=0.7) 
+        
+        xlim(0.04, 0.8)
+        legend(ncol=2, loc="lower right")
+        xlabel(L"$\phi_2$")
+        ylabel(ylab)
+        if !isnothing(tt)
+            title(join(tt, " "))
+        end
+        tight_layout()
+        display(gcf())
+        if !isnothing(path_plot)
+            fname = string("chiral_lim_", join(tt,"_"), "q_$(q).pdf") 
+            savefig(joinpath(path_plot, "chiral-lim", fname ))
+        end
+        close("all")
+    end
+end
+
+function plot_cl_best_fit(fc::Vector{Vector{FitCat}}; nmom=3, ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", tt::Union{Nothing,Vector{String}}=nothing, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov )
+    
+    for q in 1:nmom
+        println("\n- Momentum: $(q)")
+        fccat = vcat(fc[q]...)
+        w_tot  = get_w_from_fitcat(fccat)
+        wmax, wmax_idx = findmax(w_tot)
+
+        model_idx = mod(wmax_idx, length(f_tot_isov))
+        if model_idx == 0 
+            model_idx =length(f_tot_isov)
+        end
+        cat_idx = Int((wmax_idx - model_idx ) / length(f_tot_isov))+1
+
+        println("   - highest weigth: ", wmax)
+        println("   - idx max weigth: ", wmax_idx)
+        println("   - idx best model: ", model_idx)
+        println("   - idx best cat  : ", cat_idx)
+        println("   - best χ2/χ2exp : ", fccat[cat_idx].fit[model_idx].chi2 / fccat[cat_idx].fit[model_idx].chi2exp )
+
+        xdata = fccat[cat_idx].xdata; uwerr.(xdata)
+        ydata = fccat[cat_idx].ydata; 
+        fit_par = fccat[cat_idx].fit[model_idx].param
+        model = f_tot_isov[model_idx]
+
+        xdata_proj = [xdata[:,1] fill(phi2_ph, length(xdata[:,1])) fill(phi4_ph, length(xdata[:,1]))]
+        ydata_proj = model(xdata_proj, fit_par); uwerr.(ydata_proj)
+
+        errorbar(value.(xdata[:,1]), xerr=err.(xdata[:,1]), value.(ydata_proj), yerr=err.(ydata_proj), fmt="p", capsize=2, color="royalblue")
+
+        # phys res
+        ph_res = model([0.0 phi2_ph phi4_ph], fit_par)[1]; uwerr(ph_res)
+        println(ph_res)
+        errorbar(0.0, value(ph_res), err(ph_res), fmt="o", capsize=2, color="red", ms=10, mfc="none")
+
+        # cont lim band
+        xarr = [Float64.(range(0.00, 0.047, length=100)) fill(phi2_ph, 100)  fill(phi4_ph,100)]
+        yarr = model(xarr, fit_par); uwerr.(yarr)
+        fill_between(xarr[:,1], value.(yarr) .- err.(yarr), value.(yarr) .+ err.(yarr), alpha=0.2, color="royalblue")
+
+        xlabel(L"$a^2/(8t_0)$")
+        ylabel(ylab)
+        if !isnothing(tt)
+            title(join(tt, " "))
+        end
+        tight_layout()
+        display(gcf())
+        if !isnothing(path_plot)
+            fname = string("cont_lim_", join(tt,"_"), "q_$(q).pdf") 
+            savefig(joinpath(path_plot, "continuum-lim", fname ))
+        end
+        close("all")
+    end
+end

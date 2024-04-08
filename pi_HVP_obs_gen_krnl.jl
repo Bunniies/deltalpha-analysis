@@ -2,7 +2,10 @@
 # This file was created by Alessandro Conigli - 03/2024
 # Here we compute the finite-a HVP required in the analysis of the running of δα
 # The code works for a general kernel function KRNL to be used in the TMR integral.
-# The observables are then stored in a BDIO file, following the order 
+# It also allows for two different windows (SD and ILD) to compute the isovector contribution.
+# This splitting is required to correctly apply multiplicative tree-level improvement on the isovector piece.
+# The isoscalar contribution is computed with the standard non-subtracted kernel 
+# The observables are then stored in a BDIO file, foll owing the order 
 ########################################################################################
 
 using Revise
@@ -24,7 +27,7 @@ plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 #======== INCLUDE, PATHS AND CONSTANTS ==========#
 # Madrid scale setting
-const t0sqrt_ph = uwreal([0.1439, 0.0006], "sqrtt0 [fm]") 
+const t0sqrt_ph = uwreal([0.1443, 0.0007], "sqrtt0 [fm]") 
 
 include("./pi_HVP_types.jl")
 include("tools.jl")
@@ -43,11 +46,12 @@ const IMPR      = true
 const IMPR_SET  = "2" # either "1" or "2"
 const RENORM    = true
 const STD_DERIV = false
-const KRNL = krnl_dα_qhalf_sub
+const KRNL = krnl_dα_qhalf_sub # kernel for isovector component
+const KRNL88 = krnl_dα_qhalf   # kernel for isoscalar component
 const WindSD = Window("SD")
 const WindILD = Window("ILD")
 
-enslist = ["N451", "D450", "D451", "D452"]
+enslist = ["N300", "J303", "E300"]
 ensinfo = EnsInfo.(enslist)
 
 Qgev = [3., 5., 9.] # Q^2
@@ -63,11 +67,18 @@ g33_lc = Vector{Corr}(undef, length(ensinfo))
 g88_ll_conn = Vector{Corr}(undef, length(ensinfo))
 g88_lc_conn = Vector{Corr}(undef, length(ensinfo))
 
+g88_ll_disc = Vector{Corr}(undef, length(ensinfo))
+g88_lc_disc = Vector{Corr}(undef, length(ensinfo))
+
+gdelta_iso_ll = Vector{Corr}(undef, length(ensinfo))
+gdelta_iso_lc = Vector{Corr}(undef, length(ensinfo))
+
 g08_ll_conn = Vector{Corr}(undef, length(ensinfo))
 g08_lc_conn = Vector{Corr}(undef, length(ensinfo))
 
 obs_SD = Vector(undef, length(ensinfo)) # short distance obs
 obs_ILD = Vector(undef, length(ensinfo)) # long distance obs
+
 
 
 #================ READING DATA ====================#
@@ -82,9 +93,17 @@ obs_ILD = Vector(undef, length(ensinfo)) # long distance obs
         println("   - G33 ll and lc correlator")
         g33_ll[k], g33_lc[k] = corr33(path_data, ens, sector="light", path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET, cons=true, frw_bcwd=true, std=STD_DERIV)
                 
-        println("   - G88 connected ll and lc correlator")
-        g88_ll_conn[k], g88_lc_conn[k] = corr88_conn(path_data, ens, g33_ll[k], g33_lc=g33_lc[k], path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET, cons=true, frw_bcwd=true, std=STD_DERIV)
+        println("   - G88  ll and lc correlator")
         
+        g88_ll_conn[k], g88_lc_conn[k] = corr88_conn(path_data, ens, g33_ll[k], g33_lc=g33_lc[k], path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET, cons=true, frw_bcwd=true, std=STD_DERIV)
+        if ens.kappa_l == ens.kappa_s
+            println("Symmetric point ensemble") 
+
+        else
+            #g88_ll[k], g88_lc[k] = corr88(path_data, ens, g33_ll[k], g33_lc=g33_lc[k], path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET, cons=true, frw_bcwd=true, std=STD_DERIV)
+        end
+
+       
         println("   - G08 connected ll and lc correlator")
         g08_ll_conn[k], g08_lc_conn[k] = corr08_conn(g33_ll[k], g88_ll_conn[k], g33_lc=g33_lc[k], g88_lc=g88_lc_conn[k])
 
@@ -100,6 +119,11 @@ obs_ILD = Vector(undef, length(ensinfo)) # long distance obs
             renormalize!(g08_ll_conn[k], Z8*Z08)
             renormalize!(g08_lc_conn[k], Z08)
         end
+
+        gdelta_iso_ll[k] = Corr(-g88_ll_conn[k].obs + g33_ll[k].obs, g33_ll[k].id, "deltaiso_ll")
+        gdelta_iso_lc[k] = Corr(-g88_lc_conn[k].obs + g33_lc[k].obs, g33_lc[k].id, "deltaiso_lc")
+
+        
 
         println("   - Gradient flow t0")
         obs_SD[k] = OrderedDict()
@@ -159,23 +183,28 @@ for (k, ens) in enumerate(ensinfo)
 
     # Qlat = 1.0 .* 0.1467.^2 ./ obs[k]["t0"] ./hc^2 *1e6
 
-    pi_33_ll, pi_33_lc, pi_88_ll_conn, pi_88_lc_conn = [Vector{uwreal}(undef, 0) for _ = 1:4]
-    pi_33_ll_ILD, pi_33_lc_ILD, pi_88_ll_conn_ILD, pi_88_lc_conn_ILD = [Vector{uwreal}(undef, 0) for _ = 1:4]
+    pi_33_ll, pi_33_lc, pi_deltaiso_ll, pi_deltaiso_lc = [Vector{uwreal}(undef, 0) for _ = 1:4]
+    pi_33_ll_ILD, pi_33_lc_ILD, pi_deltaiso_ll_ILD, pi_deltaiso_lc_ILD = [Vector{uwreal}(undef, 0) for _ = 1:4]
     
 
-    for (j, q) in enumerate(Qlat)
+    for (j, q) in enumerate(Qlat)    
 
         println("   - SD window")
+        #isovector
         push!(pi_33_ll, tmr_integrand(g33_ll[k], q, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=WindSD))
-        push!(pi_33_lc, tmr_integrand(g33_lc[k], q, qmlat, KRNL, pl=true, t0ens=obs_SD[k]["t0"], wind=WindSD))
-        push!(pi_88_ll_conn, tmr_integrand(g88_ll_conn[k], q, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=WindSD))
-        push!(pi_88_lc_conn, tmr_integrand(g88_lc_conn[k], q, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=WindSD))
+        push!(pi_33_lc, tmr_integrand(g33_lc[k], q, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=WindSD))
+        # isovector - isoscalar
+        push!(pi_deltaiso_ll, tmr_integrand(gdelta_iso_ll[k], q, KRNL88, pl=true, t0ens=obs_SD[k]["t0"]))
+        push!(pi_deltaiso_lc, tmr_integrand(gdelta_iso_lc[k], q, KRNL88, pl=false, t0ens=obs_SD[k]["t0"]))
         
         println("   - ILD window")
-        push!(pi_33_ll_ILD, tmr_integrand(g33_ll[k], q, qmlat, KRNL, pl=true, t0ens=obs_SD[k]["t0"], wind=WindILD))
+        #isovector
+        push!(pi_33_ll_ILD, tmr_integrand(g33_ll[k], q, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=WindILD))
         push!(pi_33_lc_ILD, tmr_integrand(g33_lc[k], q, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=WindILD))
-        push!(pi_88_ll_conn_ILD, tmr_integrand(g88_ll_conn[k], q, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=WindILD))
-        push!(pi_88_lc_conn_ILD, tmr_integrand(g88_lc_conn[k], q, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=WindILD))
+        # isovector-isoscalar
+        # push!(pi_deltaiso_ll_ILD, tmr_integrand(gdelta_iso_ll[k], q, KRNL88, pl=false, t0ens=obs_SD[k]["t0"]))
+        # push!(pi_deltaiso_lc_ILD, tmr_integrand(gdelta_iso_lc[k], q, KRNL88, pl=false, t0ens=obs_SD[k]["t0"]))
+
     end
     
 
@@ -183,21 +212,21 @@ for (k, ens) in enumerate(ensinfo)
     obs_SD[k]["pi_33_ll"] = pi_33_ll #.+ obs[k]["fvc"]
     obs_SD[k]["pi_33_lc"] = pi_33_lc #.+ obs[k]["fvc"]
 
-    obs_SD[k]["pi_88_ll_conn"] = pi_88_ll_conn #.+ obs[k]["fvc"]
-    obs_SD[k]["pi_88_lc_conn"] = pi_88_lc_conn #.+ obs[k]["fvc"]
+    obs_SD[k]["pi_dltiso_ll"] = ens.kappa_l==ens.kappa_s ? 0.0 : pi_deltaiso_ll #.+ obs[k]["fvc"]
+    obs_SD[k]["pi_dltiso_lc"] = ens.kappa_l==ens.kappa_s ? 0.0 : pi_deltaiso_lc #.+ obs[k]["fvc"]
 
-    obs_SD[k]["pi_08_ll_conn"] = sqrt(3)/2 * (pi_33_ll - pi_88_ll_conn) # pi_08_ll_conn #.+ (all(iszero.(value.(pi_08_ll_conn))) ? 0.0 : obs[k]["fvc"] ) 
-    obs_SD[k]["pi_08_lc_conn"] = sqrt(3)/2 * (pi_33_lc - pi_88_lc_conn) #pi_08_lc_conn #.+ (all(iszero.(value.(pi_08_lc_conn))) ? 0.0 : obs[k]["fvc"] )
+    obs_SD[k]["pi_08_ll_conn"] = ens.kappa_l==ens.kappa_s ? 0.0 : sqrt(3)/2 * (pi_33_ll - pi_deltaiso_ll) # pi_08_ll_conn #.+ (all(iszero.(value.(pi_08_ll_conn))) ? 0.0 : obs[k]["fvc"] ) 
+    obs_SD[k]["pi_08_lc_conn"] = ens.kappa_l==ens.kappa_s ? 0.0 : sqrt(3)/2 * (pi_33_lc - pi_deltaiso_lc) #pi_08_lc_conn #.+ (all(iszero.(value.(pi_08_lc_conn))) ? 0.0 : obs[k]["fvc"] )
 
     # LD window
     obs_ILD[k]["pi_33_ll"] = pi_33_ll_ILD
     obs_ILD[k]["pi_33_lc"] = pi_33_lc_ILD
 
-    obs_ILD[k]["pi_88_ll_conn"] = pi_88_ll_conn_ILD
-    obs_ILD[k]["pi_88_lc_conn"] = pi_88_lc_conn_ILD
+    obs_ILD[k]["pi_dltiso_ll"] = obs_SD[k]["pi_dltiso_ll"]
+    obs_ILD[k]["pi_dltiso_lc"] = obs_SD[k]["pi_dltiso_lc"]
 
-    obs_ILD[k]["pi_08_ll_conn"] = ens.kappa_l==ens.kappa_s ? 0.0 : sqrt(3)/2 * (pi_33_ll_ILD - pi_88_ll_conn_ILD)
-    obs_ILD[k]["pi_08_lc_conn"] = ens.kappa_l==ens.kappa_s ? 0.0 : sqrt(3)/2 * (pi_33_lc_ILD - pi_88_lc_conn_ILD)
+    obs_ILD[k]["pi_08_ll_conn"] = ens.kappa_l==ens.kappa_s ? 0.0 : sqrt(3)/2 * (pi_33_ll_ILD - pi_deltaiso_ll)
+    obs_ILD[k]["pi_08_lc_conn"] = ens.kappa_l==ens.kappa_s ? 0.0 : sqrt(3)/2 * (pi_33_lc_ILD - pi_deltaiso_lc)
 end
 ##
 #========== ADD FVC ==========#
@@ -221,9 +250,12 @@ for k in eachindex(ensinfo)
 end
 ##
 # comparison with older BDIO
-path_bdio_old = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data/old_kernel/subctracred_kernel/"
-bb = read_BDIO(joinpath(path_bdio_old,"H101", "H101_PI_hvp_set1.bdio"), "dalpha", "pi_33_ll"); uwerr.(bb); bb
-aa = obs_SD[1]["pi_33_ll"] + obs_ILD[1]["pi_33_ll"] ; uwerr.(aa); aa
+path_bdio_old = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data/old_kernel/sub_kernel/"
+bb = read_BDIO(joinpath(path_bdio_old,"H102", "H102_PI_hvp_set1.bdio"), "dalpha", "pi_33_ll"); uwerr.(bb); bb
+cc = read_BDIO(joinpath(path_bdio_old,"H102", "H102_PI_hvp_set1.bdio"), "dalpha", "pi_33_ll"); uwerr.(cc); cc
+
+old_res = bb #.+ cc ; uwerr.(old_res); old_res
+aa = obs_SD[2]["pi_33_ll"] + obs_ILD[2]["pi_33_ll"] ; uwerr.(aa); aa
 
 
 #============ PLOT TMR =============#
@@ -234,20 +266,26 @@ for (k,ens) in enumerate(ensinfo)
 
     pi33_ild, data_ild = tmr_integrand(g33_ll[k], Qlat, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=Window("ILD"), data=true)
     pi33_sd, data_sd = tmr_integrand(g33_ll[k], Qlat, qmlat, KRNL, pl=false, t0ens=obs_SD[k]["t0"], wind=Window("SD"), data=true)
+    pi_88, data_88 = tmr_integrand(gdelta_iso_ll[k], Qlat, KRNL88, pl=false, t0ens=obs_SD[k]["t0"], data=true)
 
+    data_88 .*=10
     uwerr.(data_ild)
     uwerr.(data_sd)
+    uwerr.(data_88)
+
     xx = collect(1:length(data_ild)) .* value(a(ens.beta))
-    errorbar(xx, value.(data_ild), err.(data_ild), fmt="v", color="red", capsize=2, label=L"$\mathrm{ILD}$")
-    errorbar(xx, value.(data_sd), err.(data_sd), fmt="^", color="blue",  capsize=2, label=L"$\mathrm{SD}$")
+    errorbar(xx, value.(data_ild), err.(data_ild), fmt="v", color="red", capsize=2, label=L"$G^{(3,3)}_{\mathrm{ILD}}$")
+    errorbar(xx, value.(data_sd), err.(data_sd), fmt="^", color="blue",  capsize=2, label=L"$G^{(3,3)}_{\mathrm{SD}}$")
+    errorbar(xx, value.(data_88), err.(data_88), fmt="^", color="green",  capsize=2, label=L"$10\cdot(G^{(3,3)} - G^{(8,8)}_{\mathrm{conn}})$")
+ 
     xlabel(L"$t \ [\mathrm{fm}]$")
-    ylabel(L"$G(t) \cdot K(t, Q^2)$")
-    xlim(-0.05,2.5) 
+    ylabel(L"$G^{(d,e)}(t) \cdot K(t, Q^2)$")
+    xlim(-0.05,1.5) 
     # ylim(-0.0001, 0.0001)
     legend()
     tight_layout()
     display(gcf())
-    savefig(joinpath(path_plot, ens.id, "$(ens.id)_dalpha_kernel_SD_vs_ILD.pdf"))
+    # savefig(joinpath(path_plot, "ensembles", ens.id, "$(ens.id)_dalpha_kernel_SD_vs_ILD.pdf"))
     close()
 end
 
@@ -261,7 +299,7 @@ for (k, o) in enumerate(obs_SD)
     p = joinpath(path_bdio, ens,  string(ens, "_PI_hvp_set$(IMPR_SET)_SD.bdio"))
     fb = BDIO_open(p, "w", ens)
     uinfo = 0 
-x
+
     for (key, value) in o
         if isa(value, uwreal)
             write_uwreal(value, fb, uinfo)
