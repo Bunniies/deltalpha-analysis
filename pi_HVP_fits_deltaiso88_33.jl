@@ -159,7 +159,7 @@ end
 ## plot all cl limits
 plot_cl_all_set(fitcat_dltiso_ll_s1, fitcat_dltiso_ll_s2, fitcat_dltiso_lc_s1, fitcat_dltiso_lc_s2, path_plot=path_plot, ylab=L"$\Delta_{ls}(\Delta\alpha)$", f_tot_isov=f_tot_dltiso)
 plot_chiral_best_fit(fitcat_dltiso_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$\Delta_{ls}(\Delta\alpha)$")
-plot_cl_best_fit(fitcat_dltiso_lc_s1, path_plot=path_plot, tt=["Set", "1", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$\Delta_{ls}(\Delta\alpha)$")
+plot_cl_best_fit(fitcat_dltiso_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$\Delta_{ls}(\Delta\alpha)$")
 
 
 

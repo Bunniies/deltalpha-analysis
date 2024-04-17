@@ -96,7 +96,7 @@ function corr33(path_data::String, ens::EnsInfo; sector::String="light", path_rw
         improve_corr_vkvk!(v2v2, v2t20, 2*cv_l, std=std)
         improve_corr_vkvk!(v3v3, v3t30, 2*cv_l, std=std)
     end
-    g33 = Corr(0.5 .* (v1v1.obs .+ v2v2.obs .+ v3v3.obs)./3, v1v1.id, "G33ll")
+    g33 = Corr(0.5 .* abs.(v1v1.obs .+ v2v2.obs .+ v3v3.obs)./3, v1v1.id, "G33ll")
     if frw_bcwd
         frwd_bckwrd_symm!(g33)
     end
@@ -123,7 +123,7 @@ function corr33(path_data::String, ens::EnsInfo; sector::String="light", path_rw
             improve_corr_vkvk_cons!(v2v2_c, v2t20, v2t20_c, cv_l, cv_c, std=std)
             improve_corr_vkvk_cons!(v3v3_c, v3t30, v3t30_c, cv_l, cv_c, std=std)
         end
-        g33_c = Corr(0.5 .* (v1v1_c.obs .+ v2v2_c.obs .+ v3v3_c.obs)./3, v1v1_c.id, "G33lc")
+        g33_c = Corr(0.5 .* abs.(v1v1_c.obs .+ v2v2_c.obs .+ v3v3_c.obs)./3, v1v1_c.id, "G33lc")
         if frw_bcwd
             frwd_bckwrd_symm!(g33_c)
         end
@@ -179,7 +179,7 @@ function corr88_conn(path_data::String, ens::EnsInfo, g33_ll::Corr; g33_lc::Unio
         improve_corr_vkvk!(v3v3, v3t30, 2*cv_l, std=std)
     end
 
-    g88_ll = Corr(1/6 .* (2 * g33_ll.obs + 2 * (v1v1.obs + v2v2.obs + v3v3.obs) /3 ), v1v1.id, "G88ll") 
+    g88_ll = Corr(1/6 .* (2 * g33_ll.obs + 2 * abs.(v1v1.obs + v2v2.obs + v3v3.obs) / 3 ), v1v1.id, "G88ll") 
     if frw_bcwd
         frwd_bckwrd_symm!(g88_ll)
     end
@@ -209,13 +209,53 @@ function corr88_conn(path_data::String, ens::EnsInfo, g33_ll::Corr; g33_lc::Unio
             improve_corr_vkvk_cons!(v2v2_c, v2t20, v2t20_c, cv_l, cv_c, std=std)
             improve_corr_vkvk_cons!(v3v3_c, v3t30, v3t30_c, cv_l, cv_c, std=std)
         end
-        g88_lc = Corr(1/6 .* (2 * g33_lc.obs + 2 * (v1v1_c.obs + v2v2_c.obs + v3v3_c.obs) /3 ), v1v1.id, "G88lc") 
+        g88_lc = Corr(1/6 .* (2 * g33_lc.obs + 2 * abs.(v1v1_c.obs + v2v2_c.obs + v3v3_c.obs) /3 ), v1v1.id, "G88lc") 
         if frw_bcwd
             frwd_bckwrd_symm!(g88_lc)
         end
     end 
 
     !cons ? (return g88_ll) : (return g88_ll, g88_lc) 
+end
+
+function corrDisconnected(path_data::String, ens::EnsInfo, fl::String; path_rw::Union{Nothing,String}=nothing, L::Int64=1, frw_bcwd::Bool=true, impr::Bool=true, impr_set::String="1", cc::Bool=true, std::Bool=true)
+
+    corr_dict = get_corr_disc(path_data, ens, fl, frw_bcwd=false, path_rw=path_rw, L=L)
+
+    # corr_dict["VcVc"].obs[:] = abs.(corr_dict["VcVc"].obs)
+    if impr
+        beta = ens.beta
+        if impr_set == "1"
+            cv_l = cv_loc(beta) 
+            cv_c = cv_cons(beta)      
+        elseif impr_set =="2"
+            cv_l = cv_loc_set2(beta)
+            cv_c = cv_cons_set2(beta)
+        end
+        improve_corr_vkvk!(corr_dict["VV"], corr_dict["VT"], 2*cv_l, std=std)
+        improve_corr_vkvk!(corr_dict["VcVc"], corr_dict["VcT"], 2*cv_c, std=std)
+        improve_corr_vkvk_cons!(corr_dict["VVc"], corr_dict["VT"], corr_dict["VcT"], cv_l, cv_c, std=std)
+    end
+
+    corr_factor= Dict(
+        "88" => 1/6 * 2,
+        "08" => 1 / (2*sqrt(3)), 
+        "cc" => 1, 
+        "c8" => 1
+    )
+    g_disc_ll = Corr(corr_factor[fl] * corr_dict["VV"].obs, ens.id, "G"*fl*"_lldisc")
+    g_disc_lc = Corr(corr_factor[fl] * corr_dict["VVc"].obs, ens.id, "G"*fl*"_lcdisc")
+    g_disc_cc = Corr(corr_factor[fl] * corr_dict["VcVc"].obs, ens.id, "G"*fl*"_ccdisc" )
+    if frw_bcwd
+        frwd_bckwrd_symm!(g_disc_ll)
+        frwd_bckwrd_symm!(g_disc_lc)
+        frwd_bckwrd_symm!(g_disc_cc)
+    end
+    if cc
+        return g_disc_ll, g_disc_lc, g_disc_cc
+    else
+        return g_disc_ll, g_disc_lc
+    end
 end
 
 function corr88_disc(path_data::String, ens::EnsInfo; path_rw::Union{Nothing,String}=nothing, L::Int64=1, frw_bcwd::Bool=true, impr::Bool=true, impr_set::String="1", cons::Bool=true, std::Bool=true)
@@ -306,7 +346,7 @@ end
 @doc raw"""
 corr08_conn(g33_ll::Corr, g88_ll::Corr; g33_lc::Union{Corr, Nothing}=nothing, g88_lc::Union{Corr, Nothing}=nothing)
 
-This function return the local-loca G08 connected correlator from the G33 and G88 connected according to:
+This function return the local-local G08 connected correlator from the G33 and G88 connected according to:
 
 ```math
 G_{08}^{conn} = \frac{\sqrt{3}}{2}(G_{33} - G_{88}^{conn})
@@ -328,4 +368,65 @@ function corr08_conn(g33_ll::Corr, g88_ll::Corr; g33_lc::Union{Corr, Nothing}=no
     else
         return g08_ll
     end
+end
+
+function corrcc_conn(path_data::String, ens::EnsInfo; path_rw::Union{Nothing,String}=nothing, L::Int64=1, frw_bcwd::Bool=true, impr::Bool=true, impr_set::String="1", cons::Bool=true, std::Bool=true )
+    
+    Gamma_l = ["V1V1", "V2V2", "V3V3", "V1T10", "V2T20", "V3T30"]
+    Gamma_c = ["V1V1c", "V2V2c", "V3V3c", "V1cT10", "V2cT20", "V3cT30"]
+
+
+    v1v1 = get_corr(path_data, ens, "charm", Gamma_l[1], path_rw=path_rw, frw_bcwd=false, L=L)
+    v2v2 = get_corr(path_data, ens, "charm", Gamma_l[2], path_rw=path_rw, frw_bcwd=false, L=L)
+    v3v3 = get_corr(path_data, ens, "charm", Gamma_l[3], path_rw=path_rw, frw_bcwd=false, L=L)
+    
+    v1t10 = get_corr(path_data, ens, "charm", Gamma_l[4], path_rw=path_rw, frw_bcwd=false, L=L)
+    v2t20 = get_corr(path_data, ens, "charm", Gamma_l[5], path_rw=path_rw, frw_bcwd=false, L=L)
+    v3t30 = get_corr(path_data, ens, "charm", Gamma_l[6], path_rw=path_rw, frw_bcwd=false, L=L)
+
+    if impr
+        beta = ens.beta
+        if impr_set == "1"
+            cv_l = cv_loc(beta)
+        elseif impr_set =="2"
+            cv_l = cv_loc_set2(beta)
+        end
+        improve_corr_vkvk!(v1v1, v1t10, 2*cv_l, std=std)
+        improve_corr_vkvk!(v2v2, v2t20, 2*cv_l, std=std)
+        improve_corr_vkvk!(v3v3, v3t30, 2*cv_l, std=std)
+    end
+    gcc = Corr(abs.(v1v1.obs .+ v2v2.obs .+ v3v3.obs)./3, v1v1.id, "Gccll")
+    if frw_bcwd
+        frwd_bckwrd_symm!(gcc)
+    end
+
+    if cons
+        v1v1_c = get_corr(path_data, ens, "charm", Gamma_c[1], path_rw=path_rw, frw_bcwd=false, L=L)
+        v2v2_c = get_corr(path_data, ens, "charm", Gamma_c[2], path_rw=path_rw, frw_bcwd=false, L=L)
+        v3v3_c = get_corr(path_data, ens, "charm", Gamma_c[3], path_rw=path_rw, frw_bcwd=false, L=L)
+    
+        v1t10_c = get_corr(path_data, ens, "charm", Gamma_c[4], path_rw=path_rw, frw_bcwd=false, L=L)
+        v2t20_c = get_corr(path_data, ens, "charm", Gamma_c[5], path_rw=path_rw, frw_bcwd=false, L=L)    
+        v3t30_c = get_corr(path_data, ens, "charm", Gamma_c[6], path_rw=path_rw, frw_bcwd=false, L=L)
+
+        if impr
+            beta = ens.beta
+            if impr_set == "1"
+                cv_l = cv_loc(beta) 
+                cv_c = cv_cons(beta)
+            elseif impr_set == "2"
+                cv_l = cv_loc_set2(beta)
+                cv_c = cv_cons(beta)
+            end
+            improve_corr_vkvk_cons!(v1v1_c, v1t10, v1t10_c, cv_l, cv_c, std=std)
+            improve_corr_vkvk_cons!(v2v2_c, v2t20, v2t20_c, cv_l, cv_c, std=std)
+            improve_corr_vkvk_cons!(v3v3_c, v3t30, v3t30_c, cv_l, cv_c, std=std)
+        end
+        gcc_c = Corr(abs.(v1v1_c.obs .+ v2v2_c.obs .+ v3v3_c.obs)./3, v1v1_c.id, "Gcclc")
+        if frw_bcwd
+            frwd_bckwrd_symm!(gcc_c)
+        end
+    end
+
+    !cons ? (return gcc) : (return gcc, gcc_c)
 end

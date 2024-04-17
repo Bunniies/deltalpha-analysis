@@ -28,6 +28,21 @@ function read_BDIO(path::String, type::String, obs::String)
         "pi_08_ll_conn" => 6,
         "pi_08_lc_conn" => 7
     )
+    dict_dalpha_new = Dict(
+        "t0"        => 0,
+        "pi_33_ll_SD"  => 1,
+        "pi_33_lc_SD"  => 2,
+        "pi_33_ll_ILD"  => 3,
+        "pi_33_lc_ILD"  => 4,
+        "pi_dltiso_ll" => 5,
+        "pi_dltiso_lc" => 6,
+        "pi_cc_ll_conn" => 7,
+        "pi_cc_lc_conn" => 8,
+        "pi_cc_cc_disc" => 9,
+        "pi_c8_cc_disc" => 10,
+        "pi_08_ll"      => 11,
+        "pi_08_lc"      => 12
+        )
     dict_spectrum = Dict(
         "t0"     => 0,
         "mpi"    => 1,
@@ -38,7 +53,7 @@ function read_BDIO(path::String, type::String, obs::String)
         "3l_33_lc" => 1
     )
 
-    dict2dict = Dict("dalpha" => dict_dalpha, "spectrum" => dict_spectrum, "3level" => dict_tree_level)
+    dict2dict = Dict("dalpha" => dict_dalpha, "dalphanew" => dict_dalpha_new, "spectrum" => dict_spectrum, "3level" => dict_tree_level)
     
     if !(type in keys(dict2dict))
         error("Incorrect type.\ntype = $(keys(dict2dict))")

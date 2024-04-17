@@ -73,7 +73,7 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
                 yy_lc_s2  = model(xarr, fit_param_lc_s2)
     
                 plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="forestgreen")
-                plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
+                #plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
                 plot(xarr[:,1], value.(yy_lc_s1),alpha=ww_lc_s1[k_mod], color="purple")
                 plot(xarr[:,1], value.(yy_lc_s2),alpha=ww_lc_s2[k_mod], color="gold")
     
@@ -136,9 +136,9 @@ function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, ylab::L
         end
         # plot data points
         for (k, b) in enumerate(betatot)
-            if b == 3.85
-                continue
-            end
+            # if b == 3.85
+                # continue
+            # end
             n_ = findall(x->x.beta == b, ensinfo)
             a2_aux  = mean(value.(xdata[:,1][n_]))
             errorbar(value.(xdata[n_,2]), value.(ydata_proj[n_]), xerr=err.(xdata[n_,2]), yerr=err.(ydata_proj[n_]), fmt=fmttot[k], label=string(L"$\beta = \ $", b), color=color[k], capsize=2, ms=10, mfc="none" )

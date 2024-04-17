@@ -63,7 +63,7 @@ function tmr_integrand(cc::Vector{uwreal}, q2::Union{Float64, uwreal}, q2m::Unio
     x0 = Float64.(collect(0:T-1)) 
     k = krnl.(x0, q2, q2m) #.* value.(sqrt.(t0ens) ./ t0sqrt_ph ).^(-2)
     
-    integrand = abs.(cc .* k)
+    integrand = cc .* k # abs.(cc .* k)
     x0 = x0 .* value(t0sqrt_ph / sqrt(t0ens))
     if !isnothing(wind)
         integrand = integrand .* wind(x0)
