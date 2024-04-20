@@ -47,13 +47,13 @@ const path_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/delta
 const IMPR      = true
 const IMPR_SET  = "1" # either "1" or "2"
 const RENORM    = true
-const STD_DERIV = false
+const STD_DERIV = true
 const KRNLsub = krnl_dα_qhalf_sub # subtracted kernel
 const KRNL = krnl_dα_qhalf        # standard kernel 
 const WindSD = Window("SD")
 const WindILD = Window("ILD")
 
-enslist = ["E250"]
+enslist = ["B450"]
 ensinfo = EnsInfo.(enslist)
 
 Qgev = [3., 5., 9.] # Q^2
@@ -136,16 +136,16 @@ obs = Vector(undef, length(ensinfo))
             gc8_ll_disc[k] = gc8_lc_disc[k] = gc8_cc_disc[k] = Corr(fill(uwreal(0.0), T), ens.id, "Gc8disc")
                       
         else
-            #try    
-                g88_ll_disc[k], g88_lc_disc[k] = corrDisconnected(path_data, ens, "88", path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET,  frw_bcwd=true, std=STD_DERIV)
+            try    
+                g88_ll_disc[k], g88_lc_disc[k] = corrDisconnected(path_data, ens, "88", path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET,  frw_bcwd=true, cc=false, std=STD_DERIV)
                 gcc_ll_disc[k], gcc_lc_disc[k], gcc_cc_disc[k] = corrDisconnected(path_data, ens, "cc", path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET, cc=true, frw_bcwd=true, std=STD_DERIV)
-                g08_ll_disc[k], g08_lc_disc[k] = corrDisconnected(path_data, ens, "08", path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET, frw_bcwd=true, std=STD_DERIV)
+                g08_ll_disc[k], g08_lc_disc[k] = corrDisconnected(path_data, ens, "08", path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET, frw_bcwd=true, cc=false, std=STD_DERIV)
                 gc8_ll_disc[k], gc8_lc_disc[k], gc8_cc_disc[k] = corrDisconnected(path_data, ens, "c8", path_rw=path_rw, impr=IMPR, impr_set=IMPR_SET, cc=true, frw_bcwd=true, std=STD_DERIV)
-            # catch
-                # println("disconnected failed")
-                # T = HVPobs.Data.get_T(ens.id)
-                # g88_ll_disc[k] = g88_lc_disc[k] = gcc_ll_disc[k] =  gcc_lc_disc[k] = g08_ll_disc[k] = g08_lc_disc[k] = gc8_ll_disc[k] = gc8_lc_disc[k] = gcc_cc_disc[k] =  gc8_cc_disc[k] = Corr(fill(uwreal(0.0), T), ens.id, "Gdisc")
-            # end
+             catch
+                println("disconnected failed")
+                T = HVPobs.Data.get_T(ens.id)
+                g88_ll_disc[k] = g88_lc_disc[k] = gcc_ll_disc[k] =  gcc_lc_disc[k] = g08_ll_disc[k] = g08_lc_disc[k] = gc8_ll_disc[k] = gc8_lc_disc[k] = gcc_cc_disc[k] =  gc8_cc_disc[k] = Corr(fill(uwreal(0.0), T), ens.id, "Gdisc")
+              end
         end
         
 
@@ -186,7 +186,7 @@ obs = Vector(undef, length(ensinfo))
     end
 end
 ##
-yy =  corr_dict["VV"].obs; uwerr.(yy) #gcc_cc_disc[1].obs; uwerr.(yy)
+yy =  gcc_cc_disc[1].obs; uwerr.(yy)
 errorbar(collect(1:length(yy)), value.(yy), err.(yy), fmt="s")
 ylim(-0.00001, 0.00001)
 display(gcf())
@@ -281,7 +281,7 @@ for (k, ens) in enumerate(ensinfo)
         println("   - Gcc disconnected ")
         push!(pi_cc_ll_disc, tmr_integrand(gcc_ll_disc[k], q, KRNL, pl=false, t0ens=obs[k]["t0"]))
         push!(pi_cc_lc_disc, tmr_integrand(gcc_lc_disc[k], q, KRNL, pl=false, t0ens=obs[k]["t0"]))
-        push!(pi_cc_cc_disc, tmr_integrand(gcc_cc_disc[k], q, qmlat, KRNLsub, pl=true, t0ens=obs[k]["t0"]))
+        push!(pi_cc_cc_disc, tmr_integrand(gcc_cc_disc[k], q, KRNL, pl=true, t0ens=obs[k]["t0"]))
 
         println("   - Gc8 disconnected ")
         push!(pi_c8_ll_disc, tmr_integrand(gc8_ll_disc[k], q, KRNL, pl=false, t0ens=obs[k]["t0"]))

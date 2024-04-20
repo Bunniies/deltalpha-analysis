@@ -24,8 +24,8 @@ close("all")
 using PyCall
 
 np = pyimport("numpy")
-pp  = "/Users/alessandroconigli/Lattice/data/HVP/2ptdata/disc/E250/disc/2pt/88.npz"
-data = np.load(pp, allow_pickle=true)
+pp  = "/Users/alessandroconigli/Lattice/data/HVP/2ptdata/disc/E250/disc/2pt/cc.npz"
+data = np.load(pp)
 kkk = collect(data.keys())
 
 
@@ -46,6 +46,7 @@ for t in 1:192
 end
 
 corrvv_av_after = (corrv1v1 + corrv2v2 + corrv3v3)/3
+corrvv_av_first
 
 cdatavv[:,2:4,:]
 

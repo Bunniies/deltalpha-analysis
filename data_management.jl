@@ -117,7 +117,7 @@ function corr33(path_data::String, ens::EnsInfo; sector::String="light", path_rw
                 cv_c = cv_cons(beta)
             elseif impr_set == "2"
                 cv_l = cv_loc_set2(beta)
-                cv_c = cv_cons(beta)
+                cv_c = cv_cons_set2(beta)
             end
             improve_corr_vkvk_cons!(v1v1_c, v1t10, v1t10_c, cv_l, cv_c, std=std)
             improve_corr_vkvk_cons!(v2v2_c, v2t20, v2t20_c, cv_l, cv_c, std=std)
@@ -376,13 +376,13 @@ function corrcc_conn(path_data::String, ens::EnsInfo; path_rw::Union{Nothing,Str
     Gamma_c = ["V1V1c", "V2V2c", "V3V3c", "V1cT10", "V2cT20", "V3cT30"]
 
 
-    v1v1 = get_corr(path_data, ens, "charm", Gamma_l[1], path_rw=path_rw, frw_bcwd=false, L=L)
-    v2v2 = get_corr(path_data, ens, "charm", Gamma_l[2], path_rw=path_rw, frw_bcwd=false, L=L)
-    v3v3 = get_corr(path_data, ens, "charm", Gamma_l[3], path_rw=path_rw, frw_bcwd=false, L=L)
+    v1v1 = get_corr(path_data, ens, "charm_plus", Gamma_l[1], path_rw=path_rw, frw_bcwd=false, L=L)
+    v2v2 = get_corr(path_data, ens, "charm_plus", Gamma_l[2], path_rw=path_rw, frw_bcwd=false, L=L)
+    v3v3 = get_corr(path_data, ens, "charm_plus", Gamma_l[3], path_rw=path_rw, frw_bcwd=false, L=L)
     
-    v1t10 = get_corr(path_data, ens, "charm", Gamma_l[4], path_rw=path_rw, frw_bcwd=false, L=L)
-    v2t20 = get_corr(path_data, ens, "charm", Gamma_l[5], path_rw=path_rw, frw_bcwd=false, L=L)
-    v3t30 = get_corr(path_data, ens, "charm", Gamma_l[6], path_rw=path_rw, frw_bcwd=false, L=L)
+    v1t10 = get_corr(path_data, ens, "charm_plus", Gamma_l[4], path_rw=path_rw, frw_bcwd=false, L=L)
+    v2t20 = get_corr(path_data, ens, "charm_plus", Gamma_l[5], path_rw=path_rw, frw_bcwd=false, L=L)
+    v3t30 = get_corr(path_data, ens, "charm_plus", Gamma_l[6], path_rw=path_rw, frw_bcwd=false, L=L)
 
     if impr
         beta = ens.beta
@@ -401,13 +401,13 @@ function corrcc_conn(path_data::String, ens::EnsInfo; path_rw::Union{Nothing,Str
     end
 
     if cons
-        v1v1_c = get_corr(path_data, ens, "charm", Gamma_c[1], path_rw=path_rw, frw_bcwd=false, L=L)
-        v2v2_c = get_corr(path_data, ens, "charm", Gamma_c[2], path_rw=path_rw, frw_bcwd=false, L=L)
-        v3v3_c = get_corr(path_data, ens, "charm", Gamma_c[3], path_rw=path_rw, frw_bcwd=false, L=L)
+        v1v1_c = get_corr(path_data, ens, "charm_plus", Gamma_c[1], path_rw=path_rw, frw_bcwd=false, L=L)
+        v2v2_c = get_corr(path_data, ens, "charm_plus", Gamma_c[2], path_rw=path_rw, frw_bcwd=false, L=L)
+        v3v3_c = get_corr(path_data, ens, "charm_plus", Gamma_c[3], path_rw=path_rw, frw_bcwd=false, L=L)
     
-        v1t10_c = get_corr(path_data, ens, "charm", Gamma_c[4], path_rw=path_rw, frw_bcwd=false, L=L)
-        v2t20_c = get_corr(path_data, ens, "charm", Gamma_c[5], path_rw=path_rw, frw_bcwd=false, L=L)    
-        v3t30_c = get_corr(path_data, ens, "charm", Gamma_c[6], path_rw=path_rw, frw_bcwd=false, L=L)
+        v1t10_c = get_corr(path_data, ens, "charm_plus", Gamma_c[4], path_rw=path_rw, frw_bcwd=false, L=L)
+        v2t20_c = get_corr(path_data, ens, "charm_plus", Gamma_c[5], path_rw=path_rw, frw_bcwd=false, L=L)    
+        v3t30_c = get_corr(path_data, ens, "charm_plus", Gamma_c[6], path_rw=path_rw, frw_bcwd=false, L=L)
 
         if impr
             beta = ens.beta
@@ -416,7 +416,7 @@ function corrcc_conn(path_data::String, ens::EnsInfo; path_rw::Union{Nothing,Str
                 cv_c = cv_cons(beta)
             elseif impr_set == "2"
                 cv_l = cv_loc_set2(beta)
-                cv_c = cv_cons(beta)
+                cv_c = cv_cons_set2(beta)
             end
             improve_corr_vkvk_cons!(v1v1_c, v1t10, v1t10_c, cv_l, cv_c, std=std)
             improve_corr_vkvk_cons!(v2v2_c, v2t20, v2t20_c, cv_l, cv_c, std=std)
