@@ -26,11 +26,11 @@ plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 # Madrid scale setting
 const t0sqrt_ph = uwreal([0.1439, 0.0006], "sqrtt0 [fm]") 
 
-include("./pi_HVP_types.jl")
+include("types.jl")
 include("tools.jl")
 include("data_management.jl")
 include("plot_utils.jl")
-include("./IO_BDIO.jl")
+include("IO_BDIO.jl")
 
 
 path_3level = "/Users/alessandroconigli/Lattice/data/HVP/tree_level"
@@ -43,11 +43,12 @@ dir_path = filter(isdir, readdir(path_bdio, join=true))
 IMPR      = true
 IMPR_SET  = "1" # either "1" or "2"
 RENORM    = false
-STD_DERIV = false
+STD_DERIV = true
 
 spectrum_path = splitpath.(vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...))
-enslist = getindex.(spectrum_path, length(spectrum_path[1])-1 )
-ensinfo = EnsInfo.(enslist)
+# enslist = getindex.(spectrum_path, length(spectrum_path[1])-1 )
+# ensinfo = EnsInfo.(enslist)
+ensinfo = [EnsInfo.("H101")]
 beta_val = getfield.(ensinfo, :beta)
 NENS = length(ensinfo)
 Qgev = [3., 5., 9.] # Q^2

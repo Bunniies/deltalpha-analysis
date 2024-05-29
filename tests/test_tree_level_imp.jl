@@ -10,6 +10,7 @@ using PyPlot, LaTeXStrings
 using OrderedCollections
 using TimerOutputs
 using BDIO, ADerrors
+import ADerrors: err
 
 #================ SET UP VARIABLES ===============#
 
@@ -26,11 +27,12 @@ plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 # Madrid scale setting
 const t0sqrt_ph = uwreal([0.1439, 0.0006], "sqrtt0 [fm]") 
 
-include("./pi_HVP_types.jl")
+include("./types.jl")
 include("tools.jl")
-include("data_management.jl")
+# include("data_management.jl")
 include("plot_utils.jl")
-include("./IO_BDIO.jl")
+include("IO_BDIO.jl")
+include("../const.jl")
 
 
 path_3level = "/Users/alessandroconigli/Lattice/data/HVP/tree_level"
@@ -41,7 +43,7 @@ dir_path = filter(isdir, readdir(path_bdio, join=true))
 
 
 IMPR      = true
-STD_DERIV = true
+STD_DERIV = false
 
 spectrum_path = splitpath.(vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...))
 enslist = getindex.(spectrum_path, length(spectrum_path[1])-1 )
@@ -50,7 +52,7 @@ idx_su3 = findall(x-> x in ["A653","H101", "B450", "N202", "N300", "J500"], ensl
 enslist = enslist[idx_su3]
 spectrum_path = spectrum_path[idx_su3]
 
-ensinfo = EnsInfo.(enslist)
+ensinfo = EnsInfo.(["A654", "H101", "B450", "N202", "N300", "J500"])
 beta_val = getfield.(ensinfo, :beta)
 NENS = length(ensinfo)
 Qgev = [3., 5., 9.] # Q^2
@@ -62,16 +64,16 @@ g3l_ll, g3l_lc =  read_tree_level_v33(path_3level, cons=true)
 g3l_v3s03_ll, g3l_v3s03_lc = read_tree_level_v3sig03(path_3level, cons=true, massless=true)
 
 
-vv         = [Corr(uwreal.(g3l_ll)[1:end], "tl", "G33ll") for _ in 1:NENS] # no impr
-vvc        = [Corr(uwreal.(g3l_lc)[1:end], "tl", "G33lc") for _ in 1:NENS] # no impr
-vvc_imp_tl = [Corr(uwreal.(g3l_lc)[1:end], "tl", "G33lc") for _ in 1:NENS] # tree-level impr cv=0.5
-vv_imp_s1  = [Corr(uwreal.(g3l_ll)[1:end], "tl", "G33ll") for _ in 1:NENS] # impr with mainz set
-vvc_imp_s1 = [Corr(uwreal.(g3l_lc)[1:end], "tl", "G33lc") for _ in 1:NENS] # impr with mainz set
-vv_imp_s2  = [Corr(uwreal.(g3l_ll)[1:end], "tl", "G33ll") for _ in 1:NENS] # impr with SF set
-vvc_imp_s2 = [Corr(uwreal.(g3l_lc)[1:end], "tl", "G33lc") for _ in 1:NENS] # impr with SF set
+vv         = [Corr(uwreal.(g3l_ll)[1:end-1], "tl", "G33ll") for _ in 1:NENS] # no impr
+vvc        = [Corr(uwreal.(g3l_lc)[1:end-1], "tl", "G33lc") for _ in 1:NENS] # no impr
+vvc_imp_tl = [Corr(uwreal.(g3l_lc)[1:end-1], "tl", "G33lc") for _ in 1:NENS] # tree-level impr cv=0.5
+vv_imp_s1  = [Corr(uwreal.(g3l_ll)[1:end-1], "tl", "G33ll") for _ in 1:NENS] # impr with mainz set
+vvc_imp_s1 = [Corr(uwreal.(g3l_lc)[1:end-1], "tl", "G33lc") for _ in 1:NENS] # impr with mainz set
+vv_imp_s2  = [Corr(uwreal.(g3l_ll)[1:end-1], "tl", "G33ll") for _ in 1:NENS] # impr with SF set
+vvc_imp_s2 = [Corr(uwreal.(g3l_lc)[1:end-1], "tl", "G33lc") for _ in 1:NENS] # impr with SF set
 
-v3s03_ll = Corr(g3l_v3s03_ll[1:end], "tl", "sigmaV")
-v3s03_lc = Corr(g3l_v3s03_lc[1:end], "tl", "sigmaVc")
+v3s03_ll = Corr(g3l_v3s03_ll[1:end-1], "tl", "sigmaV")
+v3s03_lc = Corr(g3l_v3s03_lc[1:end-1], "tl", "sigmaVc")
 
 obs = Vector(undef, NENS)
 
@@ -79,12 +81,13 @@ for (k, ens) in enumerate(ensinfo)
     println(" - Ensemble: $(ens.id)")
 
     obs[k] = OrderedDict()
-    obs[k]["t0"] = read_BDIO(joinpath(spectrum_path[k]), "spectrum", "t0")[1]
+
+    # obs[k]["t0"] = read_BDIO(joinpath(spectrum_path[k]), "spectrum", "t0")[1]
     beta = ens.beta
 
     cv_l_s1 = cv_loc(beta)
     cv_c_s1 = cv_cons(beta)
-    cv_l_s2 = cv_loc_set2(beta)
+    cv_l_s2 = -0.346 #cv_loc_set2(beta)
     cv_c_s2 = cv_cons_set2(beta)
     cv_c_tl = 0.5
 
@@ -161,7 +164,7 @@ for q in eachindex(Qgev[1:1])
     plot(a28t0, getindex.(getindex.(obs, "pi_vv_imp_s2"), q)[idx_ordered], marker="d", color="orange", label="VV, np improved SF")
     plot(a28t0, getindex.(getindex.(obs, "pi_vvc_imp_s2"), q)[idx_ordered], marker="d", color="yellow", label="VVc, np improved SF")
 
-    plot(0.0, ptpred[q], color="violet", marker="d")
+    # plot(0.0, ptpred[q], color="violet", marker="d")
     xlabel(L"$a^2/8t_0$")
     ylabel(L"$\bar{\Pi}^{33, \mathrm{sub, tl}}(-Q^2)$")
     tight_layout()

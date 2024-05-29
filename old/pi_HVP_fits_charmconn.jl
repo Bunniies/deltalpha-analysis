@@ -9,7 +9,8 @@ using HVPobs
 using PyPlot, LaTeXStrings
 using OrderedCollections
 using TimerOutputs
-using BDIO, ADerrors, QuadGK, Statistics
+using BDIO, ADerrors, Statistics
+import ADerrors: err
 
 #================ SET UP VARIABLES ===============#
 
@@ -109,6 +110,8 @@ phi4 = phi4[idx]
 a28t0 = a28t0[idx]
 ensinfo = ensinfo[idx]
 NENS = length(ensinfo)
+
+
 ##############################
 ## CREATE FIT CATEGORIES
 ##############################

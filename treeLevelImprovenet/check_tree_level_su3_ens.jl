@@ -26,8 +26,8 @@ plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 #======== INCLUDE, PATHS AND CONSTANTS ==========#
 
 
-include("./pi_HVP_types.jl")
-include("./pi_HVP_func_comb.jl")
+include("./types.jl")
+include("./func_comb.jl")
 include("./tools.jl")
 include("./data_management.jl")
 include("./plot_utils.jl")
