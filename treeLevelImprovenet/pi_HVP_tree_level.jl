@@ -10,6 +10,8 @@ using PyPlot, LaTeXStrings
 using OrderedCollections
 using TimerOutputs
 using BDIO, ADerrors
+using ALPHAio
+import ADerrors: err
 
 #================ SET UP VARIABLES ===============#
 
@@ -23,19 +25,19 @@ rcParams["axes.titlesize"] = 18
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 #======== INCLUDE, PATHS AND CONSTANTS ==========#
-# Madrid scale setting
-const t0sqrt_ph = uwreal([0.1439, 0.0006], "sqrtt0 [fm]") 
 
-include("types.jl")
-include("tools.jl")
-include("data_management.jl")
-include("plot_utils.jl")
-include("IO_BDIO.jl")
+include("../utils/const.jl")
+include("../utils/types.jl")
+include("../utils/tools.jl")
+include("../utils/plot_utils.jl")
+include("../utils/IO_BDIO.jl")
+# include("../utils/data_management.jl")
 
 
 path_3level = "/Users/alessandroconigli/Lattice/data/HVP/tree_level"
-path_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
+path_store_3l = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/multi_mom/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots"
+path_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
 
 dir_path = filter(isdir, readdir(path_bdio, join=true))
 
@@ -43,15 +45,24 @@ dir_path = filter(isdir, readdir(path_bdio, join=true))
 IMPR      = true
 IMPR_SET  = "1" # either "1" or "2"
 RENORM    = false
-STD_DERIV = true
+STD_DERIV = false
 
-spectrum_path = splitpath.(vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...))
-# enslist = getindex.(spectrum_path, length(spectrum_path[1])-1 )
-# ensinfo = EnsInfo.(enslist)
-ensinfo = [EnsInfo.("H101")]
+
+enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
+          "B450", "N451", "D450", "D451", "D452",
+         "N202", "N203", "N200", "D200", "D201", "E250",
+          "N300", "J303", "E300",
+         "J500", "J501"])
+ensinfo = EnsInfo.(enslist)
+dir_path = filter(x-> basename(x) in enslist, readdir(path_bdio, join=true))
+spectrum_path = vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
+
+
 beta_val = getfield.(ensinfo, :beta)
 NENS = length(ensinfo)
-Qgev = [3., 5., 9.] # Q^2
+# Qgev = [3., 5., 9.] # Q^2
+Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
+
 Qmgev = 9.0 # Qm^2
 
 ##
@@ -81,8 +92,8 @@ for (k, ens) in enumerate(ensinfo)
             cv_c = cv_cons_set2(beta)
         end
     end
-    improve_corr_vkvk!(g3l_33_ll[k], g3l_v3s03_ll, 2*cv_l, std=STD_DERIV)
-    improve_corr_vkvk_cons!(g3l_33_lc[k], g3l_v3s03_ll, g3l_v3s03_lc, cv_l, cv_c, std=STD_DERIV)
+    improve_corr_vkvk!(g3l_33_ll[k], g3l_v3s03_ll, 2*cv_l, std=STD_DERIV, treelevel=true)
+    improve_corr_vkvk_cons!(g3l_33_lc[k], g3l_v3s03_ll, g3l_v3s03_lc, cv_l, cv_c, std=STD_DERIV, treelevel=true)
 
 end
 
@@ -115,8 +126,40 @@ for (k, ens) in enumerate(ensinfo)
 
 end
 
+##
+#======== SAVE TO BDIO WITH ALPHAIO =========#
+@info("Saving tree level improvement TMR")
+io = IOBuffer()
+write(io, "TMR 3 level improvement set 1")
+fb = ALPHAdobs_create(joinpath(path_store_3l, "treeLevelSet1.bdio"), io)
 
-#======== SAVE TO BDIO =========#
+for(k, ens) in enumerate(ensinfo)
+    extra = Dict{String, Any}("Ens" => ens.id)
+    data = Dict{String, Array{uwreal}}(
+        "3l_33_ll" => obs[k]["pi3l_33_ll"],
+        "3l_33_lc" => obs[k]["pi3l_33_lc"]
+    )
+    ALPHAdobs_write(fb, data, extra=extra)
+end
+ALPHAdobs_close(fb)
+println("# Saving complete!")
+
+##
+#========= TEST READING =========#
+fb = BDIO_open(joinpath(path_store_3l,  "treeLevelSet2.bdio"), "r")
+res = Dict()
+while ALPHAdobs_next_p(fb)
+    d = ALPHAdobs_read_parameters(fb)
+    nobs = d["nobs"]
+    dims = d["dimensions"]
+    sz = tuple(d["size"]...)
+    extra = d["extra"]
+    ks = collect(d["keys"])
+    res[extra["Ens"]] = ALPHAdobs_read_next(fb, size=sz, keys=ks)
+end
+BDIO_close!(fb)
+
+#======== SAVE TO BDIO OLD FORMAT =========#
 ##
 
 [pop!(obs[k], "t0") for k in eachindex(obs)]

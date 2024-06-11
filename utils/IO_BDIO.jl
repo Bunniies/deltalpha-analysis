@@ -63,3 +63,16 @@ function read_BDIO(path::String, type::String, obs::String)
     end
     return read_BDIO(path, dict2dict[type][obs])
 end
+
+
+function read_phys_res(path, name)
+    pp = joinpath(path, name)
+    fb = BDIO_open(pp, "r")
+    res = []
+    while ALPHAdobs_next_p(fb)
+        d = ALPHAdobs_read_parameters(fb)
+        push!(res, ALPHAdobs_read_next(fb))
+    end
+    BDIO_close!(fb)
+    return res
+end

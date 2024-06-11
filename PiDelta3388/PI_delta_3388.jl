@@ -14,20 +14,22 @@ rcParams["axes.titlesize"] = 18
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 
-include("const.jl")
-include("types.jl")
-include("plot_utils.jl")
-include("./IO_BDIO.jl")
-include("tools.jl")
+include("../utils/const.jl")
+include("../utils/types.jl")
+include("../utils/plot_utils.jl")
+include("../utils/IO_BDIO.jl")
+include("../utils/tools.jl")
 include("./func_comb.jl")
 
 path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
 path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/multi_mom/"
 
 #======= PHYSICAL CONSTANTS ====================#
-const Qgev = [3., 5., 9.] # Q^2
+# const Qgev = [3., 5., 9.] # Q^2
+const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
+
 const Qmgev = 9.0 # Qm^2
 
 const KRNL = krnl_dα_qhalf # non-subtracted kernel

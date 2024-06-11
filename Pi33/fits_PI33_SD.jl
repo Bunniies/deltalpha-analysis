@@ -23,9 +23,9 @@ include("../utils/tools.jl")
 include("func_comb_PI33.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/multi_mom/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isovector/SD"
-path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results"
+path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/multi_mom/"
 
 #======= PHYSICAL CONSTANTS ====================#
 const MPI_ph = uwreal([134.9768, 0.0005], "mpi phys")
@@ -34,7 +34,9 @@ const MK_ph  = uwreal([495.011, 0.01], "mk phys")
 const phi2_ph = (sqrt(8)*t0sqrt_ph * MPI_ph / hc)^2
 const phi4_ph = (sqrt(8)*t0sqrt_ph)^2 * ((MK_ph/hc)^2 + 0.5*(MPI_ph/hc)^2)
 
-const Qgev = [3., 5., 9.] # Q^2
+# const Qgev = [3., 5., 9.] # Q^2
+const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
+
 const Qmgev = 9.0 # Qm^2
 
 const TREELEVEL = true
@@ -104,14 +106,6 @@ BDIO_close!(fb)
 
 ##
 #========== READING AND APPLYING TREE-LEVEL IMPROVEMENT =============#
-path_bdio_3l = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-
-dir_path_3l = filter(x-> basename(x) in enslist, readdir(path_bdio_3l, join=true))
-treelevel_path_s1 = vcat(filter(!isempty, [filter(x-> occursin("tree_level_set1.bdio", x)  , readdir(dir_path_3l[k], join=true)) for k in eachindex(dir_path)])...)
-treelevel_path_s2 = vcat(filter(!isempty, [filter(x-> occursin("tree_level_set2.bdio", x)  , readdir(dir_path_3l[k], join=true)) for k in eachindex(dir_path)])...)
-
-#
-
 # computing perturbative CL prediction
 pt_pred = []
 for q in Qgev
@@ -121,14 +115,39 @@ for q in Qgev
     push!(pt_pred, res/2)
 end
 
-# perform tree-level improvement
-if TREELEVEL 
-    for (k, ens) in enumerate(ensinfo)
+fb = BDIO_open(joinpath(path_store_pi,  "treeLevelSet1.bdio"), "r")
+res_3l_s1 = Dict()
+while ALPHAdobs_next_p(fb)
+    d = ALPHAdobs_read_parameters(fb)
+    nobs = d["nobs"]
+    dims = d["dimensions"]
+    sz = tuple(d["size"]...)
+    extra = d["extra"]
+    ks = collect(d["keys"])
+    res_3l_s1[extra["Ens"]] = ALPHAdobs_read_next(fb, size=sz, keys=ks)
+end
+BDIO_close!(fb)
 
-        hvp_3l_ll_s1 = pt_pred ./ (read_BDIO(treelevel_path_s1[k], "3level", "3l_33_ll")./2)
-        hvp_3l_lc_s1 = pt_pred ./ (read_BDIO(treelevel_path_s1[k], "3level", "3l_33_lc")./2)
-        hvp_3l_ll_s2 = pt_pred ./ (read_BDIO(treelevel_path_s2[k], "3level", "3l_33_ll")./2)
-        hvp_3l_lc_s2 = pt_pred ./ (read_BDIO(treelevel_path_s2[k], "3level", "3l_33_lc")./2)
+fb = BDIO_open(joinpath(path_store_pi,  "treeLevelSet2.bdio"), "r")
+res_3l_s2 = Dict()
+while ALPHAdobs_next_p(fb)
+    d = ALPHAdobs_read_parameters(fb)
+    nobs = d["nobs"]
+    dims = d["dimensions"]
+    sz = tuple(d["size"]...)
+    extra = d["extra"]
+    ks = collect(d["keys"])
+    res_3l_s2[extra["Ens"]] = ALPHAdobs_read_next(fb, size=sz, keys=ks)
+end
+BDIO_close!(fb)
+
+if TREELEVEL
+       for (k, ens) in enumerate(ensinfo)
+
+        hvp_3l_ll_s1 = pt_pred ./ (res_3l_s1[ens.id]["3l_33_ll"] ./ 2) 
+        hvp_3l_lc_s1 = pt_pred ./ (res_3l_s1[ens.id]["3l_33_lc"] ./ 2)
+        hvp_3l_ll_s2 = pt_pred ./ (res_3l_s2[ens.id]["3l_33_ll"] ./ 2)
+        hvp_3l_lc_s2 = pt_pred ./ (res_3l_s2[ens.id]["3l_33_lc"] ./ 2)
         
         pi_33_ll_SD_s1[k] .*= hvp_3l_ll_s1
         pi_33_lc_SD_s1[k] .*= hvp_3l_lc_s1
@@ -136,7 +155,32 @@ if TREELEVEL
         pi_33_lc_SD_s2[k] .*= hvp_3l_lc_s2
     
     end
+
 end
+
+# old tree-level improvement from old BDIO format
+# path_bdio_3l = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
+# 
+# dir_path_3l = filter(x-> basename(x) in enslist, readdir(path_bdio_3l, join=true))
+# treelevel_path_s1 = vcat(filter(!isempty, [filter(x-> occursin("tree_level_set1.bdio", x)  , readdir(dir_path_3l[k], join=true)) for k in eachindex(dir_path)])...)
+# treelevel_path_s2 = vcat(filter(!isempty, [filter(x-> occursin("tree_level_set2.bdio", x)  , readdir(dir_path_3l[k], join=true)) for k in eachindex(dir_path)])...)
+# 
+# #perform tree-level improvement
+# if TREELEVEL 
+    # for (k, ens) in enumerate(ensinfo)
+# 
+        # hvp_3l_ll_s1 = pt_pred ./ (read_BDIO(treelevel_path_s1[k], "3level", "3l_33_ll")./2)
+        # hvp_3l_lc_s1 = pt_pred ./ (read_BDIO(treelevel_path_s1[k], "3level", "3l_33_lc")./2)
+        # hvp_3l_ll_s2 = pt_pred ./ (read_BDIO(treelevel_path_s2[k], "3level", "3l_33_ll")./2)
+        # hvp_3l_lc_s2 = pt_pred ./ (read_BDIO(treelevel_path_s2[k], "3level", "3l_33_lc")./2)
+        # 
+        # pi_33_ll_SD_s1[k] .*= hvp_3l_ll_s1
+        # pi_33_lc_SD_s1[k] .*= hvp_3l_lc_s1
+        # pi_33_ll_SD_s2[k] .*= hvp_3l_ll_s2
+        # pi_33_lc_SD_s2[k] .*= hvp_3l_lc_s2
+    # 
+    # end
+# end
 
 ##
 
@@ -208,10 +252,10 @@ for q in 1:NMOM
 
         for (k_mod, model) in enumerate(f_tot_isov)
             println(k_mod)
-            fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_isov[k_mod], pval=true)
-            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_isov[k_mod], pval=true)
-            fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_isov[k_mod], pval=true)
-            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=true)
+            fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_isov[k_mod], pval=false)
+            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_isov[k_mod], pval=false)
+            fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_isov[k_mod], pval=false)
+            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=false)
             push!(fitcat_pi33_ll_s1[q][k_cat].fit, fit_ll_s1)
             push!(fitcat_pi33_ll_s2[q][k_cat].fit, fit_ll_s2)
             push!(fitcat_pi33_lc_s1[q][k_cat].fit, fit_lc_s1)
@@ -225,8 +269,8 @@ end
 ## PLOTS
 #########################
 using Statistics
-plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, path_plot=path_plot, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$", f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi33_ll_s2, path_plot=path_plot, tt=["Set", "2", "LL"], f_tot_isov=f_tot_isov, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$")
+plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, nmom=3, path_plot=nothing, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$", f_tot_isov=f_tot_isov)
+plot_chiral_best_fit(fitcat_pi33_ll_s1, path_plot=nothing, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, nmom=NMOM, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$")
 plot_cl_best_fit(fitcat_pi33_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_isov, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$")
 
 cattot = [vcat(fitcat_pi33_ll_s1[k], fitcat_pi33_lc_s1[k],fitcat_pi33_ll_s2[k],fitcat_pi33_lc_s2[k]...) for k in eachindex(fitcat_pi33_lc_s1)]
@@ -241,7 +285,7 @@ plot_mAve_summary(fitcat_pi33_lc_s1, xlab=label_tot_isov, charge_factor=1., ylab
 RES = []
 SYST = []
 for q in 1:NMOM
-    @info "Momentum no. $(q)"
+    @info "Momentum no. $(q): $(Qgev[q]) GeV^2"
     fitcat_pi33_tot = vcat(vcat(fitcat_pi33_ll_s1[q],
                 fitcat_pi33_ll_s2[q],
                 fitcat_pi33_lc_s1[q],
@@ -286,6 +330,7 @@ for q in 1:NMOM
     push!(SYST, syst)
     println("   Model ave:  ", final_res)
     println("   systematic: ", syst)
+    println("\n")
 
 
     hist(value.(all_res), bins=80, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot)
@@ -302,7 +347,7 @@ io = IOBuffer()
 write(io, "PI33 SD physical results")
 fb = ALPHAdobs_create(joinpath(path_phys_res, "PI33_SD_physRes.bdio"), io)
 for k in eachindex(RES)
-    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi33 ILD")
+    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi33 SD")
     ALPHAdobs_write(fb, aux)
 end
 ALPHAdobs_close(fb)
@@ -318,7 +363,7 @@ BDIO_close!(fb)
 
 ## READ ILD results
 
-fb = BDIO_open(joinpath(path_phys_res, "PI33_ILD_physRes.bdio"), "r")
+fb = BDIO_open(joinpath(path_phys_res, "PI33_SD_physRes.bdio"), "r")
 res = []
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

@@ -26,11 +26,13 @@ include("../utils/tools.jl")
 
 const path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
 const path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-const path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/"
+const path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/multi_mom/"
 const path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
 
 #======= PHYSICAL CONSTANTS ====================#
-const Qgev = [3., 5., 9.] # Q^2
+# const Qgev = [3., 5., 9.] # Q^2
+const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
+
 const Qmgev = 9.0 # Qm^2
 
 const KRNL= krnl_dα_qhalf # non-subtracted kernel
@@ -139,7 +141,7 @@ for (k, ens) in enumerate(ensinfo)
     qmlat = Qmgev * value(t0sqrt_ph^2) / t0ens[k] / hc^2 * 1e6
 
     for (j,q) in enumerate(Qlat)
-        pi_08_ll_s1[k][j] =  tmr_integrand(g08_ll_s1[k], q, KRNL, pl=true, t0ens=t0ens[k])
+        pi_08_ll_s1[k][j] =  tmr_integrand(g08_ll_s1[k], q, KRNL, pl=false, t0ens=t0ens[k])
         pi_08_lc_s1[k][j] =  tmr_integrand(g08_lc_s1[k], q, KRNL, pl=false, t0ens=t0ens[k])
         pi_08_ll_s2[k][j] =  tmr_integrand(g08_ll_s2[k], q, KRNL, pl=false, t0ens=t0ens[k])
         pi_08_lc_s2[k][j] =  tmr_integrand(g08_lc_s2[k], q, KRNL, pl=false, t0ens=t0ens[k])

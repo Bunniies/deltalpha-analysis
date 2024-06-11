@@ -61,7 +61,17 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
 
             # xarr = [Float64.(range(1e-8, 0.05, length=100)) fill(phi2_ph, 100) fill(phi4_ph, 100)]
             xarr = [Float64.(range(1e-8, 0.008, length=100)) fill(phi2_ph, 100) fill(phi4_ph, 100)]
+            count=0
             for (k_mod, model) in enumerate(f_tot_isov)
+                # if q in [1, 2, 3, 4, 5, 6 ] &&  "a3" ∉ label_tot_dltiso[k_modaux]
+                    # println("model $(label_tot_dltiso[k_modaux]) skipped")
+                    # count +=1
+                    # k_mod = count
+                # elseif q in [1, 2, 3, 4, 5, 6 ] &&  "a3" ∈ label_tot_dltiso[k_modaux]
+                    # continue
+                # else
+                    # k_mod = k_modaux
+                # end
             
                 fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod].param
                 fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod].param
@@ -73,8 +83,8 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
                 yy_lc_s1  = model(xarr, fit_param_lc_s1)
                 yy_lc_s2  = model(xarr, fit_param_lc_s2)
     
-                plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="forestgreen")
-                plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
+                #plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="forestgreen")
+                #plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
                 plot(xarr[:,1], value.(yy_lc_s1),alpha=ww_lc_s1[k_mod], color="purple")
                 plot(xarr[:,1], value.(yy_lc_s2),alpha=ww_lc_s2[k_mod], color="gold")
     
@@ -172,7 +182,7 @@ function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::I
         axvline(value(phi2_ph), ls="dashed", color="black", lw=0.2, alpha=0.7) 
         
         xlim(0.04, 0.8)
-        legend(ncol=2, loc="lower right")
+        legend(ncol=2, loc="upper right")
         xlabel(L"$\phi_2$")
         ylabel(ylab)
         if !isnothing(tt)
@@ -245,14 +255,22 @@ function plot_cl_best_fit(fc::Vector{Vector{FitCat}}; nmom=3, ylab::LaTeXString=
     end
 end
 
-function plot_mAve_summary(fc::Vector{Vector{FitCat}}; nmom=3, ylab::Union{Nothing, LaTeXString}=nothing, xlab::Union{Nothing, Vector{Vector{String}}}=nothing, charge_factor::Float64=1., path_plot::Union{String,Nothing}=nothing, tt::Union{Nothing,Vector{String}}=nothing)
+function plot_mAve_summary(fc::Vector{Vector{FitCat}}; nmom=3, ylab::Union{Nothing, LaTeXString}=nothing, xlab::Union{Nothing, Vector{Vector{String}}}=nothing, charge_factor::Float64=1., models::Union{Vector{Function}, Nothing}=nothing, path_plot::Union{String,Nothing}=nothing, tt::Union{Nothing,Vector{String}}=nothing)
     for q in 1:nmom
         println("\n- Momentum: $(q)")
         fccat = vcat(fc[q]...)
         w_tot  = get_w_from_fitcat(fccat)
         wmax, wmax_idx = findmax(w_tot)
-
-        all_res = vcat([getindex.(getfield.(getfield(fccat[k], :fit), :param), 1) for k in eachindex(fccat)]...)
+        if isnothing(models)
+            all_res = vcat([getindex.(getfield.(getfield(fccat[k], :fit), :param), 1) for k in eachindex(fccat)]...)
+        else
+            all_res = Vector{uwreal}()
+            for (k, c) in enumerate(fccat)
+                for (j,mod) in enumerate(models)
+                    push!(all_res, mod([0.0 phi2_ph phi4_ph], c.fit[j].param)[1])
+                end
+            end
+        end
         chi2exp = vcat([getfield.(getfield(fccat[k], :fit), :chi2exp) for k in eachindex(fccat)]...)
         chi2    = vcat([getfield.(getfield(fccat[k], :fit), :chi2) for k in eachindex(fccat)]...)
         pval    = vcat([getfield.(getfield(fccat[k], :fit), :pval) for k in eachindex(fccat)]...)
@@ -260,6 +278,7 @@ function plot_mAve_summary(fc::Vector{Vector{FitCat}}; nmom=3, ylab::Union{Nothi
         
         final_res, syst = model_average(all_res, w_tot) .* charge_factor; uwerr(final_res)
         final_err = sqrt(err(final_res)^2 + syst^2)
+        println("model ave: ", final_res )
 
         # sort weights and discard 5% tail
         idxW = sortperm(w_tot, rev=true)

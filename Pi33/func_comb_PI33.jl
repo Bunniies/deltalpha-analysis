@@ -35,7 +35,7 @@ for n = 2:n_par_var+1
     f_tot_isov[n] = Vector{Function}(undef, length(aux))
     f_aux = []
     for (k, a) in enumerate(aux)
-        if "a4" ∈ model_var_label[a] && "a3" ∉ model_var_label[a]
+        if "a4" ∈ model_var_label[a] #&& "a3" ∉ model_var_label[a]
             continue
         end
         if "a3phi2" ∈ model_var_label[a] && "a2phi2" ∉ model_var_label[a]

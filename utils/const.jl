@@ -38,8 +38,11 @@ const Zvc_l = Dict(
 const b_values = [3.34, 3.40, 3.46, 3.55, 3.70, 3.85]
 const hc = 197.3269804 #MeV fm
 
-# Madrid scale setting
-const t0sqrt_ph = uwreal([0.1443, 0.0007], "sqrtt0 [fm]") 
+# scale setting
+# const t0sqrt_ph = uwreal([0.1443, 0.0007], "sqrtt0 [fm]")  # Regensburg
+println("scale setting from BRUNO ET AL!!!")
+const t0sqrt_ph = uwreal([0.1467, 0.0017], "sqrtt0 [fm]") 
+
 #1608.08900
 const t0_data = [2.204, 2.872, 3.682, 5.162, 8.613, 14.011]
 const t0_error = [5, 10, 12, 16, 25, 39] .* 1e-3
