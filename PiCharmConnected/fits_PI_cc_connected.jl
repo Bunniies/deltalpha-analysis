@@ -23,9 +23,9 @@ include("../utils/tools.jl")
 include("./func_comb_charm_connected.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/multi_mom/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/scale_error_multimom/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/charmConn"
-path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/multi_mom/"
+path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_multimom/"
 
 
 #======= PHYSICAL CONSTANTS ====================#
@@ -38,7 +38,7 @@ const phi4_ph = (sqrt(8)*t0sqrt_ph)^2 * ((MK_ph/hc)^2 + 0.5*(MPI_ph/hc)^2)
 # const Qgev = [3., 5., 9.] # Q^2
 const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
 
-const Qmgev = 9.0 # Qm^2
+const Qmgev = 36.0 # Qm^2
 
 enslist = sort([ "H101", "H102", "N101", "C101",
           "N451", "D450", "D452",
@@ -101,7 +101,36 @@ while ALPHAdobs_next_p(fb)
 end
 BDIO_close!(fb)
 
+##  cancelling fluctuations from t0_ph
+NOERR = true
+if NOERR
+    for (k,ens) in enumerate(ensinfo)
+        uwerr.(pi_cc_ll_s1[k])
+        uwerr.(pi_cc_lc_s1[k])
+        uwerr.(pi_cc_ll_s2[k])
+        uwerr.(pi_cc_lc_s2[k])
 
+        for (j,q) in enumerate(Qgev)
+            set_fluc_to_zero!(pi_cc_ll_s1[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_cc_lc_s1[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_cc_ll_s2[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_cc_lc_s2[k][j], "sqrtt0 [fm]")
+
+            pi_cc_ll_s1[k][j] *= 1.0
+            pi_cc_lc_s1[k][j] *= 1.0
+            pi_cc_ll_s2[k][j] *= 1.0
+            pi_cc_lc_s2[k][j] *= 1.0
+        end
+
+        uwerr.(pi_cc_ll_s1[k])
+        uwerr.(pi_cc_lc_s1[k])
+        uwerr.(pi_cc_ll_s2[k])
+        uwerr.(pi_cc_lc_s2[k])
+    end
+
+end
+
+##
 ##############################
 ## CREATE FIT CATEGORIES
 ##############################
@@ -231,16 +260,29 @@ for q in 1:NMOM
 
 end
 
+## check error with systematics
+aux = similar(RES)
+for k in eachindex(RES)
+    aux[k] = RES[k] + uwreal([0.0, SYST[k]], "Syst Picc conn")
+end
+uwerr.(aux)
 ## saving physical results in BDIO
 
 io = IOBuffer()
 write(io, "PICC connected physical results")
 fb = ALPHAdobs_create(joinpath(path_phys_res, "PIcc_conn_physRes.bdio"), io)
 for k in eachindex(RES)
-    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Picc conn")
+    aux = RES[k] #+ uwreal([0.0, SYST[k]], "Syst Picc conn")
     ALPHAdobs_write(fb, aux)
 end
 ALPHAdobs_close(fb)
+
+## saving systematics in txt file
+using DelimitedFiles
+open(joinpath(path_phys_res, "systematics.txt"), "a") do io
+    writedlm(io, ["# pi cc conn "])
+    writedlm(io, [Qgev SYST])
+end
 
 ## test reading
 fb = BDIO_open(joinpath(path_phys_res, "PIcc_conn_physRes.bdio"), "r")
@@ -250,3 +292,16 @@ while ALPHAdobs_next_p(fb)
     push!(res, ALPHAdobs_read_next(fb))
 end
 BDIO_close!(fb)
+
+
+## test cancelling fluctuations
+details(pi_cc_ll_s1[1][10])
+mchist(pi_cc_ll_s1[1][10], "sqrtt0 [fm] err")
+set_fluc_to_zero!(pi_cc_ll_s1[1][10], "sqrtt0 [fm] err")
+mchist(pi_cc_ll_s1[1][10], "sqrtt0 [fm] err")
+pi_cc_ll_s1[1][10] *=1
+
+uwerr(pi_cc_ll_s1[1][10])
+details(pi_cc_ll_s1[1][10])
+
+set_fluc_to_zero(pi_cc_ll_s1[1][10], "C101")

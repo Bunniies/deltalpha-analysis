@@ -32,21 +32,21 @@ const RENORM = true
 # ensinfo = EnsInfo.(enslist)
 #enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
         #"B450", "N451", "D450", "D451", "D452",
-        #"N202", "N203", "N200", "D200", "D201", "E250"])
-        #"N300", "J303", "E300",
+        #"N202", "N203", "N200", "D251", "D200", "D201", "E250"])
+        #"N300", "J303", "J304", "E300",
         #"J500", "J501"])
  
-
-enslist = sort(["D200"])        
+# enslist = sort(["D450"])        
+enslist = sort(["D450"])        
 ensinfo = EnsInfo.(enslist)
 ##
 #============ OBSERVABLE ALLOCATIONS ============#
 
-
+# isovector
 g33_ll = Vector{Corr}(undef, 1)
 g33_lc = Vector{Corr}(undef, 1)
 
-
+# isoscalar
 g88_ll_conn = Vector{Corr}(undef, 1)
 g88_lc_conn = Vector{Corr}(undef, 1)
 
@@ -56,8 +56,10 @@ g88_lc_disc = Vector{Corr}(undef, 1)
 gdelta_iso_ll = Vector{Corr}(undef, 1) # (G33 - G88) ll
 gdelta_iso_lc = Vector{Corr}(undef, 1) # (G33 - G88) lc
 
+# isoscalar singlet
 g08_ll_conn = Vector{Corr}(undef, 1)
 g08_lc_conn = Vector{Corr}(undef, 1)
+g00_lc_conn = Vector{Corr}(undef, 1)
 
 g08_ll_disc = Vector{Corr}(undef, 1)
 g08_lc_disc = Vector{Corr}(undef, 1)
@@ -65,8 +67,11 @@ g08_lc_disc = Vector{Corr}(undef, 1)
 g08_ll = Vector{Corr}(undef, 1)
 g08_lc = Vector{Corr}(undef, 1)
 
+# charm
 gcc_ll_conn = Vector{Corr}(undef, 1)
 gcc_lc_conn = Vector{Corr}(undef, 1)
+gcc_ll_conn_plus = Vector{Corr}(undef, 1)
+gcc_lc_conn_plus = Vector{Corr}(undef, 1)
 
 gcc_ll_disc = Vector{Corr}(undef, 1)
 gcc_lc_disc = Vector{Corr}(undef, 1)
@@ -80,33 +85,37 @@ gc8_cc_disc = Vector{Corr}(undef, 1)
     for (k, ens) in enumerate(ensinfo)
         @info("Reading data ensemble: $(ens.id)")
 
-
-
         for impr_set in ["1", "2"]
             println("   - Impr Set: ", impr_set)
 
             println("        - G33 ll and lc correlator")
             gll_ll, gll_lc = corrConnected(path_data, ens, "light", path_rw=path_rw, impr=IMPR, impr_set=impr_set, std=STD_DERIV)
+            
             g33_ll[1] = Corr(0.5*gll_ll.obs, ens.id, "G33_ll")
             g33_lc[1] = Corr(0.5*gll_lc.obs, ens.id, "G33_lc")
 
             println("        - G88 connected ll and lc correlator")  
             gss_ll, gss_lc = corrConnected(path_data, ens, "strange", path_rw=path_rw, impr=IMPR, impr_set=impr_set, std=STD_DERIV)
+            
             g88_ll_conn[1]  = Corr(1/6 .*( gll_ll.obs + 2*gss_ll.obs), ens.id, "G88_ll_conn" )
             g88_lc_conn[1]  = Corr(1/6 .*( gll_lc.obs + 2*gss_lc.obs), ens.id, "G88_lc_conn" )
                         
             println("        - G08 connected ll and lc correlator")
-            g08_ll_conn[1] = Corr(1/(2*sqrt(3)) .* 2 .* (gll_ll.obs .- gss_ll.obs), ens.id,  "G08_ll_conn")
+            g08_ll_conn[1] = Corr(1/(2*sqrt(3)) .* (gll_ll.obs .- gss_ll.obs), ens.id,  "G08_ll_conn")
             g08_lc_conn[1] = Corr(1/(2*sqrt(3)) .* (gll_lc.obs .- gss_lc.obs), ens.id,  "G08_lc_conn")
 
+            println("        - G08 connected ll and lc correlator")
+            g00_lc_conn[1] = Corr(1/4 * (2*gll_lc.obs .+ gss_lc.obs), ens.id, "G00_lc_conn")
 
             println("        - Gcc connected ll and lc correlator")
             try
-                gcc_ll_conn[1], gcc_lc_conn[1] = corrConnected(path_data, ens, "charm_plus", path_rw=path_rw, impr=IMPR, impr_set=impr_set, std=STD_DERIV) 
+                gcc_ll_conn_plus[1], gcc_lc_conn_plus[1] = corrConnected(path_data, ens, "charm_plus", path_rw=path_rw, impr=IMPR, impr_set=impr_set, std=STD_DERIV) 
+                gcc_ll_conn[1], gcc_lc_conn[1] = corrConnected(path_data, ens, "charm", path_rw=path_rw, impr=IMPR, impr_set=impr_set, std=STD_DERIV) 
             catch
                 println("        - cc connected not found for ens $(ens.id)")
                 T = HVPobs.Data.get_T(ens.id)
                 gcc_ll_conn[1] = gcc_lc_conn[1] = Corr(fill(uwreal(0.0), T), ens.id, "Gcc") 
+                gcc_ll_conn_plus[1] = gcc_lc_conn_plus[1] = Corr(fill(uwreal(0.0), T), ens.id, "Gcc") 
             end
 
             if ens.kappa_l != ens.kappa_s
@@ -128,65 +137,62 @@ gc8_cc_disc = Vector{Corr}(undef, 1)
             end
 
             if RENORM
-
+                # isovector
                 Z3 = get_Z3(ens, impr_set=impr_set) 
                 renormalize!(g33_ll[1], Z3^2)  
                 renormalize!(g33_lc[1], Z3)    
                 
+                # isoscalaar
                 Z8 = get_Z8(ens, impr_set=impr_set)
-                renormalize!(g88_ll_conn[1], Z8^2)
-                renormalize!(g88_lc_conn[1], Z8)
-                renormalize!(g88_ll_disc[1], Z8^2)
-                renormalize!(g88_lc_disc[1], Z8)
-    
+                Z08 = get_Z08(ens, impr_set=impr_set)
+                g88_ll_conn[1].obs[:] = Z8^2 .* g88_ll_conn[1].obs[:] .+ 2 .* Z8 * Z08 .* g08_ll_conn[1].obs[:]
+                g88_lc_conn[1].obs[:] = Z8 .* g88_lc_conn[1].obs[:] .+ Z08 .* g08_lc_conn[1].obs[:]
+                
+                g88_ll_disc[1].obs[:] = Z8^2 .* g88_ll_disc[1].obs[:] .+ 2 .* Z8 * Z08 .* g08_ll_disc[1].obs[:] 
+                g88_lc_disc[1].obs[:] = Z8 .* g88_lc_disc[1].obs[:] .+   Z08 .* g08_lc_disc[1].obs[:] 
+
+                # charm 
                 Zcc = Zvc_l[ens.id]
                 renormalize!(gcc_ll_conn[1], Zcc*Zcc)
                 renormalize!(gcc_lc_conn[1], Zcc)
-                renormalize!(gcc_ll_disc[1], Zcc*Zcc)
-                renormalize!(gcc_lc_disc[1], Zcc)
-    
-                Z08 = get_Z08(ens, impr_set=impr_set)
-                renormalize!(g08_ll_conn[1], Z8*Z08)
-                renormalize!(g08_lc_conn[1], Z8)
-                renormalize!(g08_ll_disc[1], Z8*Z08)
-                renormalize!(g08_lc_disc[1], Z8)
+                renormalize!(gcc_ll_conn_plus[1], Zcc*Zcc)
+                renormalize!(gcc_lc_conn_plus[1], Zcc)
+                
+                # isoscalar isosinglet
+                g08_lc_conn[1].obs[:] = Z8 .* g08_lc_conn[1].obs[:] .+ Z08 .* g00_lc_conn[1].obs[:]
+                g08_lc_disc[1].obs[:] = Z8 .* g08_lc_disc[1].obs[:] # here still missing the g00_lc_disc !
+
             end
             
             if ens.kappa_l != ens.kappa_s
                 gdelta_iso_ll[1] = Corr(-g88_ll_conn[1].obs - g88_ll_disc[1].obs + g33_ll[1].obs, g33_ll[1].id, "deltaiso_ll")
                 gdelta_iso_lc[1] = Corr(-g88_lc_conn[1].obs - g88_lc_disc[1].obs + g33_lc[1].obs, g33_lc[1].id, "deltaiso_lc")
-                g08_ll[1] = Corr(g08_ll_conn[1].obs + 2 .* g08_ll_disc[1].obs, g08_ll_conn[1].id, "G08ll")
                 g08_lc[1] = Corr(g08_lc_conn[1].obs + g08_lc_disc[1].obs, g08_lc_conn[1].id, "G08lc")
 
             else
                 gdelta_iso_ll[1] = Corr(-g88_ll_conn[1].obs + g33_ll[1].obs, g33_ll[1].id, "deltaiso_ll")
                 gdelta_iso_lc[1] = Corr(-g88_lc_conn[1].obs + g33_lc[1].obs, g33_lc[1].id, "deltaiso_lc")
-                g08_ll[1] = Corr(g08_ll_conn[1].obs , g08_ll_conn[1].id, "G08ll")
                 g08_lc[1] = Corr(g08_lc_conn[1].obs , g08_lc_conn[1].id, "G08lc")
             end
             
 
 
-            data_corr = Dict{String, Array{uwreal}}(
-                "g33_ll" => g33_ll[1].obs,
-                "g33_lc" => g33_lc[1].obs
-            )
+            data_corr = Dict{String, Array{uwreal}}()
             
+            data_corr["g33_ll"] = g33_ll[1].obs
+            data_corr["g33_lc"] = g33_lc[1].obs
+
             data_corr["g3388_dlt_ll"] = gdelta_iso_ll[1].obs
             data_corr["g3388_dlt_lc"] = gdelta_iso_lc[1].obs
 
             data_corr["gcc_ll_conn"] = gcc_ll_conn[1].obs
             data_corr["gcc_lc_conn"] = gcc_lc_conn[1].obs
+            data_corr["gcc_ll_conn_plus"] = gcc_ll_conn_plus[1].obs
+            data_corr["gcc_lc_conn_plus"] = gcc_lc_conn_plus[1].obs
             
-            data_corr["g08_ll"] = g08_ll[1].obs
             data_corr["g08_lc"] = g08_lc[1].obs
 
-            # data_corr["gcc_ll_disc"] = gcc_ll_disc[1].obs
-            # data_corr["gcc_lc_disc"] = gcc_lc_disc[1].obs
             data_corr["gcc_cc_disc"] = gcc_cc_disc[1].obs
- 
-            #data_corr["gc8_ll_disc"] = gc8_ll_disc[1].obs
-            #data_corr["gc8_lc_disc"] = gc8_lc_disc[1].obs
             data_corr["gc8_cc_disc"] = gc8_cc_disc[1].obs
             
             io = IOBuffer()
@@ -206,7 +212,7 @@ end # end time begin
 
 ## TEST WITH READING
 
-fb = BDIO_open(joinpath(path_store_bdio,  "D200_corr_set1"), "r")
+fb = BDIO_open(joinpath(path_store_bdio,  "D251_corr_set1"), "r")
 
 # res = Dict()
 count=0

@@ -51,7 +51,7 @@ weights given by the model average. One plot for each value of the momenta is ge
 """
 function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", nmom::Int64=3, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
     
-    for q in 1:nmom
+    for q in [6,8,12]#1:nmom
         for k_cat in eachindex(fc_ll_s1[q])
 
             ww_ll_s1 = get_w_from_fitcat(fc_ll_s1[q], norm=true)
@@ -83,8 +83,8 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
                 yy_lc_s1  = model(xarr, fit_param_lc_s1)
                 yy_lc_s2  = model(xarr, fit_param_lc_s2)
     
-                #plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="forestgreen")
-                #plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
+                plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="forestgreen")
+                plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
                 plot(xarr[:,1], value.(yy_lc_s1),alpha=ww_lc_s1[k_mod], color="purple")
                 plot(xarr[:,1], value.(yy_lc_s2),alpha=ww_lc_s2[k_mod], color="gold")
     
@@ -113,7 +113,7 @@ end
 
 function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::Int64=0, ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", tt::Union{Nothing,Vector{String}}=nothing, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
 
-    for q in 1:nmom
+    for q in [6,8,12]#1:nmom
         println("\n- Momentum: $(q)")
         fccat = vcat(fc[q]...)
         w_tot  = get_w_from_fitcat(fccat)
@@ -182,7 +182,7 @@ function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::I
         axvline(value(phi2_ph), ls="dashed", color="black", lw=0.2, alpha=0.7) 
         
         xlim(0.04, 0.8)
-        legend(ncol=2, loc="upper right")
+        legend(ncol=2, loc="lower right")
         xlabel(L"$\phi_2$")
         ylabel(ylab)
         if !isnothing(tt)

@@ -5,6 +5,14 @@ function krnl_dα(t::Union{Float64, uwreal}, Q2::Union{Float64,uwreal})
     return K
 end
 
+function krnl_dα_sub(t::Union{Float64, uwreal}, Q2::Union{Float64,uwreal}, Q2m::Union{Float64,uwreal})
+
+    K = t^2 - 4/Q2 * sin((sqrt(Q2)*t)/2)^2 - 64/3 * (Q2/Q2m^2) * sin((sqrt(Q2m)*t)/4)^4
+    return K
+end
+
+
+
 function krnl_dα_qhalf(t::Union{Float64, uwreal}, Q2::Union{Float64,uwreal})
 
     K = 16. / Q2 * sin((sqrt(Q2)*t)/4)^4
@@ -159,7 +167,7 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
     
  
     if ens.id in ["A653", "A654", "D150", "B450", "N451", "D450", "D451", "D452", "D251", "E250"]
-        taux = collect(2:15) 
+        taux = collect(4:20) 
         Thalf = Int(length(corr[1].obs)/2)+1
         T = length(corr[1].obs)
         tmin = Thalf .- taux
@@ -170,13 +178,13 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
         param=2
         pbc = true
     else
-        # @. const_fit(x, p) = p[1] + 0 * x
+        #@. const_fit(x, p) = p[1] + 0 * x
         param = 1 
 
         # tmin and tmax tuned on H101 and then scaled 
-        tminaux = collect(18:44) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
+        tminaux = collect(22:54) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
         T = length(corr[1].obs)
-        tmaxaux = collect(20:40) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
+        tmaxaux = collect(38:60) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
         tmax = T .- collect(reverse(tmaxaux))
         tmax = tmax[1:2:end]
         tmin = tminaux[1:2:end] 
@@ -394,4 +402,149 @@ function model_average(results::Vector{uwreal}, ww)
     #syst = sum( )
     return fin_res, syst
     
+end
+
+function set_fluc_to_zero!(a::uwreal, id_str::String)
+    ws = ADerrors.wsg
+    id_int = ws.str2id[id_str]
+    idx = ADerrors.find_mcid(a, id_int)
+    if isnothing(idx)
+        error("No error available... maybe run uwerr")
+    else
+        nd = ws.fluc[ws.map_ids[a.ids[idx]]].nd
+        for j in 1:length(a.prop)
+            if (a.prop[j] && ((ws.map_nob[j] == a.ids[idx])))
+                ws.fluc[j].delta[:] .= 0.0
+            end
+        end
+        return nothing
+    end
+    
+end
+
+function corrBounding(corr::Vector{uwreal}, mUp::uwreal, mLow::uwreal, tcut::Int64, ens::EnsInfo)
+    T = HVPobs.Data.get_T(ens.id)
+
+    upperBound = corr[:]
+    lowerBound = corr[:]
+
+    @. G_PBC(x0, p) = exp(-p*(x0-tcut)) + exp(-p*(T-x0+tcut))
+    @. G_OBC(x0, p) = exp(-p*(x0-tcut))
+
+    if ens.bc == "obc"
+        upperBound[tcut:end] = corr[tcut] .* G_OBC(collect(tcut:T), mUp)
+        lowerBound[tcut:end] = corr[tcut] .* G_OBC(collect(tcut:T), mLow)
+    elseif ens.bc == "pbc"
+        upperBound[tcut:end] = corr[tcut] .* G_PBC(collect(tcut:T), mUp)
+        lowerBound[tcut:end] = corr[tcut] .* G_PBC(collect(tcut:T), mLow)
+    else
+        error("Boundary conditions for ensemble $(ens.id) are not recognised. Supported values are \"obc\" or \"pbc\" ")
+    end
+    return lowerBound, upperBound
+end
+
+function boundingMethod(corr::Vector{uwreal}, ens::EnsInfo, krnl::Vector{Union{Tu, Tf}}, sector::String; pl::Bool=true, wind::Union{Window,Nothing}=nothing, path_pl::Union{Nothing,String}=nothing, qval::String="" ) where {Tu, Tf}
+
+    T = HVPobs.Data.get_T(ens.id)
+    thalf = Int64(T/2)
+    tcut_arr = collect(5: thalf - ceil(Int64, 0.4 / HVPobs.Data.get_a(ens.beta) ))
+    
+    mpi = m_ens[ens.id]["m_pi"] 
+    mrho = m_ens[ens.id]["m_rho"]
+    E2pi = 2*sqrt(mpi^2 + (2*pi/ens.L)^2)
+    E3pi = 2*sqrt(mpi^2 + (2*pi/ens.L)^2) + sqrt(mpi^2 + 2(2*pi/ens.L)^2)
+
+    meffdata = meff(corr)
+
+    store_tmrUp = []
+    store_tmrLow = []
+    if sector == "33"
+        mUp = mrho < E2pi ? mrho : E2pi
+        ll = mrho < E2pi ? L"$M_\rho$" : L"$E_{\pi\pi}$"
+        yll = L"$\mathit{\bar\Pi}^{3,3}(-Q^2)$"
+    elseif sector == "88"
+        mUp = mrho
+        ll =  L"$M_\rho$"
+        yll = L"$\mathit{\bar\Pi}^{8,8}(-Q^2)$"
+    elseif sector == "08"
+        mUp = mrho
+        ll =  L"$M_\rho$"
+        yll = L"$\mathit{\bar\Pi}^{0,8}(-Q^2) $"
+    else
+        error("Sector $(sector) not recognised. Supported values are \"33\", \"88\", \"08\" ")
+    end
+
+    for tcut in tcut_arr
+        if  HVPobs.Data.get_a(ens.beta)*tcut < 1.5
+            mLow =  meffdata[tcut]
+        else
+            tcutaux = ceil(Int64, 1.5 / HVPobs.Data.get_a(ens.beta) )
+            mLow = meffdata[tcutaux]
+        end
+
+        lowerBound, upperBound = corrBounding(corr, mUp, mLow, tcut, ens)
+
+        tmrUp_tmp  = upperBound .* krnl 
+        tmrLow_tmp = lowerBound .* krnl
+
+        if !isnothing(wind)
+            t_fm = T .* HVPobs.Data.get_a(ens.beta)
+            tmrUp_tmp .* wind(t_fm)
+            tmrLow_tmp .* wind(t_fm)
+        end
+        push!(store_tmrUp, sum(tmrUp_tmp[1:thalf]))
+        push!(store_tmrLow, sum(tmrLow_tmp[1:thalf]))
+    end
+    uwerr.(store_tmrLow)
+    uwerr.(store_tmrUp)
+    
+    tmin = tcut_arr[1]
+    for k in eachindex(store_tmrLow)
+        difff = store_tmrUp[k] - store_tmrLow[k]
+        # println(value(difff))
+        # println(0.5*max(err(store_tmrUp[k]), err(store_tmrLow[k])))
+        if value(difff) < 0.5 * max(err(store_tmrUp[k]), err(store_tmrLow[k]))
+            tmin += k
+            break
+        end
+    end
+    res = 0.0
+    tmax = 0 
+    try
+        tmax = tmin + ceil(Int64, 0.8 / HVPobs.Data.get_a(ens.beta)) # 0.8fm is the length of the averaged interval
+        res = plat_av(0.5*(store_tmrLow[tmin:tmax] .+ store_tmrUp[tmin:tmax])) 
+    catch
+        tmax = tmin + ceil(Int64, 0.2 / HVPobs.Data.get_a(ens.beta)) # 0.8fm is the length of the averaged interval
+        res = plat_av(0.5*(store_tmrLow[tmin:tmax] .+ store_tmrUp[tmin:tmax])) 
+
+    end
+
+    # println(tmin)
+    # println(tmax)
+    # println("")
+    if pl 
+        uwerr(res)
+
+        fill_between(tcut_arr, value(res)-err(res), value(res)+err(res), color="lightskyblue", alpha=0.8)
+
+        errorbar(tcut_arr, value.(store_tmrLow), err.(store_tmrLow), fmt="d", capsize=2, ms=4, color="navy", label=L"$M_{\mathrm{eff}}$")
+        errorbar(tcut_arr, value.(store_tmrUp), err.(store_tmrUp), fmt="d", capsize=2, ms=4, color="darkred", label=ll )
+ 
+        axvline(tmin, ls=":", color="gray")
+        axvline(tmax, ls=":", color="gray")
+        ylim(value(res) - 20* err(res), value(res) + 20* err(res))
+        xlim(tcut_arr[1], tcut_arr[end])
+        ylabel(yll)
+        xlabel(L"$t_{\mathrm{cut}}/a$")
+        legend()
+        tight_layout()
+        display(gcf())
+        if !isnothing(path_pl)
+            tt = joinpath(path_pl, "boundMethod_$(ens.id)_Q$(qval).pdf")
+            savefig(tt)
+        end
+        close("all")
+    end
+
+    return res
 end

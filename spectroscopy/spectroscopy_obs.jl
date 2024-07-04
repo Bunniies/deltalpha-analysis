@@ -10,6 +10,7 @@ using PyPlot, LaTeXStrings
 using OrderedCollections
 using TimerOutputs
 using BDIO, ADerrors
+import ADerrors: err
 
 #================ SET UP VARIABLES ===============#
 
@@ -23,25 +24,25 @@ rcParams["axes.titlesize"] = 18
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 #======== INCLUDE, PATHS AND CONSTANTS ==========#
-
-include("./pi_HVP_types.jl")
-include("tools.jl")
-include("data_management.jl")
-include("plot_utils.jl")
+include("../utils/const.jl")
+include("../utils/types.jl")
+include("../utils/tools.jl")
+# include("data_management.jl")
+include("../utils/plot_utils.jl")
 
 path_data = "/Users/alessandroconigli/Lattice/data/HVP/mesons"
 path_rw   = "/Users/alessandroconigli/Lattice/data/HVP/rwf_deflated"
 path_ms   = "/Users/alessandroconigli/Lattice/data/HVP/ms_t0_dat"
 path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FVC"
 
-path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots"
+path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/ensembles/"
 path_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
 
 IMPR      = true
 RENORM    = true
 STD_DERIV = false
 
-enslist = ["A653"]
+enslist = ["D450"]
 ensinfo = EnsInfo.(enslist)
 
 
@@ -96,14 +97,15 @@ wpmm["N200"]     = [5.0, -2.0, -1.0, -1.0]
 wpmm["N203"]     = [5.0, -2.0, -1.0, -1.0]
 wpmm["N300"]     = [5.0, -1.5, -1.0, -1.0]
 wpmm["J303"]     = [5.0, -2.0, -1.0, -1.0]
+wpmm["J304"]     = [5.0, -2.0, -1.0, -1.0]
 
 for k in eachindex(ensinfo)
     if ensinfo[k].kappa_l == ensinfo[k].kappa_s
         obs[k]["mpi"] = get_meff_BMA(g_pi[k:k], ensinfo[k], path_plt=path_plot, ll=L"$m_{\pi}$")[1] 
         obs[k]["mk"] = obs[k]["mpi"]
     else
-        obs[k]["mpi"] = get_meff_BMA(g_pi[k:k], ensinfo[k], path_plt=path_plot, ll=L"$m_{\pi}$")[1] 
-        obs[k]["mk"]  = get_meff_BMA(g_k[k:k], ensinfo[k], path_plt=path_plot, ll=L"$m_{K}$")[1] 
+        obs[k]["mpi"] = get_meff_BMA(g_pi[k:k], ensinfo[k], path_plt=path_plot, ll=L"$m_{\pi}$", wpm=wpmm)[1] 
+        obs[k]["mk"]  = get_meff_BMA(g_k[k:k], ensinfo[k], path_plt=path_plot, ll=L"$m_{K}$", wpm=wpmm)[1] 
     end
 end
 

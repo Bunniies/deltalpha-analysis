@@ -23,9 +23,9 @@ include("../utils/tools.jl")
 include("func_comb_PI33.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/multi_mom/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/scale_error_multimom/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isovector/SD"
-path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/multi_mom/"
+path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_multimom/"
 
 #======= PHYSICAL CONSTANTS ====================#
 const MPI_ph = uwreal([134.9768, 0.0005], "mpi phys")
@@ -37,7 +37,7 @@ const phi4_ph = (sqrt(8)*t0sqrt_ph)^2 * ((MK_ph/hc)^2 + 0.5*(MPI_ph/hc)^2)
 # const Qgev = [3., 5., 9.] # Q^2
 const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
 
-const Qmgev = 9.0 # Qm^2
+const Qmgev = 36.0 # Qm^2
 
 const TREELEVEL = true
 
@@ -46,8 +46,8 @@ const TREELEVEL = true
 
 enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
           "B450", "N451", "D450", "D451", "D452",
-         "N202", "N203", "N200", "D200", "D201", "E250",
-         "J303", "E300",
+         "N202", "N203", "N200", "D251", "D200", "D201", "E250",
+         "J303", "J304", "E300",
          "J500", "J501"])
 
 ensinfo = EnsInfo.(enslist)
@@ -182,6 +182,34 @@ end
     # end
 # end
 
+##  cancelling fluctuations from t0_ph
+NOERR = true
+if NOERR
+    for (k,ens) in enumerate(ensinfo)
+        uwerr.(pi_33_ll_SD_s1[k])
+        uwerr.(pi_33_lc_SD_s1[k])
+        uwerr.(pi_33_ll_SD_s2[k])
+        uwerr.(pi_33_lc_SD_s2[k])
+
+        for (j,q) in enumerate(Qgev)
+            set_fluc_to_zero!(pi_33_ll_SD_s1[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_33_lc_SD_s1[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_33_ll_SD_s2[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_33_lc_SD_s2[k][j], "sqrtt0 [fm]")
+
+            pi_33_ll_SD_s1[k][j] *= 1.0
+            pi_33_lc_SD_s1[k][j] *= 1.0
+            pi_33_ll_SD_s2[k][j] *= 1.0
+            pi_33_lc_SD_s2[k][j] *= 1.0
+        end
+
+        uwerr.(pi_33_ll_SD_s1[k])
+        uwerr.(pi_33_lc_SD_s1[k])
+        uwerr.(pi_33_ll_SD_s2[k])
+        uwerr.(pi_33_lc_SD_s2[k])
+    end
+end
+
 ##
 
 ##############################
@@ -242,7 +270,7 @@ end
 #================= FITTING ====================#
 # pi 33 
 for q in 1:NMOM
-
+    
     for k_cat in eachindex(fitcat_pi33_ll_s1[q])
         xdata = fitcat_pi33_ll_s1[q][k_cat].xdata
         ydata_ll_s1 = fitcat_pi33_ll_s1[q][k_cat].ydata
@@ -269,8 +297,8 @@ end
 ## PLOTS
 #########################
 using Statistics
-plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, nmom=3, path_plot=nothing, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$", f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi33_ll_s1, path_plot=nothing, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, nmom=NMOM, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$")
+plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, nmom=3, path_plot=path_plot, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$", f_tot_isov=f_tot_isov)
+plot_chiral_best_fit(fitcat_pi33_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_isov, nmom=NMOM, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$")
 plot_cl_best_fit(fitcat_pi33_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_isov, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$")
 
 cattot = [vcat(fitcat_pi33_ll_s1[k], fitcat_pi33_lc_s1[k],fitcat_pi33_ll_s2[k],fitcat_pi33_lc_s2[k]...) for k in eachindex(fitcat_pi33_lc_s1)]
@@ -340,17 +368,22 @@ for q in 1:NMOM
 end
 
 ## saving physical results in BDIO
-
-# aaa  = RES[1] + uwreal([0.0, SYST[1]], "SYST")
-
 io = IOBuffer()
 write(io, "PI33 SD physical results")
 fb = ALPHAdobs_create(joinpath(path_phys_res, "PI33_SD_physRes.bdio"), io)
 for k in eachindex(RES)
-    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi33 SD")
+    aux = RES[k] #+ uwreal([0.0, SYST[k]], "Syst Pi33 SD")
     ALPHAdobs_write(fb, aux)
 end
 ALPHAdobs_close(fb)
+
+## saving systematics in txt file
+using DelimitedFiles
+open(joinpath(path_phys_res, "systematics.txt"), "a") do io
+    # pi 33 SD 
+    writedlm(io, ["# pi 33 SD"])
+    writedlm(io, [Qgev SYST])
+end
 
 ## test reading
 fb = BDIO_open(joinpath(path_phys_res, "PI33_SD_physRes.bdio"), "r")
