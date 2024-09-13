@@ -14,28 +14,28 @@ rcParams["axes.titlesize"] = 18
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 
-include("../utils/const.jl")
-include("../utils/types.jl")
-include("../utils/plot_utils.jl")
-include("../utils/IO_BDIO.jl")
-include("../utils/tools.jl")
+include("../../utils/const.jl")
+include("../../utils/types.jl")
+include("../../utils/plot_utils.jl")
+include("../../utils/IO_BDIO.jl")
+include("../../utils/tools.jl")
 
 
 path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/scale_error_multimom/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial"
 
 #======= PHYSICAL CONSTANTS ====================#
 # const Qgev = [3., 5., 9.] # Q^2
 const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
-const Qmgev = 36.0 # Qm^2
+const Qmgev = 9.0 # Qm^2
 
 const KRNLsub = krnl_dα_qhalf_sub # subtracted kernel
 
 #============== READ CORRELATORS FROM BDIO FILES =================#
 
 enslist = sort([ "H101", "H102", "N101", "C101",
-         "B450", "N451", "D450", "D452",
+         "B450", "D450", "D452",
          "N202", "N203", "N200", "D200",  "E250",
          "N300", "J303", "E300",
          "J500"

@@ -7,7 +7,7 @@ end
 
 function krnl_dα_sub(t::Union{Float64, uwreal}, Q2::Union{Float64,uwreal}, Q2m::Union{Float64,uwreal})
 
-    K = t^2 - 4/Q2 * sin((sqrt(Q2)*t)/2)^2 - 64/3 * (Q2/Q2m^2) * sin((sqrt(Q2m)*t)/4)^4
+    K = t^2 - 4/Q2 * sin((sqrt(Q2)*t)/2)^2 - 4/3 * (Q2/Q2m^2) * sin((sqrt(Q2m)*t)/2)^4
     return K
 end
 
@@ -167,24 +167,24 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
     
  
     if ens.id in ["A653", "A654", "D150", "B450", "N451", "D450", "D451", "D452", "D251", "E250"]
-        taux = collect(4:20) 
+        taux = collect(5:30) 
         Thalf = Int(length(corr[1].obs)/2)+1
         T = length(corr[1].obs)
         tmin = Thalf .- taux
         tmax = Thalf .+ taux
-        tmax = tmax[1:2:end]
-        tmin = tmin[1:2:end] 
+        tmax = tmax[1:1:end]
+        tmin = tmin[1:1:end] 
         @. const_fit(x,p) = p[2] * (exp(-p[1]*(x)) + exp(-p[1]*(T-x)) )# + p[4] * (exp(-p[3]*(x)) + exp(-p[3]*(T-x)) )
         param=2
         pbc = true
     else
-        #@. const_fit(x, p) = p[1] + 0 * x
-        param = 1 
+       # @. const_fit(x, p) = p[1] + 0 * x
+        param = 1
 
         # tmin and tmax tuned on H101 and then scaled 
-        tminaux = collect(22:54) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
+        tminaux = collect(20:42) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
         T = length(corr[1].obs)
-        tmaxaux = collect(38:60) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
+        tmaxaux = collect(50:70) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
         tmax = T .- collect(reverse(tmaxaux))
         tmax = tmax[1:2:end]
         tmin = tminaux[1:2:end] 
@@ -197,6 +197,7 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
     for k in eachindex(corr)
         t = string(L"$\kappa_1 = $" ,L" $\kappa_2 = $" )   
         if ens.id in ["A653", "A654","D150", "B450", "N451", "D450", "D451", "D452", "D251", "E250"]
+            # data = -1. .* corr[k].obs
             data = -1. .* corr[k].obs
         else
             _, data = meff(corr[k], [tmin[end-4],tmax[1]], pl=false, wpm=wpm, data=true)
@@ -206,7 +207,7 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
         isnothing(path_plt) ? tt = nothing : tt = joinpath(path_plt, name_bma)
 
         M[k], syst, all_res, FitDict = bayesian_av(const_fit, data, tmin, tmax, param, pl=pl, wpm=wpm, data=true, path_plt=tt, plt_title=t , label=ll, pbc=pbc)
-    
+        println(FitDict["AIC"])
         if pl
             fig = figure(figsize=(10,7.5))
             modstot = FitDict["mods"]
@@ -389,7 +390,8 @@ function get_w_from_fitcat(catvec::Vector{FitCat}; norm::Bool=false)
     if norm
         w_min = minimum(w)
         w_max = maximum(w)
-        w = (w .- w_min) ./ (w_max - w_min)
+        w = 1.0 .* (w .- w_min) ./ (w_max - w_min) .+ 0.0 # normalise between 0.1 and 1
+        replace!(x -> x>1 ? 1 : x, w)
     end
     return w
 end
@@ -442,12 +444,32 @@ function corrBounding(corr::Vector{uwreal}, mUp::uwreal, mLow::uwreal, tcut::Int
     end
     return lowerBound, upperBound
 end
+function corrBounding(corr::Vector{uwreal}, mUp33::uwreal, mUp88, mLow::uwreal, tcut::Int64, ens::EnsInfo)
+    T = HVPobs.Data.get_T(ens.id)
+
+    upperBound = corr[:]
+    lowerBound = corr[:]
+
+    @. G_PBC(x0, p) = exp(-p*(x0-tcut)) + exp(-p*(T-x0+tcut))
+    @. G_OBC(x0, p) = exp(-p*(x0-tcut))
+
+    if ens.bc == "obc"
+        upperBound[tcut:end] = corr[tcut] .* (G_OBC(collect(tcut:T), mUp33) - G_OBC(collect(tcut:T), mUp88))
+        lowerBound[tcut:end] = corr[tcut] .* G_OBC(collect(tcut:T), mLow)
+    elseif ens.bc == "pbc"
+        upperBound[tcut:end] = corr[tcut] .* (G_PBC(collect(tcut:T), mUp33) - G_PBC(collect(tcut:T), mUp88))
+        lowerBound[tcut:end] = corr[tcut] .* G_PBC(collect(tcut:T), mLow)
+    else
+        error("Boundary conditions for ensemble $(ens.id) are not recognised. Supported values are \"obc\" or \"pbc\" ")
+    end
+    return lowerBound, upperBound
+end
 
 function boundingMethod(corr::Vector{uwreal}, ens::EnsInfo, krnl::Vector{Union{Tu, Tf}}, sector::String; pl::Bool=true, wind::Union{Window,Nothing}=nothing, path_pl::Union{Nothing,String}=nothing, qval::String="" ) where {Tu, Tf}
 
     T = HVPobs.Data.get_T(ens.id)
     thalf = Int64(T/2)
-    tcut_arr = collect(5: thalf - ceil(Int64, 0.4 / HVPobs.Data.get_a(ens.beta) ))
+    tcut_arr = collect(8: thalf - ceil(Int64, 0.2 / HVPobs.Data.get_a(ens.beta) ))
     
     mpi = m_ens[ens.id]["m_pi"] 
     mrho = m_ens[ens.id]["m_rho"]
@@ -464,10 +486,16 @@ function boundingMethod(corr::Vector{uwreal}, ens::EnsInfo, krnl::Vector{Union{T
         yll = L"$\mathit{\bar\Pi}^{3,3}(-Q^2)$"
     elseif sector == "88"
         mUp = mrho
-        ll =  L"$M_\rho$"
+        ll =  L"$M_\omega$"
         yll = L"$\mathit{\bar\Pi}^{8,8}(-Q^2)$"
+    elseif sector == "3388"
+        mUp33 = mrho < E2pi ? mrho : E2pi 
+        mUp88 = mrho
+        println("mUp33: ", value(mUp33), " mUp88: ", value(mUp88) )
+        ll =  L"$M_\rho$"
+        yll = L"$\Delta_{ls}(-Q^2)$"
     elseif sector == "08"
-        mUp = mrho
+        mUp = mrho 
         ll =  L"$M_\rho$"
         yll = L"$\mathit{\bar\Pi}^{0,8}(-Q^2) $"
     else
@@ -481,29 +509,33 @@ function boundingMethod(corr::Vector{uwreal}, ens::EnsInfo, krnl::Vector{Union{T
             tcutaux = ceil(Int64, 1.5 / HVPobs.Data.get_a(ens.beta) )
             mLow = meffdata[tcutaux]
         end
-
-        lowerBound, upperBound = corrBounding(corr, mUp, mLow, tcut, ens)
-
+        
+        if sector == "3388"
+            lowerBound, upperBound = corrBounding(corr, mUp33, mUp88, mLow, tcut, ens)
+        else
+            lowerBound, upperBound = corrBounding(corr, mUp, mLow, tcut, ens)
+        end
+    
         tmrUp_tmp  = upperBound .* krnl 
         tmrLow_tmp = lowerBound .* krnl
 
         if !isnothing(wind)
             t_fm = T .* HVPobs.Data.get_a(ens.beta)
-            tmrUp_tmp .* wind(t_fm)
-            tmrLow_tmp .* wind(t_fm)
+            tmrUp_tmp .*= wind(t_fm)
+            tmrLow_tmp .*= wind(t_fm)
         end
         push!(store_tmrUp, sum(tmrUp_tmp[1:thalf]))
         push!(store_tmrLow, sum(tmrLow_tmp[1:thalf]))
     end
     uwerr.(store_tmrLow)
     uwerr.(store_tmrUp)
-    
-    tmin = tcut_arr[1]
+
+    tmin = 0#tcut_arr[1]
     for k in eachindex(store_tmrLow)
         difff = store_tmrUp[k] - store_tmrLow[k]
-        # println(value(difff))
+        # println(abs(value(difff)))
         # println(0.5*max(err(store_tmrUp[k]), err(store_tmrLow[k])))
-        if value(difff) < 0.5 * max(err(store_tmrUp[k]), err(store_tmrLow[k]))
+        if abs(value(difff)) < 0.5 * max(err(store_tmrUp[k]), err(store_tmrLow[k]))
             tmin += k
             break
         end
@@ -514,15 +546,13 @@ function boundingMethod(corr::Vector{uwreal}, ens::EnsInfo, krnl::Vector{Union{T
         tmax = tmin + ceil(Int64, 0.8 / HVPobs.Data.get_a(ens.beta)) # 0.8fm is the length of the averaged interval
         res = plat_av(0.5*(store_tmrLow[tmin:tmax] .+ store_tmrUp[tmin:tmax])) 
     catch
-        tmax = tmin + ceil(Int64, 0.2 / HVPobs.Data.get_a(ens.beta)) # 0.8fm is the length of the averaged interval
+        tmax = tmin + ceil(Int64, 0.4 / HVPobs.Data.get_a(ens.beta)) # 0.8fm is the length of the averaged interval
         res = plat_av(0.5*(store_tmrLow[tmin:tmax] .+ store_tmrUp[tmin:tmax])) 
-
     end
 
-    # println(tmin)
-    # println(tmax)
-    # println("")
     if pl 
+        tmin += tcut_arr[1]
+        tmax += tcut_arr[1]
         uwerr(res)
 
         fill_between(tcut_arr, value(res)-err(res), value(res)+err(res), color="lightskyblue", alpha=0.8)
@@ -540,7 +570,7 @@ function boundingMethod(corr::Vector{uwreal}, ens::EnsInfo, krnl::Vector{Union{T
         tight_layout()
         display(gcf())
         if !isnothing(path_pl)
-            tt = joinpath(path_pl, "boundMethod_$(ens.id)_Q$(qval).pdf")
+            tt = joinpath(path_pl, "boundMethod_$(ens.id)_$(sector)_Q$(qval).pdf")
             savefig(tt)
         end
         close("all")

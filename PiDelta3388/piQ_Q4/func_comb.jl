@@ -7,10 +7,12 @@
 phi42(x) = (x[:,3] - 1.5*x[:,2]).^2  # phi4 -1.5phi2
 a3cutoff(x)  =  (x[:,3] - 1.5*x[:,2]) .* x[:,1].^(3/2)      # (a^2/8t0)^{3/2}
 phi4sq(x) =  (x[:,3] - 1.5*x[:,2]) .* x[:,3]                # phi4
+a4cutoff(x)  = x[:,1].^(2)                                  # (a^2/8t0)^{2}
 
-model_var_list = [phi42, a3cutoff, phi4sq]
-model_var_label = ["phi4-1.5phi2", "a3", "phi4"]
-model_map = [Bool.([i,j,k]) for i=0:1 for j=0:1 for k=0:1]
+
+model_var_list = [phi42, a3cutoff, phi4sq, a4cutoff]
+model_var_label = ["phi4-1.5phi2", "a3", "phi4", "a4"]
+model_map = [Bool.([i,j,k, n]) for i=0:1 for j=0:1 for k=0:1 for n=0:1]
 
 n_par_var = length(model_var_list) # number of extra parameters
 n_par_tot_dltiso =  [2]
@@ -26,6 +28,12 @@ for n = 2:n_par_var+1
     f_tot_dltiso[n] = Vector{Function}(undef, length(aux))
     f_aux = []
     for (k, a) in enumerate(aux)
+        if "a4" ∈ model_var_label[a] && "a3" ∉ model_var_label[a]
+            continue
+        end
+        if "phi4-1.5phi2" ∈ model_var_label[a] && "phi4" ∈ model_var_label[a]
+            continue
+        end
         
         push!(n_par_tot_dltiso, n_par_tot_dltiso[1]+n-1)
         push!(label_tot_dltiso, model_var_label[a])

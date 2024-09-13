@@ -35,7 +35,7 @@ include("../utils/IO_BDIO.jl")
 
 
 path_3level = "/Users/alessandroconigli/Lattice/data/HVP/tree_level"
-path_store_3l = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/scale_error_multimom/"
+path_store_3l = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots"
 path_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
 
@@ -43,16 +43,17 @@ dir_path = filter(isdir, readdir(path_bdio, join=true))
 
 
 IMPR      = true
-IMPR_SET  = "2" # either "1" or "2"
+IMPR_SET  = "1" # either "1" or "2"
 RENORM    = false
 STD_DERIV = false
 
 
 enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
-          "B450", "N451", "D450", "D451", "D452",
+         "B450", "N451", "D450", "D451", "D452",
          "N202", "N203", "N200", "D251", "D200", "D201", "E250",
-          "N300", "J303", "J304", "E300",
+          "J307", "J306", "J303", "J304", "E300", "F300",
          "J500", "J501"])
+
 ensinfo = EnsInfo.(enslist)
 dir_path = filter(x-> basename(x) in enslist, readdir(path_bdio, join=true))
 spectrum_path = vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
@@ -63,7 +64,7 @@ NENS = length(ensinfo)
 # Qgev = [3., 5., 9.] # Q^2
 Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
 
-Qmgev = 36.0 # Qm^2
+Qmgev = 9.0 # Qm^2
 
 ##
 #============ OBSERVABLE ALLOCATIONS ============#
@@ -130,8 +131,8 @@ end
 #======== SAVE TO BDIO WITH ALPHAIO =========#
 @info("Saving tree level improvement TMR")
 io = IOBuffer()
-write(io, "TMR 3 level improvement set 2")
-fb = ALPHAdobs_create(joinpath(path_store_3l, "treeLevelSet2.bdio"), io)
+write(io, "TMR 3 level improvement set 1")
+fb = ALPHAdobs_create(joinpath(path_store_3l, "treeLevelSet1.bdio"), io)
 
 for(k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

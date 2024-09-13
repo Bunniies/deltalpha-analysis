@@ -22,7 +22,7 @@ const path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
 const path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
 
 const IMPR = true
-const STD_DERIV = true
+const STD_DERIV = false
 const RENORM = true
 
 # enslist = sort([  "H102", "N101", "C101", "C102", "D150",
@@ -30,7 +30,7 @@ const RENORM = true
         #  "N203", "N200", "D200", "D201", "E250",
         #  "J303", "E300"])
 
-enslist = sort([ "E250", "J303", "E300", "J501" ])
+enslist = sort([ "H102" ])
 ensinfo = EnsInfo.(enslist)
 Nens = length(ensinfo)
 

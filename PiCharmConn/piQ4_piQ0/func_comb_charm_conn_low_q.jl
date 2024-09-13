@@ -1,7 +1,7 @@
 ################################
 # ISOVECTOR CHANNEL
 ###############################
-charm_basemodel(x,p) = p[1] .+ p[2] .* x[:,1]  .+ p[3] .* (x[:,2] .- value.(phi2_ph))  .+ p[4] .* (x[:,3] .- value.(phi4_ph)) 
+charm_basemodel(x,p) = p[1] .+ p[2] .* x[:,1]  .+ p[3] .* (x[:,2] .- value.(phi2_ph))  .+ p[4] .* (x[:,3] .- value.(phi4_ph))
 
 # phi2lin(x)   = (x[:,2] .- value.(phi2_ph))                              # Φ2 - Φ2^{ph}
 # phi4lin(x)   = (x[:,3] .- value.(phi4_ph))                              # Φ4 - Φ4^{ph}
@@ -16,9 +16,9 @@ model_var_list  = [ a3cutoff, a4cutoff, a2phi2, a3phi2, phi2sqr, phi2log]
 model_var_label = [ "a3", "a4", "a2phi2", "a3phi2", "phi2sqr", "phi2log"]
 model_map = [Bool.([i,j,k,l,m,n]) for i=0:1 for j=0:1 for k=0:1 for l=0:1 for m=0:1 for n=0:1] 
 
-# model_var_list  = [a3cutoff, a4cutoff, a2phi2, a3phi2]
-# model_var_label = ["a3", "a4", "a2phi2", "a3phi2"]
-# model_map = [Bool.([i,j,k,l]) for i=0:1 for j=0:1 for k=0:1 for l=0:1 ] 
+# model_var_list  = [a3cutoff, a2phi2, a2phi4, phi2sqr,  a3phi2, phi2log]
+# model_var_label = ["a3", "a2phi2", "a2phi4", "phi2sqr",  "a3phi2", "phi2log"]
+# model_map = [Bool.([i,j,k,l,m,n]) for i=0:1 for j=0:1 for k=0:1 for l=0:1 for m=0:1 for n=0:1] 
 
 n_par_var = length(model_var_list) # number of extra parameters
 n_par_tot_charm =  [4]
@@ -40,7 +40,10 @@ for n = 2:n_par_var+1
         if "a3phi2" ∈ model_var_label[a] && "a2phi2" ∉ model_var_label[a]
             continue
         end
-        if "phi2sqr" ∈ model_var_label[a] && "phi2log" ∈ model_var_label[a]
+        # if "phi2log" ∈ model_var_label[a]
+            # continue
+        # end
+        if [ "a3", "a4", "a2phi2", "a3phi2", "phi2sqr", "phi2log"] == model_var_label[a]
             continue
         end
         push!(n_par_tot_charm, n_par_tot_charm[1]+n-1)

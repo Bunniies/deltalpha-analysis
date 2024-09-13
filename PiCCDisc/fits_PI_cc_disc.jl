@@ -23,7 +23,7 @@ include("../utils/tools.jl")
 include("./func_comb_charm_disconnected.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/std_mom/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/ccDisc"
 
 
@@ -41,7 +41,7 @@ const Qmgev = 9.0 # Qm^2
 enslist = sort([  "H102", "N101", "C101", "C102", "D150",
         "N451", "D451", "D452",
         "N203", "N200", "D200", "D201", "E250",
-        "J303", "E300",
+        "J303", # E300 removed
         "J501"])
 
 
@@ -150,7 +150,7 @@ end
 #########################
 using Statistics
 plot_cl_all_set(fitcat_cc_ll_s1, fitcat_cc_ll_s2, fitcat_cc_lc_s1, fitcat_cc_lc_s2, path_plot=path_plot, ylab=L"$(\Delta\alpha^{c,c})_{\mathrm{disc}}$", f_tot_isov=f_tot_charm)
-plot_chiral_best_fit(fitcat_cc_cc_s1, nfit=0, path_plot=path_plot, tt=["SD Wind", "CC"], f_tot_isov=f_tot_charm, ylab=L"$(\Delta\alpha^{c,c})_{\mathrm{disc}}$")
+plot_chiral_best_fit(fitcat_cc_cc_s1, nfit=1, path_plot=path_plot, tt=[""], f_tot_isov=f_tot_charm, ylab=L"$(\Delta\alpha^{c,c})_{\mathrm{disc}}$")
 plot_cl_best_fit(fitcat_cc_cc_s1, path_plot=path_plot, tt=["SD Wind", "CC"], f_tot_isov=f_tot_charm, ylab=L"$(\Delta\alpha^{c,c})_{\mathrm{disc}}$")
 
 cattot = [vcat(fitcat_cc_lc_s1[k], fitcat_cc_lc_s2[k]...) for k in eachindex(fitcat_cc_lc_s1)]
@@ -169,7 +169,7 @@ for q in 1:NMOM
     @info "Momentum no. $(q)"
     fitcat_cc_tot = vcat(vcat(#fitcat_cc_ll_s1[q],
                 #fitcat_cc_ll_s2[q],
-                fitcat_cc_cc_s1[q])...)
+                fitcat_cc_cc_s2[q])...)
 
     ww_tot = get_w_from_fitcat(fitcat_cc_tot)
 

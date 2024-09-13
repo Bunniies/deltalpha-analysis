@@ -42,7 +42,7 @@ IMPR      = true
 RENORM    = true
 STD_DERIV = false
 
-enslist = ["D450"]
+enslist = ["J307"]
 ensinfo = EnsInfo.(enslist)
 
 
@@ -74,7 +74,7 @@ obs = Vector(undef, length(ensinfo))
 
         println("   - Gradient flow t0")
         obs[k] = OrderedDict()
-        obs[k]["t0"] = get_t0(path_ms, ens, path_rw=path_rw, pl=false)
+        obs[k]["t0"] = get_t0(path_ms, ens, path_rw=path_rw, pl=true)
     end
 end
 
@@ -98,10 +98,13 @@ wpmm["N203"]     = [5.0, -2.0, -1.0, -1.0]
 wpmm["N300"]     = [5.0, -1.5, -1.0, -1.0]
 wpmm["J303"]     = [5.0, -2.0, -1.0, -1.0]
 wpmm["J304"]     = [5.0, -2.0, -1.0, -1.0]
+wpmm["F300"]     = [5.0, -2.0, -1.0, -1.0]
+wpmm["J306"]     = [5.0, -2.0, -1.0, -1.0]
+wpmm["J307"]     = [5.0, -2.0, -1.0, -1.0]
 
 for k in eachindex(ensinfo)
     if ensinfo[k].kappa_l == ensinfo[k].kappa_s
-        obs[k]["mpi"] = get_meff_BMA(g_pi[k:k], ensinfo[k], path_plt=path_plot, ll=L"$m_{\pi}$")[1] 
+        obs[k]["mpi"] = get_meff_BMA(g_pi[k:k], ensinfo[k], path_plt=path_plot, ll=L"$m_{\pi}$", wpm=wpmm)[1] 
         obs[k]["mk"] = obs[k]["mpi"]
     else
         obs[k]["mpi"] = get_meff_BMA(g_pi[k:k], ensinfo[k], path_plt=path_plot, ll=L"$m_{\pi}$", wpm=wpmm)[1] 

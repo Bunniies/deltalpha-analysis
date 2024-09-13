@@ -15,17 +15,17 @@ rcParams["axes.titlesize"] = 18
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 
-include("../utils/const.jl")
-include("../utils/types.jl")
-include("../utils/plot_utils.jl")
-include("../utils/IO_BDIO.jl")
-include("../utils/tools.jl")
+include("../../utils/const.jl")
+include("../../utils/types.jl")
+include("../../utils/plot_utils.jl")
+include("../../utils/IO_BDIO.jl")
+include("../../utils/tools.jl")
 include("./func_comb.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/multi_mom/"
-path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isoscalar/"
-path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/multi_mom/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial/"
+path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isoscalar/piQ_piQ4/"
+path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_artificial/piQ_Q4/"
 
 
 #======= PHYSICAL CONSTANTS ====================#
@@ -40,11 +40,11 @@ const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
 const Qmgev = 9.0 # Qm^2
 
 enslist = sort([ "H102", "N101", "C101", "C102", "D150",
-         "N451", "D450", "D451", "D452",
-         "N203", "N200", "D200", "D201", "E250",
-         "J303", "E300",
+         "N451", "D450", "D452", #  D451 removed
+           "N200", "D251", "D200", "D201", "E250", # N203 removed
+         "J303", "J306", "J304", "E300", "F300",
          "J501"
-])
+         ])
 
 ensinfo = EnsInfo.(enslist)
 
@@ -89,7 +89,7 @@ while ALPHAdobs_next_p(fb)
     res = ALPHAdobs_read_next(fb, size=sz, keys=ks)
     if extra["Ens"] ∉ enslist # != enslist[count]
         @info("Mismatch with EnsID in current BDIO uinfo2 ")
-        println(extra["Ens"], " ", enslist[count])
+        #println(extra["Ens"], " ", enslist[count])
         continue
     end
     push!(pi_3388_ll_s1, res["pi3388_ll_s1"])
@@ -99,6 +99,36 @@ while ALPHAdobs_next_p(fb)
 
 end
 BDIO_close!(fb)
+
+
+##  cancelling fluctuations from t0_ph
+NOERR = false
+if NOERR
+    for (k,ens) in enumerate(ensinfo)
+        uwerr.(pi_3388_ll_s1[k])
+        uwerr.(pi_3388_lc_s1[k])
+        uwerr.(pi_3388_ll_s2[k])
+        uwerr.(pi_3388_lc_s2[k])
+
+        for (j,q) in enumerate(Qgev)
+            set_fluc_to_zero!(pi_3388_ll_s1[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_3388_lc_s1[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_3388_ll_s2[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_3388_lc_s2[k][j], "sqrtt0 [fm]")
+
+            pi_3388_ll_s1[k][j] *= 1.0
+            pi_3388_lc_s1[k][j] *= 1.0
+            pi_3388_ll_s2[k][j] *= 1.0
+            pi_3388_lc_s2[k][j] *= 1.0
+        end
+
+        uwerr.(pi_3388_ll_s1[k])
+        uwerr.(pi_3388_lc_s1[k])
+        uwerr.(pi_3388_ll_s2[k])
+        uwerr.(pi_3388_lc_s2[k])
+    end
+
+end
 
 ##############################
 ## CREATE FIT CATEGORIES
@@ -166,8 +196,8 @@ end
 ## PLOTS
 #########################
 using Statistics
-plot_cl_all_set(fitcat_3388_ll_s1, fitcat_3388_ll_s2, fitcat_3388_lc_s1, fitcat_3388_lc_s2, path_plot=nothing, nmom=NMOM, ylab=L"$-\Delta_{ls}(\Delta\alpha)$", f_tot_isov=f_tot_dltiso)
-plot_chiral_best_fit(fitcat_3388_lc_s1, path_plot=nothing, nmom=NMOM, tt=["Set", "1", "LC"], f_tot_isov=f_tot_dltiso , ylab=L"$-\Delta_{ls}(\Delta\alpha)$")
+plot_cl_all_set(fitcat_3388_ll_s1, fitcat_3388_ll_s2, fitcat_3388_lc_s1, fitcat_3388_lc_s2, path_plot=path_plot, nmom=3, ylab=L"$-\Delta_{ls}(\Delta\alpha)$", f_tot_isov=f_tot_dltiso)
+plot_chiral_best_fit(fitcat_3388_lc_s2, path_plot=path_plot, nmom=3, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso , ylab=L"$-\Delta_{ls}(\Delta\alpha)$")
 plot_cl_best_fit(fitcat_3388_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$-\Delta_{ls}(\Delta\alpha)$")
 
 cattot = [vcat(fitcat_3388_ll_s1[k], fitcat_3388_lc_s1[k], fitcat_3388_ll_s2[k],  fitcat_3388_lc_s2[k]...) for k in eachindex(fitcat_3388_lc_s1)]
@@ -218,6 +248,7 @@ for q in 1:NMOM
     for (k, cat) in enumerate(fitcat_pi3388_tot)
         for (j, mod) in enumerate(f_tot_dltiso)
             push!(all_res, mod([0.0 phi2_ph phi4_ph], cat.fit[j].param)[1])
+            #push!(all_res, mod([0.0 value(phi2_ph) value(phi4_ph)], cat.fit[j].param)[1])
         end
     end
 
@@ -229,9 +260,17 @@ for q in 1:NMOM
     println("\n")
 
 
-    #hist(value.(all_res), bins=800, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot)
-    #display(gcf())
-    #close()
+    hist(value.(all_res) ./ 3, bins=80, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot, zorder=3)
+    fill_betweenx([0,0.6], value(final_res).+err(final_res), value(final_res).-err(final_res), alpha=0.4, color="gold", zorder=2)
+    errtot = sqrt(err(final_res)^2 + syst^2)
+    fill_betweenx([0,0.6], value(final_res).+errtot, value(final_res).-errtot, alpha=0.4, color="tomato", zorder=1)
+    xlim(value(final_res)-6*err(final_res), value(final_res)+6*err(final_res))
+    ylabel(L"$\mathrm{Frequency}$")
+    xlabel(L"$-\Delta_{ls}(\Delta\alpha)$")
+    tight_layout()
+    display(gcf())
+    savefig(joinpath(path_plot, "hist", "hist_q$(q).pdf"))
+    close()
 
 end
 
@@ -240,13 +279,21 @@ io = IOBuffer()
 write(io, "PI 33-88 SD physical results")
 fb = ALPHAdobs_create(joinpath(path_phys_res, "PI3388_physRes.bdio"), io)
 for k in eachindex(RES)
-    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi3388")
+    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi3388 high q ")
     ALPHAdobs_write(fb, aux)
 end
 ALPHAdobs_close(fb)
 
+
+## saving systematics in txt file
+using DelimitedFiles
+open(joinpath(path_phys_res, "systematics.txt"), "a") do io
+    writedlm(io, ["# pi 3388 "])
+    writedlm(io, [Qgev SYST])
+end
+
 ## test reading
-fb = BDIO_open(joinpath(path_phys_res, "PI3388_physRes.bdio"), "r")
+fb = BDIO_open(joinpath(path_phys_res, "no_err/PI3388_physRes.bdio"), "r")
 res = []
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

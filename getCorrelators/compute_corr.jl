@@ -29,15 +29,15 @@ const STD_DERIV = false
 const RENORM = true
 
 # enslist = ["H101"]
-# ensinfo = EnsInfo.(enslist)
-#enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
+#ensinfo = EnsInfo.(enslist)
+#enslist = sort([ #"H101", "H102", "N101", "C101", "C102", "D150",
         #"B450", "N451", "D450", "D451", "D452",
         #"N202", "N203", "N200", "D251", "D200", "D201", "E250"])
-        #"N300", "J303", "J304", "E300",
-        #"J500", "J501"])
- 
+         #"N300", "J303", "J304", "E300",
+         #"J500", "J501"])
+
+enslist = sort(["J306", "J307", "F300"])        
 # enslist = sort(["D450"])        
-enslist = sort(["D450"])        
 ensinfo = EnsInfo.(enslist)
 ##
 #============ OBSERVABLE ALLOCATIONS ============#
@@ -182,8 +182,11 @@ gc8_cc_disc = Vector{Corr}(undef, 1)
             data_corr["g33_ll"] = g33_ll[1].obs
             data_corr["g33_lc"] = g33_lc[1].obs
 
+            data_corr["g88_ll"] = g88_ll_conn[1].obs .+ g88_ll_disc[1].obs
+            data_corr["g88_lc"] = g88_lc_conn[1].obs .+ g88_lc_disc[1].obs
+
             data_corr["g3388_dlt_ll"] = gdelta_iso_ll[1].obs
-            data_corr["g3388_dlt_lc"] = gdelta_iso_lc[1].obs
+            data_corr["g3388_dlt_lc"] = gdelta_iso_lc[1].obs 
 
             data_corr["gcc_ll_conn"] = gcc_ll_conn[1].obs
             data_corr["gcc_lc_conn"] = gcc_lc_conn[1].obs

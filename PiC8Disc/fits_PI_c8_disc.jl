@@ -23,7 +23,7 @@ include("../utils/tools.jl")
 include("./func_comb.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/std_mom/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/c8Disc"
 
 
@@ -150,7 +150,7 @@ end
 #########################
 using Statistics
 plot_cl_all_set(fitcat_cc_ll_s1, fitcat_cc_ll_s2, fitcat_cc_lc_s1, fitcat_cc_lc_s2, path_plot=path_plot, ylab=L"$(\Delta\alpha^{c,8})_{\mathrm{sub}}$", f_tot_isov=f_tot_charm)
-plot_chiral_best_fit(fitcat_c8_cc_s2, path_plot=path_plot, tt=["No Wind", "CC"], f_tot_isov=f_tot_dltiso, ylab=L"$(\Delta\alpha^{c,8})_{\mathrm{disc}}$")
+plot_chiral_best_fit(fitcat_c8_cc_s1, path_plot=path_plot, tt=[""], f_tot_isov=f_tot_dltiso, ylab=L"$(\Delta\alpha^{c,8})_{\mathrm{disc}}$")
 plot_cl_best_fit(fitcat_c8_cc_s2, path_plot=path_plot, tt=["No Wind", "CC"], f_tot_isov=f_tot_dltiso, ylab=L"$(\Delta\alpha^{c,8})_{\mathrm{disc}}$")
 
 cattot = [vcat(fitcat_cc_lc_s1[k], fitcat_cc_lc_s2[k]...) for k in eachindex(fitcat_cc_lc_s1)]
@@ -201,6 +201,7 @@ for q in 1:NMOM
     for (k, cat) in enumerate(fitcat_c8_tot)
         for (j, mod) in enumerate(f_tot_dltiso)
             push!(all_res, mod([0.0 phi2_ph phi4_ph], cat.fit[j].param)[1])
+            # push!(all_res, mod([0.0 value(phi2_ph) value(phi4_ph)], cat.fit[j].param)[1])
         end
     end
 

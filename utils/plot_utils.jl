@@ -52,10 +52,10 @@ weights given by the model average. One plot for each value of the momenta is ge
 function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", nmom::Int64=3, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
     
     for q in [6,8,12]#1:nmom
-        for k_cat in eachindex(fc_ll_s1[q])
+        for k_cat in eachindex(fc_lc_s1[q])
 
-            ww_ll_s1 = get_w_from_fitcat(fc_ll_s1[q], norm=true)
-            ww_ll_s2 = get_w_from_fitcat(fc_ll_s2[q], norm=true)
+            # ww_ll_s1 = get_w_from_fitcat(fc_ll_s1[q], norm=true)
+            # ww_ll_s2 = get_w_from_fitcat(fc_ll_s2[q], norm=true)
             ww_lc_s1 = get_w_from_fitcat(fc_lc_s1[q], norm=true)
             ww_lc_s2 = get_w_from_fitcat(fc_lc_s2[q], norm=true)
 
@@ -73,24 +73,24 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
                     # k_mod = k_modaux
                 # end
             
-                fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod].param
-                fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod].param
+                # fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod].param
+                # fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod].param
                 fit_param_lc_s1 = fc_lc_s1[q][k_cat].fit[k_mod].param
                 fit_param_lc_s2 = fc_lc_s2[q][k_cat].fit[k_mod].param
     
-                yy_ll_s1  = model(xarr, fit_param_ll_s1)
-                yy_ll_s2  = model(xarr, fit_param_ll_s2)
+                # yy_ll_s1  = model(xarr, fit_param_ll_s1)
+                # yy_ll_s2  = model(xarr, fit_param_ll_s2)
                 yy_lc_s1  = model(xarr, fit_param_lc_s1)
                 yy_lc_s2  = model(xarr, fit_param_lc_s2)
     
-                plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="forestgreen")
-                plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
+                # plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="forestgreen")
+                # plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
                 plot(xarr[:,1], value.(yy_lc_s1),alpha=ww_lc_s1[k_mod], color="purple")
                 plot(xarr[:,1], value.(yy_lc_s2),alpha=ww_lc_s2[k_mod], color="gold")
     
             end
         end
-        axvline.(unique(value.(fc_ll_s1[q][1].xdata[:,1])), linewidth=1.5, alpha=0.5, color="gray", ls=":")
+        axvline.(unique(value.(fc_lc_s1[q][1].xdata[:,1])), linewidth=1.5, alpha=0.5, color="gray", ls=":")
         xlim(0.0,0.008)
         L2D = PyPlot.matplotlib.lines.Line2D
         custom_lines = [L2D([0], [0], color="forestgreen", lw=2),
@@ -114,6 +114,7 @@ end
 function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::Int64=0, ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", tt::Union{Nothing,Vector{String}}=nothing, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
 
     for q in [6,8,12]#1:nmom
+        println("using the first three momenta")
         println("\n- Momentum: $(q)")
         fccat = vcat(fc[q]...)
         w_tot  = get_w_from_fitcat(fccat)
@@ -156,6 +157,7 @@ function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::I
         # plot data points
         for (k, b) in enumerate(betatot)
             # if b == 3.85
+                # println("beta 3.85 removed!")
                 # continue
             # end
             n_ = findall(x->x.beta == b, ensinfo)
@@ -167,22 +169,22 @@ function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::I
             replace!(value.(yy_ll), Inf=>0.0)
             uwerr.(yy_ll)
             fill_between(xxx[:,2], value.(yy_ll)-err.(yy_ll), value.(yy_ll)+err.(yy_ll), color=color[k], alpha=0.5)
-            # plot(xxx[:,2], value.(yy_ll), ls="--", color=color[k], lw=0.5)
+            # plot(xxx[:,2], value.(yy_ll), ls="--", color=color[k], lw=0.9)
         end
 
         # cont lim band
-        xarr = [fill(1e-8, 100) Float64.(range(0.01, 0.8, length=100)) fill(phi4_ph,100)]
+        xarr = [fill(1e-8, 100) Float64.(range(0.01, 0.8, length=100)) fill(value(phi4_ph),100)]
         yarr = model(xarr, fit_par); uwerr.(yarr)
         fill_between(xarr[:,2], value.(yarr) .- err.(yarr), value.(yarr) .+ err.(yarr), alpha=0.2, color="gray")
 
         # phys res
-        ph_res = model([0.0 phi2_ph phi4_ph], fit_par)[1]; uwerr(ph_res)
+        ph_res = model([0.0 value(phi2_ph) value(phi4_ph)], fit_par)[1]; uwerr(ph_res)
         println(ph_res)
         errorbar(value(phi2_ph), value(ph_res), err(ph_res), fmt="o", capsize=2, color="red", ms=10, mfc="none")
         axvline(value(phi2_ph), ls="dashed", color="black", lw=0.2, alpha=0.7) 
         
         xlim(0.04, 0.8)
-        legend(ncol=2, loc="lower right")
+        legend(ncol=2, loc="upper right")
         xlabel(L"$\phi_2$")
         ylabel(ylab)
         if !isnothing(tt)
@@ -200,7 +202,7 @@ end
 
 function plot_cl_best_fit(fc::Vector{Vector{FitCat}}; nmom=3, ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", tt::Union{Nothing,Vector{String}}=nothing, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov )
     
-    for q in 1:nmom
+    for q in [6,8,12]#1:nmom
         println("\n- Momentum: $(q)")
         fccat = vcat(fc[q]...)
         w_tot  = get_w_from_fitcat(fccat)
@@ -256,7 +258,7 @@ function plot_cl_best_fit(fc::Vector{Vector{FitCat}}; nmom=3, ylab::LaTeXString=
 end
 
 function plot_mAve_summary(fc::Vector{Vector{FitCat}}; nmom=3, ylab::Union{Nothing, LaTeXString}=nothing, xlab::Union{Nothing, Vector{Vector{String}}}=nothing, charge_factor::Float64=1., models::Union{Vector{Function}, Nothing}=nothing, path_plot::Union{String,Nothing}=nothing, tt::Union{Nothing,Vector{String}}=nothing)
-    for q in 1:nmom
+    for q in [6,8,12]#1:nmom
         println("\n- Momentum: $(q)")
         fccat = vcat(fc[q]...)
         w_tot  = get_w_from_fitcat(fccat)
@@ -325,7 +327,7 @@ function plot_mAve_summary(fc::Vector{Vector{FitCat}}; nmom=3, ylab::Union{Nothi
         subplot(413)
         ax3 = gca()
         setp(ax3.get_xticklabels(),visible=false) # Disable x tick labels
-        Pval = fill(1., length(w_tot))
+        pval = fill(1., length(w_tot))
         bar(x, pval, alpha=0.4, color="forestgreen", edgecolor="darkgreen", linewidth=1.5)
         ylim(0,1)
         ylabel(L"$p-values$")

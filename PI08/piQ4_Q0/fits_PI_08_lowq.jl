@@ -15,17 +15,17 @@ rcParams["axes.titlesize"] = 18
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 
-include("../utils/const.jl")
-include("../utils/types.jl")
-include("../utils/plot_utils.jl")
-include("../utils/IO_BDIO.jl")
-include("../utils/tools.jl")
+include("../../utils/const.jl")
+include("../../utils/types.jl")
+include("../../utils/plot_utils.jl")
+include("../../utils/IO_BDIO.jl")
+include("../../utils/tools.jl")
 include("./func_comb.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data/"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/multi_mom/"
-path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/pi08/"
-path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/multi_mom/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/low_q_kernel/scale_error_artificial/"
+path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/pi08/pi_Q4_piQ0/"
+path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_artificial/piQ4_piQ0/"
 
 #======= PHYSICAL CONSTANTS ====================#
 const MPI_ph = uwreal([134.9768, 0.0005], "mpi phys")
@@ -35,15 +35,15 @@ const phi2_ph = (sqrt(8)*t0sqrt_ph * MPI_ph / hc)^2
 const phi4_ph = (sqrt(8)*t0sqrt_ph)^2 * ((MK_ph/hc)^2 + 0.5*(MPI_ph/hc)^2)
 
 # const Qgev = [3., 5., 9.] # Q^2
-const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
+const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] ./ 4 # Q^2
 
 const Qmgev = 9.0 # Qm^2
 
 
 enslist = sort([  "H102", "N101", "C101", "C102", "D150",
-        "N451", "D451", "D452",
-        "N203", "N200", "D200", "D201", "E250",
-        "J303", "E300",
+        "N451",  "D452", "D451", # D450 D451 removed
+        "N203", "N200", "D200", "D201", "E250", # D251 D201 removed 
+        "J303", "J304",  "E300", # J304 removed 
         "J501"])
 
 
@@ -93,21 +93,42 @@ while ALPHAdobs_next_p(fb)
         println(extra["Ens"], " ", enslist)
         continue
     end
-    # Z08_s1 = get_Z08(EnsInfo(extra["Ens"]), impr_set="1")
-    # Z08_s2 = get_Z08(EnsInfo(extra["Ens"]), impr_set="2")
-    # Z8_s1 = get_Z8(EnsInfo(extra["Ens"]), impr_set="1")
-    # Z8_s2 = get_Z8(EnsInfo(extra["Ens"]), impr_set="2")
 
-    push!(pi_08_ll_s1, res["pi08_ll_s1"])
+    # push!(pi_08_ll_s1, res["pi08_ll_s1"])
     push!(pi_08_lc_s1, res["pi08_lc_s1"])
-    push!(pi_08_ll_s2, res["pi08_ll_s2"])
+    # push!(pi_08_ll_s2, res["pi08_ll_s2"])
     push!(pi_08_lc_s2, res["pi08_lc_s2"])
 
 end
 BDIO_close!(fb)
 
+##  cancelling fluctuations from t0_ph
+NOERR = false
+if NOERR
+    for (k,ens) in enumerate(ensinfo)
+        # uwerr.(pi_08_ll_s1[k])
+        uwerr.(pi_08_lc_s1[k])
+        # uwerr.(pi_08_ll_s2[k])
+        uwerr.(pi_08_lc_s2[k])
 
-##
+        for (j,q) in enumerate(Qgev)
+            # set_fluc_to_zero!(pi_08_ll_s1[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_08_lc_s1[k][j], "sqrtt0 [fm]")
+            # set_fluc_to_zero!(pi_08_ll_s2[k][j], "sqrtt0 [fm]")
+            set_fluc_to_zero!(pi_08_lc_s2[k][j], "sqrtt0 [fm]")
+
+            # pi_08_ll_s1[k][j] *= 1.0
+            pi_08_lc_s1[k][j] *= 1.0
+            # pi_08_ll_s2[k][j] *= 1.0
+            pi_08_lc_s2[k][j] *= 1.0
+        end
+
+        # uwerr.(pi_08_ll_s1[k])
+        uwerr.(pi_08_lc_s1[k])
+        # uwerr.(pi_08_ll_s2[k])
+        uwerr.(pi_08_lc_s2[k])
+    end
+end
 
 ##############################
 ## CREATE FIT CATEGORIES
@@ -126,15 +147,15 @@ for s in 1:2
     if s == 1
         for q in 1:NMOM
             str = "all_data_set$(s)_q$(q)"
-            # pi 33
+            # pi 08
+            # push!(fitcat_pi08_ll_s1[q], FitCat(xdata, getindex.(pi_08_ll_s1, q), str))
             push!(fitcat_pi08_lc_s1[q], FitCat(xdata, getindex.(pi_08_lc_s1, q), str))
-            push!(fitcat_pi08_ll_s1[q], FitCat(xdata, getindex.(pi_08_ll_s1, q), str))
         end
     elseif s == 2
         for q in 1:NMOM
             str = "all_data_set$(s)_q$(q)"
-            # pi 33
-            push!(fitcat_pi08_ll_s2[q], FitCat(xdata, getindex.(pi_08_ll_s2, q), str))
+            # pi 08
+            # push!(fitcat_pi08_ll_s2[q], FitCat(xdata, getindex.(pi_08_ll_s2, q), str))
             push!(fitcat_pi08_lc_s2[q], FitCat(xdata, getindex.(pi_08_lc_s2, q), str))
         end
 
@@ -146,21 +167,21 @@ end
 # pi 08
 for q in 1:NMOM
 
-    for k_cat in eachindex(fitcat_pi08_ll_s1[q])
-        xdata = fitcat_pi08_ll_s1[q][k_cat].xdata
-        ydata_ll_s1 = fitcat_pi08_ll_s1[q][k_cat].ydata
-        ydata_ll_s2 = fitcat_pi08_ll_s2[q][k_cat].ydata
+    for k_cat in eachindex(fitcat_pi08_lc_s1[q])
+        xdata = fitcat_pi08_lc_s1[q][k_cat].xdata
+        # ydata_ll_s1 = fitcat_pi08_ll_s1[q][k_cat].ydata
+        # ydata_ll_s2 = fitcat_pi08_ll_s2[q][k_cat].ydata
         ydata_lc_s1 = fitcat_pi08_lc_s1[q][k_cat].ydata
         ydata_lc_s2 = fitcat_pi08_lc_s2[q][k_cat].ydata
 
         for (k_mod, model) in enumerate(f_tot_dltiso)
             println(k_mod)
-            fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_dltiso[k_mod], pval=false)
-            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_dltiso[k_mod], pval=false)
+            # fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_dltiso[k_mod], pval=false)
+            # fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_dltiso[k_mod], pval=false)
             fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_dltiso[k_mod], pval=false)
             fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_dltiso[k_mod], pval=false)
-            push!(fitcat_pi08_ll_s1[q][k_cat].fit, fit_ll_s1)
-            push!(fitcat_pi08_ll_s2[q][k_cat].fit, fit_ll_s2)
+            # push!(fitcat_pi08_ll_s1[q][k_cat].fit, fit_ll_s1)
+            # push!(fitcat_pi08_ll_s2[q][k_cat].fit, fit_ll_s2)
             push!(fitcat_pi08_lc_s1[q][k_cat].fit, fit_lc_s1)
             push!(fitcat_pi08_lc_s2[q][k_cat].fit, fit_lc_s2)
 
@@ -172,12 +193,12 @@ end
 ## PLOTS
 #########################
 using Statistics
-plot_cl_all_set(fitcat_pi08_ll_s1, fitcat_pi08_ll_s2, fitcat_pi08_lc_s1, fitcat_pi08_lc_s2, path_plot=nothing, nmom=NMOM, ylab=L"$(\Delta\alpha^{0,8})$", f_tot_isov=f_tot_dltiso)
-plot_chiral_best_fit(fitcat_pi08_lc_s1, path_plot=path_plot, tt=["Set", "1", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$(\Delta\alpha^{0,8})$")
-plot_cl_best_fit(fitcat_pi08_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$(\Delta\alpha^{0,8})$")
+plot_cl_all_set(fitcat_pi08_ll_s1, fitcat_pi08_ll_s2, fitcat_pi08_lc_s1, fitcat_pi08_lc_s2, path_plot=path_plot, nmom=3, ylab=L"$(\Delta\alpha^{0,8})$", f_tot_isov=f_tot_dltiso)
+plot_chiral_best_fit(fitcat_pi08_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$(\Delta\alpha^{0,8})$")
+plot_cl_best_fit(fitcat_pi08_lc_s1, path_plot=path_plot, tt=["Set", "1", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$(\Delta\alpha^{0,8})$")
 
 cattot = [vcat( fitcat_pi08_lc_s1[k],fitcat_pi08_lc_s2[k]...) for k in eachindex(fitcat_pi08_lc_s1)]
-plot_mAve_summary(cattot, xlab=vcat(label_tot_dltiso,label_tot_dltiso), charge_factor=1., ylab=L"$(\Delta\alpha^{0,8})$", tt=["Set", "1-2", "LC"], path_plot=path_plot)
+plot_mAve_summary(cattot, xlab=vcat(label_tot_dltiso,label_tot_dltiso), charge_factor=1 / (6*sqrt(3)), ylab=L"$(\Delta\alpha^{0,8})$", tt=["Set", "1-2", "LC"], path_plot=path_plot)
 plot_mAve_summary(fitcat_pi33_lc_s1, xlab=label_tot_isov, charge_factor=1., ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$")
 
 
@@ -216,7 +237,7 @@ for q in 1:NMOM
     xdata = fitcat_pi08_tot[cat_idx].xdata
     param = fitcat_pi08_tot[cat_idx].fit[model_idx].param
 
-    ph_res_best = 1 / 3 *best_mod([0.0 phi2_ph phi4_ph], param)[1]; uwerr(ph_res_best)
+    ph_res_best = 1 / (6*sqrt(3)) * best_mod([0.0 phi2_ph phi4_ph], param)[1]; uwerr(ph_res_best)
     println("   best res: ", ph_res_best )
     ## histogram
 
@@ -224,18 +245,27 @@ for q in 1:NMOM
     for (k, cat) in enumerate(fitcat_pi08_tot)
         for (j, mod) in enumerate(f_tot_dltiso)
             push!(all_res, mod([0.0 phi2_ph phi4_ph], cat.fit[j].param)[1])
+            #push!(all_res, mod([0.0 value(phi2_ph) value(phi4_ph)], cat.fit[j].param)[1])
         end
     end
 
-    final_res, syst =  1 ./ 3 .* model_average(all_res, ww_tot); uwerr(final_res)
+    final_res, syst =  1 ./ (6*sqrt(3)) .* model_average(all_res, ww_tot); uwerr(final_res)
     push!(RES, final_res)
     push!(SYST, syst)
     println("   Model ave:  ", final_res)
     println("   systematic: ", syst)
 
 
-    hist(value.(all_res), bins=80, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot)
+    hist(value.(all_res) .*1 ./ (6*sqrt(3)) , bins=80, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot, zorder=3)
+    fill_betweenx([0,0.6], value(final_res).+err(final_res), value(final_res).-err(final_res), alpha=0.4, color="gold", zorder=2)
+    errtot = sqrt(err(final_res)^2 + syst^2)
+    fill_betweenx([0,0.6], value(final_res).+errtot, value(final_res).-errtot, alpha=0.4, color="tomato", zorder=1)
+    xlim(value(final_res)-6*err(final_res), value(final_res)+6*err(final_res))
+    ylabel(L"$\mathrm{Frequency}$")
+    xlabel(L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{SD}}$")
+    tight_layout()
     display(gcf())
+    savefig(joinpath(path_plot, "hist", "hist_q$(q).pdf"))
     close()
 
 end
@@ -248,10 +278,17 @@ io = IOBuffer()
 write(io, "PI08  physical results")
 fb = ALPHAdobs_create(joinpath(path_phys_res, "PI08_physRes.bdio"), io)
 for k in eachindex(RES)
-    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi08 SD")
+    aux = RES[k]+ uwreal([0.0, SYST[k]], "Syst Pi08 lowq")
     ALPHAdobs_write(fb, aux)
 end
 ALPHAdobs_close(fb)
+
+## saving systematics in txt file
+using DelimitedFiles
+open(joinpath(path_phys_res, "systematics.txt"), "a") do io
+    writedlm(io, ["# pi 08 "])
+    writedlm(io, [Qgev SYST])
+end
 
 ## test reading
 fb = BDIO_open(joinpath(path_phys_res, "PI08_physRes.bdio"), "r")
@@ -261,4 +298,17 @@ while ALPHAdobs_next_p(fb)
     push!(res, ALPHAdobs_read_next(fb))
 end
 BDIO_close!(fb)
+
+
+## test reading PiQ - PiQ4
+fb = BDIO_open("/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_multimom/piQ_Q4/PI08_physRes.bdio", "r")
+res = []
+while ALPHAdobs_next_p(fb)
+    d = ALPHAdobs_read_parameters(fb)
+    push!(res, ALPHAdobs_read_next(fb))
+end
+BDIO_close!(fb)
+
+tot = (res .+ RES) .*  (6*sqrt(3))
+uwerr.(tot)
 
