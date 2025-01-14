@@ -43,7 +43,7 @@ dir_path = filter(isdir, readdir(path_bdio, join=true))
 
 
 IMPR      = true
-IMPR_SET  = "1" # either "1" or "2"
+IMPR_SET  = "2" # either "1" or "2"
 RENORM    = false
 STD_DERIV = false
 
@@ -55,6 +55,8 @@ enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
          "J500", "J501"])
 
 ensinfo = EnsInfo.(enslist)
+ensinfo = EnsInfo.(["H101"])
+
 dir_path = filter(x-> basename(x) in enslist, readdir(path_bdio, join=true))
 spectrum_path = vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
 

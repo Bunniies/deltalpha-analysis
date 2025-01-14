@@ -9,9 +9,9 @@ import ADerrors: err
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 rcParams["text.usetex"] =  true
 rcParams["mathtext.fontset"]  = "cm"
-rcParams["font.size"] =13
-rcParams["axes.labelsize"] =22
-rcParams["axes.titlesize"] = 18
+rcParams["font.size"] = 20
+rcParams["axes.labelsize"] = 26
+rcParams["axes.titlesize"] = 22
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 
@@ -42,7 +42,7 @@ const Qmgev = 9.0 # Qm^2
 enslist = sort([ "H102", "N101", "C101", "C102", "D150",
          "N451", "D450", "D452", #  D451 removed
            "N200", "D251", "D200", "D201", "E250", # N203 removed
-         "J303", "J306", "J304", "E300", "F300",
+         "J303", "J306", "J304", "E300", 
          "J501"
          ])
 
@@ -197,7 +197,7 @@ end
 #########################
 using Statistics
 plot_cl_all_set(fitcat_3388_ll_s1, fitcat_3388_ll_s2, fitcat_3388_lc_s1, fitcat_3388_lc_s2, path_plot=path_plot, nmom=3, ylab=L"$-\Delta_{ls}(\Delta\alpha)$", f_tot_isov=f_tot_dltiso)
-plot_chiral_best_fit(fitcat_3388_lc_s2, path_plot=path_plot, nmom=3, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso , ylab=L"$-\Delta_{ls}(\Delta\alpha)$")
+plot_chiral_best_fit(fitcat_3388_ll_s1, path_plot=path_plot, nmom=3, tt=["Set", "1", "LL"], f_tot_isov=f_tot_dltiso , ylab=L"$-\Delta_{ls}(\Delta\alpha)$")
 plot_cl_best_fit(fitcat_3388_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$-\Delta_{ls}(\Delta\alpha)$")
 
 cattot = [vcat(fitcat_3388_ll_s1[k], fitcat_3388_lc_s1[k], fitcat_3388_ll_s2[k],  fitcat_3388_lc_s2[k]...) for k in eachindex(fitcat_3388_lc_s1)]
@@ -216,7 +216,15 @@ for q in 1:NMOM
                 fitcat_3388_lc_s1[q],
                 fitcat_3388_lc_s2[q])...)
 
-    ww_tot = get_w_from_fitcat(fitcat_pi3388_tot)
+    # ww_tot = get_w_from_fitcat(fitcat_pi3388_tot)
+
+    ww_ll_s1 = get_w_from_fitcat(fitcat_3388_ll_s1[q])
+    ww_ll_s2 = get_w_from_fitcat(fitcat_3388_ll_s2[q])
+    ww_lc_s1 = get_w_from_fitcat(fitcat_3388_lc_s1[q])
+    ww_lc_s2 = get_w_from_fitcat(fitcat_3388_lc_s2[q])
+
+    ww_tot = vcat(ww_ll_s1, ww_ll_s2, ww_lc_s1, ww_lc_s2)
+    println(sum(ww_tot))
 
     w, widx  =  findmax(ww_tot)
   
@@ -252,7 +260,7 @@ for q in 1:NMOM
         end
     end
 
-    final_res, syst = 1 ./ 3 .* model_average(all_res, ww_tot); uwerr(final_res)
+    final_res, syst =  1 ./ 3 .* model_average(all_res, ww_tot); uwerr(final_res)
     push!(RES, final_res)
     push!(SYST, syst)
     println("   Model ave:  ", final_res)
@@ -260,7 +268,7 @@ for q in 1:NMOM
     println("\n")
 
 
-    hist(value.(all_res) ./ 3, bins=80, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot, zorder=3)
+    hist(value.(all_res) ./ 3, bins=40, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot, zorder=3)
     fill_betweenx([0,0.6], value(final_res).+err(final_res), value(final_res).-err(final_res), alpha=0.4, color="gold", zorder=2)
     errtot = sqrt(err(final_res)^2 + syst^2)
     fill_betweenx([0,0.6], value(final_res).+errtot, value(final_res).-errtot, alpha=0.4, color="tomato", zorder=1)

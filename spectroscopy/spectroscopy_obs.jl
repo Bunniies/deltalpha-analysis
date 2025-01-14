@@ -42,7 +42,7 @@ IMPR      = true
 RENORM    = true
 STD_DERIV = false
 
-enslist = ["J307"]
+enslist = ["E300"]
 ensinfo = EnsInfo.(enslist)
 
 
@@ -55,6 +55,8 @@ g_pi_a0p = Vector{Corr}(undef, length(ensinfo))
 g_k_a0p = Vector{Corr}(undef, length(ensinfo))
 
 obs = Vector(undef, length(ensinfo))
+
+##
 
 
 #================ READING DATA ====================#
@@ -101,6 +103,7 @@ wpmm["J304"]     = [5.0, -2.0, -1.0, -1.0]
 wpmm["F300"]     = [5.0, -2.0, -1.0, -1.0]
 wpmm["J306"]     = [5.0, -2.0, -1.0, -1.0]
 wpmm["J307"]     = [5.0, -2.0, -1.0, -1.0]
+wpmm["E300"]     = [5.0, -1.0, -1.0, -1.0]
 
 for k in eachindex(ensinfo)
     if ensinfo[k].kappa_l == ensinfo[k].kappa_s

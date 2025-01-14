@@ -9,22 +9,22 @@ import ADerrors: err
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 rcParams["text.usetex"] =  true
 rcParams["mathtext.fontset"]  = "cm"
-rcParams["font.size"] =13
-rcParams["axes.labelsize"] =22
-rcParams["axes.titlesize"] = 18
+rcParams["font.size"] = 20
+rcParams["axes.labelsize"] = 26
+rcParams["axes.titlesize"] = 22
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 
-include("../utils/const.jl")
-include("../utils/types.jl")
-include("../utils/plot_utils.jl")
-include("../utils/IO_BDIO.jl")
-include("../utils/tools.jl")
+include("../../utils/const.jl")
+include("../../utils/types.jl")
+include("../../utils/plot_utils.jl")
+include("../../utils/IO_BDIO.jl")
+include("../../utils/tools.jl")
 include("func_comb_PI33.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/"
-path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isovector/SD_ILD/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial/"
+path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isovector/piQ_piQ4/SD_ILD"
 path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results"
 
 #======= PHYSICAL CONSTANTS ====================#
@@ -34,7 +34,7 @@ const MK_ph  = uwreal([495.011, 0.01], "mk phys")
 const phi2_ph = (sqrt(8)*t0sqrt_ph * MPI_ph / hc)^2
 const phi4_ph = (sqrt(8)*t0sqrt_ph)^2 * ((MK_ph/hc)^2 + 0.5*(MPI_ph/hc)^2)
 
-const Qgev = [3., 5., 9.] # Q^2
+const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
 const Qmgev = 9.0 # Qm^2
 
 const TREELEVEL = true
@@ -42,9 +42,9 @@ const TREELEVEL = true
 #============== READ CORRELATORS FROM BDIO FILES =================#
 
 enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
-          "B450", "N451", "D450", "D451", "D452",
-         "N202", "N203", "N200", "D200", "D201", "E250",
-         "J303", "E300",
+         "B450", "N451", "D450", "D451", "D452",
+         "N202", "N203", "N200", "D251", "D200", "E250", # D201 removed
+          "J307", "J303", "J306", "J304", "E300", "F300", 
          "J500", "J501"])
 
 ensinfo = EnsInfo.(enslist)
@@ -113,14 +113,6 @@ BDIO_close!(fb)
 
 ##
 #========== READING TREE-LEVEL IMPROVEMENT =============#
-path_bdio_3l = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-
-dir_path_3l = filter(x-> basename(x) in enslist, readdir(path_bdio_3l, join=true))
-treelevel_path_s1 = vcat(filter(!isempty, [filter(x-> occursin("tree_level_set1.bdio", x)  , readdir(dir_path_3l[k], join=true)) for k in eachindex(dir_path)])...)
-treelevel_path_s2 = vcat(filter(!isempty, [filter(x-> occursin("tree_level_set2.bdio", x)  , readdir(dir_path_3l[k], join=true)) for k in eachindex(dir_path)])...)
-
-#
-
 # computing perturbative CL prediction
 pt_pred = []
 for q in Qgev
@@ -130,6 +122,32 @@ for q in Qgev
     push!(pt_pred, res/2)
 end
 
+fb = BDIO_open(joinpath(path_store_pi,  "treeLevelSet1.bdio"), "r")
+res_3l_s1 = Dict()
+while ALPHAdobs_next_p(fb)
+    d = ALPHAdobs_read_parameters(fb)
+    nobs = d["nobs"]
+    dims = d["dimensions"]
+    sz = tuple(d["size"]...)
+    extra = d["extra"]
+    ks = collect(d["keys"])
+    res_3l_s1[extra["Ens"]] = ALPHAdobs_read_next(fb, size=sz, keys=ks)
+end
+BDIO_close!(fb)
+
+fb = BDIO_open(joinpath(path_store_pi,  "treeLevelSet2.bdio"), "r")
+res_3l_s2 = Dict()
+while ALPHAdobs_next_p(fb)
+    d = ALPHAdobs_read_parameters(fb)
+    nobs = d["nobs"]
+    dims = d["dimensions"]
+    sz = tuple(d["size"]...)
+    extra = d["extra"]
+    ks = collect(d["keys"])
+    res_3l_s2[extra["Ens"]] = ALPHAdobs_read_next(fb, size=sz, keys=ks)
+end
+BDIO_close!(fb)
+
 pi_33_ll_s1 = similar(pi_33_ll_SD_s1)
 pi_33_lc_s1 = similar(pi_33_ll_SD_s1)
 pi_33_ll_s2 = similar(pi_33_ll_SD_s1) 
@@ -137,10 +155,10 @@ pi_33_lc_s2 = similar(pi_33_ll_SD_s1)
 
 for (k, ens) in enumerate(ensinfo)
 
-    hvp_3l_ll_s1 = pt_pred ./ (read_BDIO(treelevel_path_s1[k], "3level", "3l_33_ll")./2)
-    hvp_3l_lc_s1 = pt_pred ./ (read_BDIO(treelevel_path_s1[k], "3level", "3l_33_lc")./2)
-    hvp_3l_ll_s2 = pt_pred ./ (read_BDIO(treelevel_path_s2[k], "3level", "3l_33_ll")./2)
-    hvp_3l_lc_s2 = pt_pred ./ (read_BDIO(treelevel_path_s2[k], "3level", "3l_33_lc")./2)
+    hvp_3l_ll_s1 = pt_pred ./ (res_3l_s1[ens.id]["3l_33_ll"]./2)
+    hvp_3l_lc_s1 = pt_pred ./ (res_3l_s1[ens.id]["3l_33_lc"]./2)
+    hvp_3l_ll_s2 = pt_pred ./ (res_3l_s2[ens.id]["3l_33_ll"]./2)
+    hvp_3l_lc_s2 = pt_pred ./ (res_3l_s2[ens.id]["3l_33_lc"]./2)
 
     pi_33_ll_s1[k] = pi_33_ll_SD_s1[k] .* hvp_3l_ll_s1 .+ pi_33_ll_ILD_s1[k]
     pi_33_lc_s1[k] = pi_33_lc_SD_s1[k] .* hvp_3l_lc_s1 .+ pi_33_lc_ILD_s1[k]
@@ -219,10 +237,10 @@ for q in 1:NMOM
 
         for (k_mod, model) in enumerate(f_tot_isov)
             println(k_mod)
-            fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_isov[k_mod], pval=true)
-            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_isov[k_mod], pval=true)
-            fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_isov[k_mod], pval=true)
-            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=true)
+            fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_isov[k_mod], pval=false)
+            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_isov[k_mod], pval=false)
+            fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_isov[k_mod], pval=false)
+            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=false)
             push!(fitcat_pi33_ll_s1[q][k_cat].fit, fit_ll_s1)
             push!(fitcat_pi33_ll_s2[q][k_cat].fit, fit_ll_s2)
             push!(fitcat_pi33_lc_s1[q][k_cat].fit, fit_lc_s1)
@@ -237,7 +255,7 @@ end
 #########################
 using Statistics
 plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, path_plot=path_plot, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}$", f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi33_ll_s1, path_plot=path_plot, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}$")
+plot_chiral_best_fit(fitcat_pi33_ll_s2, path_plot=path_plot, tt=["Set", "2", "LL"], f_tot_isov=f_tot_isov, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}$")
 plot_cl_best_fit(fitcat_pi33_lc_s1, path_plot=path_plot, tt=["Set", "1", "LC"], f_tot_isov=f_tot_isov, ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}$")
 
 cattot = [vcat(fitcat_pi33_ll_s1[k], fitcat_pi33_lc_s1[k],fitcat_pi33_ll_s2[k],fitcat_pi33_lc_s2[k]...) for k in eachindex(fitcat_pi33_lc_s1)]

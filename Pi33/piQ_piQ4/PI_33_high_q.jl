@@ -26,6 +26,7 @@ include("../../utils/tools.jl")
 # include("./func_comb.jl")
 
 const path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
+# const path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/std_deriv/"
 const path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
 const path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial/tmp"
 const path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
@@ -40,12 +41,12 @@ const WindSD = Window("SD")
 const WindILD = Window("ILD")
 
 
-enslist = sort([# "H101", "H102", "N101", "C101", "C102", "D150"])
-         # "B450", "N451", "D450", "D451", "D452"])
+enslist = sort([ #"H101", "H102", "N101", "C101", "C102", "D150"])
+        #   "B450", "N451", "D450", "D451", "D452"])
          #"N202", "N203", "N200", "D251", "D200", "D201", "E250"])
-          #"J307", "J306", "J303", "J304", "E300", "F300"])
-         "J500", "J501"])
-#enslist = ["A653"]
+          "J307", "J306", "J303", "J304", "E300", "F300"])
+         #"J500", "J501"])
+# enslist = ["E300"]
 # enslist = ["H101"]
 ensinfo = EnsInfo.(enslist)
 
@@ -86,7 +87,7 @@ for (k, ens) in enumerate(ensinfo)
     g33_lc_s2[k] = res_s2["g33_lc"]
 end
 
-##
+
 #============== READ t0 FROM BDIO FILES =================#
 dir_path = filter(x-> basename(x) in enslist, readdir(path_bdio_obs, join=true))
 spectrum_path = vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
@@ -135,6 +136,8 @@ end
 
 ##
 #=========== COMPUTE TMR ==============#
+@info("Computing TMR ")
+
 # set 1 improvement coefficients
 pi_33_ll_SD_s1 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)] 
 pi_33_lc_SD_s1 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)]
@@ -194,7 +197,7 @@ end
 @info("Saving PI 33 results in BDIO")
 io = IOBuffer()
 write(io, "PI delta 33. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_33_beta5.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_33_beta4.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)
@@ -216,7 +219,7 @@ println("# Saving complete!")
 
 ##
 #========= TEST READING =========#
-fb = BDIO_open(joinpath(path_store_pi, "multi_mom", "PI_33.bdio"), "r")
+fb = BDIO_open(joinpath(path_store_pi, "PI_33_beta1.bdio"), "r")
 res = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

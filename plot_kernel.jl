@@ -108,12 +108,12 @@ for (j,q) in enumerate(Qlat)
     data08 .*= 10 * 1/3 ; uwerr.(data08)
 
     xx = collect(0:length(data33)-1) .* value(a(ensinfo.beta))
-    errorbar(xx, value.(data33), err.(data33), fmt="v", color="tomato", capsize=4, label=L"$G^{(3,3)}$")
-    errorbar(xx, value.(datadltiso), err.(datadltiso), fmt="^", color="forestgreen", capsize=4, label=L"$10\cdot(G^{(3,3)} - G^{(8,8)})$")
-    errorbar(xx, value.(datacc_conn), err.(datacc_conn), fmt="d", color="royalblue", capsize=4, label=L"$\frac{4}{9}G^{(c,c)}_{\mathrm{conn}}$")
-    errorbar(xx, value.(data08), err.(data08), fmt="o", color="black", capsize=4, label=L"$10\cdot\frac{1}{3}G^{(0,8)}$")
-    errorbar(xx, value.(datacc_disc), err.(datacc_disc), fmt="d", color="gold", capsize=4, label=L"$1000\cdot\frac{4}{9}G^{(c,c)}_{\mathrm{disc}}$")
-    errorbar(xx, value.(datac8_disc), err.(datac8_disc), fmt="o", color="plum", capsize=4, label=L"$1000\cdot\frac{2}{3\sqrt{3}}G^{(c,8)}_{\mathrm{disc}}$")
+    errorbar(xx, value.(data33), err.(data33), fmt="v", color="#E69F00", capsize=4, label=L"$G^{(3,3)}$")
+    errorbar(xx, value.(datadltiso), err.(datadltiso), fmt="^", color="#56B4E9", capsize=4, label=L"$10\cdot(G^{(3,3)} - G^{(8,8)})$")
+    errorbar(xx, value.(datacc_conn), err.(datacc_conn), fmt="d", color="#009E73", capsize=4, label=L"$\frac{4}{9}G^{(c,c)}_{\mathrm{conn}}$")
+    errorbar(xx, value.(data08), err.(data08), fmt="o", color="#D55E00", capsize=4, label=L"$10\cdot\frac{1}{3}G^{(0,8)}$")
+    errorbar(xx, value.(datacc_disc), err.(datacc_disc), fmt="d", color="#0072B2", capsize=4, label=L"$1000\cdot\frac{4}{9}G^{(c,c)}_{\mathrm{disc}}$")
+    errorbar(xx, value.(datac8_disc), err.(datac8_disc), fmt="o", color="#CC79A7", capsize=4, label=L"$1000\cdot\frac{2}{3\sqrt{3}}G^{(c,8)}_{\mathrm{disc}}$")
 
 
     xlabel(L"$t \ [\mathrm{fm}]$")
@@ -122,6 +122,7 @@ for (j,q) in enumerate(Qlat)
     legend(ncol=1)
     tight_layout()
     display(gcf())
-    savefig(joinpath(path_plot, ensinfo.id, "$(ensinfo.id)_dalpha_kernel_SD_vs_ILD.pdf"))
+    savefig(joinpath(path_plot, ensinfo.id, "$(ensinfo.id)_dalpha_kernel_highq.pdf"))
     close()
 end
+

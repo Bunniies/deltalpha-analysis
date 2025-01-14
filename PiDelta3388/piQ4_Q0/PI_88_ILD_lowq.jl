@@ -25,30 +25,33 @@ include("../../utils/IO_BDIO.jl")
 include("../../utils/tools.jl")
 
 const path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
+# const path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/std_deriv/"
 const path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-const path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/low_q_kernel/scale_error_multimom/tmp"
+const path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/low_q_kernel/scale_error_artificial/tmp/"
 const path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
 const path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/ensembles"
 
 
 #======= PHYSICAL CONSTANTS ====================#
 const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] ./ 4 # Q^2
-# const Qgev = [1.0, 3.0, 5.0, 9.0] # Q^2
+# const Qgev = [9.0] ./ 4 # Q^2
 # println("CHECK YOUR Qveg!!")
-const Qmgev = 36.0 # Qm^2
+const Qmgev = 9.0 # Qm^2
 
-const KRNLsub = krnl_dα_sub # subtracted kernel Q4 - Q0
+const KRNLsub = krnl_dα # non-subtracted kernel Q4 - Q0
+WindILD = Window("ILD")
 
 #============== READ CORRELATORS FROM BDIO FILES =================#
 @info("Reading Correlators")
 
-enslist = sort([# "H101", "H102", "N101", "C101", "C102", "D150"])
-          #"B450", "N451", "D450", "D451", "D452"])
-         #"N202", "N203", "N200", "D251", "D200", "D201", "E250"])
-          #"N300", "J303", "J304", "E300"])
-          "J500", "J501"])
+ enslist = sort([#"H101", "H102", "N101", "C101", "C102",  "D150"]) # C102 non computed
+        #"B450", "N451", "D450", "D451", "D452"]) # D451 not computed 
+        #"N202", "N203", "N200", "D251", "D200", "D201", "E250"]) # D201 enot computed
+        #"J307", "J303", "J304", "E300"]) # J304 not computed
+         "J500", "J501"])
+#enslist = sort(["C102", "D451", "D201", "J304"])
 
-#enslist = ["D451"]
+
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_corr, join=true)) for k in eachindex(enslist)]...)
@@ -105,6 +108,7 @@ for (k, ens) in enumerate(ensinfo)
     t0ens[k] = t0ens_aux
 end
 
+
 #=========== COMPUTE FVC  ==============#
 @info("Computing Finite-Volume Corrections")
 pi_fvc_pi = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)]
@@ -113,8 +117,8 @@ pi_fvc_k  = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)]
 for (k,ens) in enumerate(ensinfo)
     println("Ensemble: $(ens.id)")
     
-    Qlat = Qgev .* value.(t0sqrt_ph.^2 ./ t0ens[k]) ./hc^2 *1e6
-    qmlat = Qmgev * value(t0sqrt_ph^2 / t0ens[k]) /hc^2 *1e6
+    Qlat = Qgev .* t0sqrt_ph.^2 ./ t0ens[k] ./hc^2 *1e6
+    qmlat = Qmgev * t0sqrt_ph^2 / t0ens[k] /hc^2 *1e6
 
     # Qlat = Qgev .* t0sqrt_ph_noerr.^2 ./ t0ens[k] ./hc^2 *1e6
 
@@ -127,9 +131,9 @@ for (k,ens) in enumerate(ensinfo)
     T = Float64.(collect(1:length(fvc_pi)))
 
     for (j,q) in enumerate(Qlat)
-        krnl = KRNLsub.(T,q, qmlat)
-        pi_fvc_pi[k][j] = abs(sum(fvc_pi .* krnl))
-        pi_fvc_k[k][j]  = abs(sum(fvc_k .* krnl))
+        krnl = KRNLsub.(T,q)
+        pi_fvc_pi[k][j] = abs(sum(fvc_pi .* krnl .* WindILD(T .* value(a(ens.beta)))))
+        pi_fvc_k[k][j]  = abs(sum(fvc_k  .* krnl .* WindILD(T .* value(a(ens.beta)))))
     end
 end
 
@@ -139,7 +143,6 @@ end
 # set 1 improvement coefficients
 pi_3388_ll_s1 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)] 
 pi_3388_lc_s1 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)]
-test_std = similar.(pi_3388_ll_s1)
 # set 2 improvement coefficients
 pi_3388_ll_s2 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)]
 pi_3388_lc_s2 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)]
@@ -155,25 +158,26 @@ for (k, ens) in enumerate(ensinfo)
     for (j,q) in enumerate(Qlat)
 
         x0 = Float64.(collect(0: length(g3388_dlt_lc_s1[k])-1))
-        kk = KRNLsub.(x0, q, qmlat )
+        kk = KRNLsub.(x0, q)
         if j == 12
             ss = joinpath(path_plot, ens.id)
             qqq = "9"
+            pplot = true
         else
             ss = nothing
             qqq = ""
+            pplot = false
         end
 
-        pi_3388_ll_s1[k][j] = boundingMethod(g3388_dlt_ll_s1[k], ens, kk, "88", path_pl=ss, qval=qqq)
-        pi_3388_lc_s1[k][j] = boundingMethod(g3388_dlt_lc_s1[k], ens, kk, "88")
-        pi_3388_ll_s2[k][j] = boundingMethod(g3388_dlt_ll_s2[k], ens, kk, "88")
-        pi_3388_lc_s2[k][j] = boundingMethod(g3388_dlt_lc_s2[k], ens, kk, "88") 
+        pi_3388_ll_s1[k][j] = boundingMethod(g3388_dlt_ll_s1[k], ens, kk, "88", wind=WindILD, path_pl=ss, qval=qqq)
+        pi_3388_lc_s1[k][j] = boundingMethod(g3388_dlt_lc_s1[k], ens, kk, "88", wind=WindILD, pl=false)
+        pi_3388_ll_s2[k][j] = boundingMethod(g3388_dlt_ll_s2[k], ens, kk, "88", wind=WindILD, pl=false)
+        pi_3388_lc_s2[k][j] = boundingMethod(g3388_dlt_lc_s2[k], ens, kk, "88", wind=WindILD, pl=false) 
 
-        #test_std[k][j] = tmr_integrand(g3388_dlt_ll_s1[k], q, qmlat, KRNLsub, pl=true, t0ens=t0ens[k])
-        # pi_3388_ll_s1[k][j] =  tmr_integrand(g3388_dlt_ll_s1[k], q, KRNL, pl=false, t0ens=t0ens[k])
-        # pi_3388_lc_s1[k][j] =  tmr_integrand(g3388_dlt_lc_s1[k], q, KRNL, pl=false, t0ens=t0ens[k])
-        # pi_3388_ll_s2[k][j] =  tmr_integrand(g3388_dlt_ll_s2[k], q, KRNL, pl=false, t0ens=t0ens[k])
-        # pi_3388_lc_s2[k][j] =  tmr_integrand(g3388_dlt_lc_s2[k], q, KRNL, pl=false, t0ens=t0ens[k])
+        # pi_3388_ll_s1[k][j] =  tmr_integrand(g3388_dlt_ll_s1[k], q, KRNLsub, pl=pplot, t0ens=t0ens[k])
+        # pi_3388_lc_s1[k][j] =  tmr_integrand(g3388_dlt_lc_s1[k], q, KRNLsub, pl=false, t0ens=t0ens[k])
+        # pi_3388_ll_s2[k][j] =  tmr_integrand(g3388_dlt_ll_s2[k], q, KRNLsub, pl=false, t0ens=t0ens[k])
+        # pi_3388_lc_s2[k][j] =  tmr_integrand(g3388_dlt_lc_s2[k], q, KRNLsub, pl=false, t0ens=t0ens[k])
     end
 end
 
@@ -190,18 +194,18 @@ for k in eachindex(ensinfo)
         pi_3388_ll_s2[k] .+= 1.5 * pifvc
         pi_3388_lc_s2[k] .+= 1.5 * pifvc   
     else    
-        pi_3388_ll_s1[k] .+= (pifvc + kfvc -2/3*kfvc)
-        pi_3388_lc_s1[k] .+= (pifvc + kfvc -2/3*kfvc)
-        pi_3388_ll_s2[k] .+= (pifvc + kfvc -2/3*kfvc)
-        pi_3388_lc_s2[k] .+= (pifvc + kfvc -2/3*kfvc)
+        pi_3388_ll_s1[k] .+= (2/3*kfvc)
+        pi_3388_lc_s1[k] .+= (2/3*kfvc)
+        pi_3388_ll_s2[k] .+= (2/3*kfvc)
+        pi_3388_lc_s2[k] .+= (2/3*kfvc)
     end
 end
 ##
 #============== SAVE results to BDIO ===============#
-@info("Saving PI (33-88) results in BDIO")
+@info("Saving PI (88) results in BDIO")
 io = IOBuffer()
-write(io, "PI delta 33-88. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_88_beta5.bdio"), io)
+write(io, "PI delta 88. ")
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_88_ILD_beta5.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

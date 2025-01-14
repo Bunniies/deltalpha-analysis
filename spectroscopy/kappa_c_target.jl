@@ -63,7 +63,7 @@ end
 
 ## INTERPOLATION 
 
-mDs_ph = uwreal([1991.9, 1e-8], "mDs phys") # = 1968.47 * sqrtt0_bruno / sqrtt0_regensburg
+mDs_ph = uwreal([1983.4, 1e-8], "mDs phys") # = 1968.47 * sqrtt0_bruno / sqrtt0_regensburg
 kappa_c_target_tot = Dict{String, Array{uwreal}}()
 for (k,ens) in enumerate(ensinfo)
 
@@ -72,11 +72,12 @@ for (k,ens) in enumerate(ensinfo)
     idx = sortperm(value.(m_ens))
     m_ens = m_ens[idx]
     uwerr.(m_ens)
-    kappa_ens_inv = 1 ./ [kappas[ens.id][ll] for ll in keystot]
+    kappa_ens_inv = sort(1 ./ [kappas[ens.id][ll] for ll in keystot])
     errorbar(kappa_ens_inv, value.(m_ens), err.(m_ens), fmt="s", color="black", mfc="none", capsize=2)
 
     fitp, chi2exp = lin_fit(kappa_ens_inv, m_ens)
-    mDs_lat = mDs_ph * t0sqrt_ph / sqrt(t0(ens.beta)) / hc
+    # mDs_lat = mDs_ph * t0sqrt_ph / sqrt(t0(ens.beta)) / hc
+    mDs_lat = mDs_ph * t0sqrt_ph / value(sqrt(t0_bruno(ens.beta))) / hc
     kappa_c_target = x_lin_fit(fitp, mDs_lat)
     uwerr(kappa_c_target)
 
@@ -96,7 +97,7 @@ for (k,ens) in enumerate(ensinfo)
     ylabel(L"$m_{D_s}$")
     tight_layout()
     display(gcf())
-    savefig(joinpath(path_plot, ens.id, "kappa_target_interp.pdf"))
+    # savefig(joinpath(path_plot, ens.id, "kappa_target_interp.pdf"))
     close("all")
 end
 

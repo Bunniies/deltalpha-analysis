@@ -22,22 +22,23 @@ include("../utils/const.jl")
 
 const path_data = "/Users/alessandroconigli/Lattice/data/HVP/2ptdata"
 const path_rw   = "/Users/alessandroconigli/Lattice/data/HVP/rwf_deflated"
-const path_store_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv"
+const path_store_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
 
 const IMPR = true
 const STD_DERIV = false
 const RENORM = true
+println("STD_DERIV: ", STD_DERIV)
 
 # enslist = ["H101"]
 #ensinfo = EnsInfo.(enslist)
 #enslist = sort([ #"H101", "H102", "N101", "C101", "C102", "D150",
-        #"B450", "N451", "D450", "D451", "D452",
-        #"N202", "N203", "N200", "D251", "D200", "D201", "E250"])
-         #"N300", "J303", "J304", "E300",
-         #"J500", "J501"])
+        #"B450", "N451", "D450", "D451", "D452"])
+        # "N202", "N203", "N200", "D251", "D200", "D201", "E250"])
+        # "N300", "J303", "J304", "E300",
+        # "J500", "J501"])
 
-enslist = sort(["J306", "J307", "F300"])        
-# enslist = sort(["D450"])        
+# enslist = sort(["A653"])        
+enslist = sort(["D450"])        
 ensinfo = EnsInfo.(enslist)
 ##
 #============ OBSERVABLE ALLOCATIONS ============#
@@ -85,7 +86,7 @@ gc8_cc_disc = Vector{Corr}(undef, 1)
     for (k, ens) in enumerate(ensinfo)
         @info("Reading data ensemble: $(ens.id)")
 
-        for impr_set in ["1", "2"]
+        for impr_set in ["2"] #["1", "2"]
             println("   - Impr Set: ", impr_set)
 
             println("        - G33 ll and lc correlator")
@@ -120,13 +121,13 @@ gc8_cc_disc = Vector{Corr}(undef, 1)
 
             if ens.kappa_l != ens.kappa_s
                 println("        - G88, G08, Gcc, Gc8 disconnected")
-                try    
+                #try    
                     g88_ll_disc[1], g88_lc_disc[1], _ = corrDisconnected(path_data, ens, "88", path_rw=path_rw, impr=IMPR, impr_set=impr_set, std=STD_DERIV)
                     g08_ll_disc[1], g08_lc_disc[1], _ = corrDisconnected(path_data, ens, "80", path_rw=path_rw, impr=IMPR, impr_set=impr_set, std=STD_DERIV)
                     
                     gcc_ll_disc[1], gcc_lc_disc[1], gcc_cc_disc[1] = corrDisconnected(path_data, ens, "cc", path_rw=path_rw, impr=false)
                     gc8_ll_disc[1], gc8_lc_disc[1], gc8_cc_disc[1] = corrDisconnected(path_data, ens, "c8", path_rw=path_rw, impr=false)
-                catch
+                #catch
                     println("disconnected failed")
                     T = HVPobs.Data.get_T(ens.id)
                     g88_ll_disc[1] = g88_lc_disc[1] = gcc_ll_disc[1] =  gcc_lc_disc[1] = g08_ll_disc[1] = g08_lc_disc[1] = gc8_ll_disc[1] = gc8_lc_disc[1] = gcc_cc_disc[1] =  gc8_cc_disc[1] = Corr(fill(uwreal(0.0), T), ens.id, "Gdisc")
@@ -215,7 +216,7 @@ end # end time begin
 
 ## TEST WITH READING
 
-fb = BDIO_open(joinpath(path_store_bdio,  "D251_corr_set1"), "r")
+fb = BDIO_open(joinpath(path_store_bdio,  "H102_corr_set2"), "r")
 
 # res = Dict()
 count=0

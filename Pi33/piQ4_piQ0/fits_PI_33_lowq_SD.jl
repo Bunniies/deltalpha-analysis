@@ -8,8 +8,8 @@ import ADerrors: err
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 rcParams["text.usetex"] =  true
 rcParams["mathtext.fontset"]  = "cm"
-rcParams["font.size"] =20
-rcParams["axes.labelsize"] =26
+rcParams["font.size"] = 20
+rcParams["axes.labelsize"] = 26
 rcParams["axes.titlesize"] = 22
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
@@ -23,7 +23,7 @@ include("func_comb_PI33.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
 path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/low_q_kernel/scale_error_artificial/"
-path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isovector/piQ4_piQ0/"
+path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isovector/piQ4_piQ0/SD/"
 path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_artificial/piQ4_piQ0/"
 
 #======= PHYSICAL CONSTANTS ====================#
@@ -78,7 +78,7 @@ pi_33_lc_s1 = Vector{Vector{uwreal}}(undef, 0)
 pi_33_ll_s2 = Vector{Vector{uwreal}}(undef, 0)
 pi_33_lc_s2 = Vector{Vector{uwreal}}(undef, 0)
 
-fb = BDIO_open(joinpath(path_store_pi, "PI_33.bdio"), "r")
+fb = BDIO_open(joinpath(path_store_pi, "PI_33_SD.bdio"), "r")
 res = Dict()
 count=0
 while ALPHAdobs_next_p(fb)
@@ -215,7 +215,7 @@ end
 ## PLOTS
 #########################
 using Statistics
-ll = L"$\mathit{\Pi}^{3,3}_{\mathrm{sub}}(Q^2/4) - \mathit{\Pi}^{3,3}_{\mathrm{sub}}(0)$"
+ll = L"$\mathit{\bar\Pi}^{33, \mathrm{SD}}_{\mathrm{sub}}(Q^2/4)$"
 plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_isov)
 plot_chiral_best_fit(fitcat_pi33_lc_s2, path_plot=path_plot, nmom=3, tt=["Set", "2", "LC"], f_tot_isov=f_tot_isov, ylab=ll)
 plot_cl_best_fit(fitcat_pi33_ll_s1, path_plot=path_plot, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
@@ -237,15 +237,14 @@ for q in 1:NMOM
                 fitcat_pi33_lc_s1[q],
                 fitcat_pi33_lc_s2[q])...)
 
-    # ww_tot = get_w_from_fitcat(fitcat_pi33_tot)
+    ww_tot = get_w_from_fitcat(fitcat_pi33_tot)
 
     ww_ll_s1 = get_w_from_fitcat(fitcat_pi33_ll_s1[q])
     ww_ll_s2 = get_w_from_fitcat(fitcat_pi33_ll_s2[q])
     ww_lc_s1 = get_w_from_fitcat(fitcat_pi33_lc_s1[q])
     ww_lc_s2 = get_w_from_fitcat(fitcat_pi33_lc_s2[q])
 
-    ww_tot = vcat(ww_ll_s1, ww_ll_s2, ww_lc_s1, ww_lc_s2)
-
+    # ww_tot = vcat(ww_ll_s1, ww_ll_s2, ww_lc_s1, ww_lc_s2)
 
     w, widx  =  findmax(ww_tot)
   
@@ -292,7 +291,7 @@ for q in 1:NMOM
     fill_betweenx([0,0.6], value(final_res).+errtot, value(final_res).-errtot, alpha=0.4, color="tomato", zorder=1)
     xlim(value(final_res)-6*err(final_res), value(final_res)+6*err(final_res))
     ylabel(L"$\mathrm{Frequency}$")
-    xlabel(L"$\mathit{\Pi}^{3,3}_{\mathrm{sub}}(Q^2/4) - \mathit{\Pi}^{3,3}_{\mathrm{sub}}(0)$")
+    xlabel(L"$\mathit{\bar\Pi}^{33, \mathrm{SD}}_{\mathrm{sub}}(Q^2/4)$")
     tight_layout()
     display(gcf())
     savefig(joinpath(path_plot, "hist", "hist_q$(q).pdf"))
@@ -309,10 +308,10 @@ end
 ## saving physical results in BDIO
 
 io = IOBuffer()
-write(io, "PI33 low q physical results")
-fb = ALPHAdobs_create(joinpath(path_phys_res, "PI33_physRes.bdio"), io)
+write(io, "PI33 ILD physical results")
+fb = ALPHAdobs_create(joinpath(path_phys_res, "PI33_SD_physRes.bdio"), io)
 for k in eachindex(RES)
-    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi33 low q")
+    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi33 SD low q")
     ALPHAdobs_write(fb, aux)
 end
 ALPHAdobs_close(fb)

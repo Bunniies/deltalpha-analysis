@@ -9,22 +9,23 @@ using DelimitedFiles
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 rcParams["text.usetex"] =  true
 rcParams["mathtext.fontset"]  = "cm"
-rcParams["font.size"] =13
-rcParams["axes.labelsize"] =22
-rcParams["axes.titlesize"] = 18
+rcParams["font.size"] =20
+rcParams["axes.labelsize"] =26
+rcParams["axes.titlesize"] = 22
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
-path_phys_res_highq = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_multimom/piQ_Q4/"
-path_phys_res_lowq = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_multimom/piQ4_piQ0/"
-path_phys_res_fullq = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_multimom/full_q/"
+path_phys_res_highq = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_artificial/piQ_Q4/"
+path_phys_res_lowq = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_artificial/piQ4_piQ0/"
+path_phys_res_fullq = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_artificial/full_q/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/running"
 
 include("../utils/IO_BDIO.jl")
 include("./tools_running.jl")
+include("../utils/const.jl")
 
 const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
 NMOM = length(Qgev)
-Qmgev =  36.0  # GeV^2
+Qmgev =  9.0  # GeV^2
 
 ######################################
 ## HIGH Q
@@ -32,34 +33,34 @@ Qmgev =  36.0  # GeV^2
 ## read phys res data HIGH Q
 # reading systematic errors
 
-syst_highq = read_systematics(path_phys_res_highq)
+# syst_highq = read_systematics(path_phys_res_highq)
 
 # 33
 pi33_SD = read_phys_res(path_phys_res_highq, "PI33_SD_physRes.bdio")
 pi33_ILD = read_phys_res(path_phys_res_highq, "PI33_ILD_physRes.bdio")
-pi33_SD = pi33_SD .+ [uwreal([0.0, syst_highq["pi33SD"][k]], "syst 33 SD") for k in eachindex(Qgev)]
-pi33_ILD = pi33_ILD .+ [uwreal([0.0, syst_highq["pi33ILD"][k]], "syst 33 ILD") for k in eachindex(Qgev)]
 
-b33qqm_highq = [(q/(4*Qmgev)) * log(2) / (4pi^2) for q in Qgev]
+b33qm_pt_5loops = uwreal([1895.26*1e-5, 2.62*1e-5], "b33_qm_pt")
+b33qqm_highq = [(q/(4*Qmgev)) * b33qm_pt_5loops for q in Qgev] # using PT result
+# b33qqm_highq = [(q/(4*Qmgev)) * log(2) / (4pi^2) for q in Qgev] # at LO
 pi33_highq = (pi33_ILD + pi33_SD + b33qqm_highq ) 
+#add_t0_err!(pi33_highq, t0sqrt_ph_err)
 
 # 88
 pi3388dlt_highq = read_phys_res(path_phys_res_highq, "PI3388_physRes.bdio")
-pi3388dlt_highq = pi3388dlt_highq .+ [uwreal([0.0, syst_highq["pi3388"][k]], "syst 3388") for k in eachindex(Qgev)]
+# add_t0_err!(pi3388dlt_highq, t0sqrt_ph_err)
 pi88_highq = pi33_highq * charge_factor["88"] - pi3388dlt_highq
 
 # cc connected 
 picc_highq_sub = read_phys_res(path_phys_res_highq, "PIcc_conn_physRes.bdio")
-picc_highq_sub = picc_highq_sub .+ [uwreal([0.0, syst_highq["piccconn"][k]], "syst cc conn") for k in eachindex(Qgev)]
+bcc_highq = read_phys_res(path_phys_res_highq, "PI_blc_2Qm_physRes.bdio")
 
-bcc_highq = read_phys_res(path_phys_res_highq, "PI_blc_physRes.bdio")
-bcc_highq = bcc_highq .+ [uwreal([0.0, syst_highq["piblc"][k]], "syst blc") for k in eachindex(Qgev)]
-
-picc_highq = picc_highq_sub .+ bcc_highq .+ 2 * charge_factor["cc"] * b33qqm_highq
+picc_highq = picc_highq_sub .+ Qgev ./ (4*Qmgev) .* bcc_highq .+ 2 * charge_factor["cc"] * b33qqm_highq
+#add_t0_err!(picc_highq, t0sqrt_ph_err)
 
 # 08
-pi08_highq = read_phys_res(path_phys_res_highq, "PI08_physRes.bdio")
-pi08_highq = pi08_highq .+ [uwreal([0.0, syst_highq["pi80"][k]], "syst 80") for k in eachindex(Qgev)]
+pi08_highq = Vector{uwreal}(read_phys_res(path_phys_res_highq, "PI08_physRes.bdio"))
+
+# add_t0_err!(pi08_highq, t0sqrt_ph_err)
 
 # remove charge factor
 pi88_highq ./= charge_factor["88"]
@@ -76,6 +77,7 @@ fitcc = fit_routine(funccc, Qgev, picc_highq, 10)
 fit08 = fit_routine(func08, Qgev, pi08_highq, 10)
 
 ## plot 
+fig = figure(figsize=(10,7.))
 ax = gca()
 ax.tick_params(right=true)
 
@@ -111,7 +113,7 @@ xlabel(L"$Q^2\ [\mathrm{GeV}^2]$")
 ylabel(L"$\Pi(-Q^2) -\Pi(-Q^2/4) $")
 legend()
 tight_layout()
-display(gcf())
+display(fig)
 savefig(joinpath(path_plot, "hvp_running_highq.pdf"))
 close("all")
 
@@ -122,31 +124,35 @@ close("all")
 ## read phys res data LOW Q
 # reading systematic errors
 
-syst_lowq = read_systematics(path_phys_res_lowq)
+# syst_lowq = read_systematics(path_phys_res_lowq)
 
 # 33
 pi33_lowq_sub = read_phys_res(path_phys_res_lowq, "PI33_physRes.bdio") 
-pi33_lowq_sub = pi33_lowq_sub .+ [uwreal([0.0, syst_lowq["pi33"][k]], "syst 33 lowq") for k in eachindex(Qgev)]
-b33qqm_lowq = [(q/(4*Qmgev)) * log(2) / (4pi^2) for q in Qgev ./4]
+b33qqm_lowq = [(q/(4*Qmgev)) * b33qm_pt_5loops for q in Qgev ./4]
+# b33qqm_lowq = [(q/(4*Qmgev^2)) * log(2) / (4pi^2) for q in Qgev ./4] # at LO
 pi33_lowq = pi33_lowq_sub .+ b33qqm_lowq
+# add_t0_err!(pi33_lowq, t0sqrt_ph_err)
 
 # 88
-pi88_lowq_sub = read_phys_res(path_phys_res_lowq, "PI88_physRes.bdio")
-pi88_lowq_sub = pi88_lowq_sub .+ [uwreal([0.0, syst_lowq["pi88"][k]], "syst 88 lowq") for k in eachindex(Qgev)]
-pi88_lowq = pi88_lowq_sub .+ b33qqm_lowq
+pi33_lowq_SD = read_phys_res(path_phys_res_lowq, "PI33_SD_physRes.bdio")
+# add_t0_err!(pi33_lowq_SD, t0sqrt_ph_err)
+pi3388dlt_lowq = read_phys_res(path_phys_res_lowq, "PI3388_SD_physRes.bdio")
+# add_t0_err!(pi3388dlt_lowq, t0sqrt_ph_err)
+pi88_lowq_ILD = read_phys_res(path_phys_res_lowq, "PI88_ILD_physRes.bdio")
+# add_t0_err!(pi88_lowq_ILD, t0sqrt_ph_err)
+
+pi88_lowq = pi33_lowq_SD * charge_factor["88"] - pi3388dlt_lowq + pi88_lowq_ILD
+# add_t0_err!(pi88_lowq, t0sqrt_ph_err) # use either this or the previous three lines
 
 # cc connected
 picc_lowq_sub = read_phys_res(path_phys_res_lowq, "PIcc_conn_physRes.bdio")
-picc_lowq_sub = picc_lowq_sub .+ [uwreal([0.0, syst_lowq["piccconn"][k]], "syst cc lowq") for k in eachindex(Qgev)]
-
-bcc_lowq = read_phys_res(path_phys_res_lowq, "PI_blc_physRes.bdio")
-bcc_lowq = bcc_lowq .+ [uwreal([0.0, syst_lowq["piblc"][k]], "syst blc lowq") for k in eachindex(Qgev)]
-
-picc_lowq = picc_lowq_sub  .+ 2 .* charge_factor["cc"] .* b33qqm_lowq #.+ bcc_lowq
+bcc_lowq = read_phys_res(path_phys_res_highq, "PI_blc_2Qm_physRes.bdio")
+picc_lowq = picc_lowq_sub .+ 4/3 * Qgev ./ 4 ./ (4*Qmgev) .* bcc_lowq .+ 2 .* charge_factor["cc"] .* b33qqm_lowq #.+ bcc_lowq
+# add_t0_err!(picc_lowq, t0sqrt_ph_err)
 
 # 08
-pi08_lowq = read_phys_res(path_phys_res_lowq, "PI08_physRes.bdio")
-pi08_lowq = pi08_lowq .+ [uwreal([0.0, syst_lowq["pi80"][k]], "syst 80 lowq") for k in eachindex(Qgev)]
+pi08_lowq = Vector{uwreal}(read_phys_res(path_phys_res_lowq, "PI08_physRes.bdio"))
+# add_t0_err!(pi08_lowq, t0sqrt_ph_err)
 
 # remove charge factor
 pi88_lowq ./= charge_factor["88"]
@@ -163,6 +169,7 @@ fitcc = fit_routine(funccc, Qgev ./ 4, picc_lowq, 10)
 fit08 = fit_routine(func08, Qgev ./ 4, pi08_lowq, 10)
 
 ## plot
+fig = figure(figsize=(10,7.))
 ax = gca()
 ax.tick_params(right=true)
 # isovector 
@@ -197,7 +204,7 @@ xlabel(L"$Q^2\ [\mathrm{GeV}^2]$")
 ylabel(L"$\Pi(-Q^2/4) -\Pi(0) $")
 legend()
 tight_layout()
-display(gcf())
+display(fig)
 savefig(joinpath(path_plot, "hvp_running_lowq.pdf"))
 close("all")
 
@@ -205,16 +212,32 @@ close("all")
 ######################
 ## TOTAL Q
 #####################
-syst_fullq = read_systematics(path_phys_res_fullq)
+
+# add_t0_err!(pi33_tot, t0sqrt_ph_err)
+## test with t0err
+# uwerr.(pi33_tot)
+# pi33_tot
+# add_t0_phi2_phi4_err!(pi33_tot, t0sqrt_ph_err)
+# uwerr.(pi33_tot)
+# pi33_tot
+# details(pi33_tot[12])
+##
 
 pi33_tot = pi33_highq .+ pi33_lowq
-pi88_tot = pi88_highq .+ pi88_lowq
-pi08_tot = pi08_highq .+ pi08_lowq
+add_t0_err!(pi33_tot, t0sqrt_ph_err)
 
-# picc_tot = picc_highq .+ picc_lowq
-picc_tot = read_phys_res(path_phys_res_fullq, "PIcc_conn_physRes.bdio")
-picc_tot = picc_tot .+ [uwreal([0.0, syst_fullq["piccconn"][k]], "syst cc fullq") for k in eachindex(Qgev)]
-picc_tot ./= charge_factor["cc"] # remove charge factor 
+pi88_tot = pi88_highq .+ pi88_lowq
+add_t0_err!(pi88_tot, t0sqrt_ph_err)
+
+pi08_tot = pi08_highq .+ pi08_lowq
+add_t0_err!(pi08_tot, t0sqrt_ph_err)
+
+picc_tot = picc_highq .+ picc_lowq
+add_t0_err!(picc_tot, t0sqrt_ph_err)
+
+# picc_tot = read_phys_res(path_phys_res_fullq, "PIcc_conn_physRes.bdio")
+# picc_tot = picc_tot .+ [uwreal([0.0, syst_fullq["piccconn"][k]], "syst cc fullq") for k in eachindex(Qgev)]
+# picc_tot ./= charge_factor["cc"] # remove charge factor 
 
 wpmm = Dict{String, Vector{Float64}}()
 wpmm["E300"] = [-1., 2., -1., -1.]
@@ -231,6 +254,7 @@ fit08 = fit_routine(func08, Qgev, pi08_tot, 10)
 
 ## figure
 # isovector 
+fig = figure(figsize=(10,7.))
 ax = gca()
 ax.tick_params(right=true)
 
@@ -265,9 +289,44 @@ xlabel(L"$Q^2\ [\mathrm{GeV}^2]$")
 ylabel(L"$\mathit{\bar\Pi}(-Q^2)$")
 legend()
 tight_layout()
-display(gcf())
-savefig(joinpath(path_plot, "hvp_running_totq.pdf"))
+display(fig)
+savefig(joinpath(path_plot, "hvp_running_totq_scale_err.pdf"))
+# savefig(joinpath(path_plot, "hvp_running_totq.pdf"))
 close("all")
+
+
+## SAVING FINAL RESULTS IN BDIO
+
+@info("Saving final PI results")
+using ALPHAio
+io = IOBuffer()
+write(io, "PI phys final results")
+path_store_pi_fin = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/final_pi_phys_results"
+fb = ALPHAdobs_create(joinpath(path_store_pi_fin, "PI_all_phys_res.bdio"), io)
+
+data = Dict{String, Array{uwreal}}(
+    "pi_33" => pi33_tot,
+    "pi_88" => pi88_tot,
+    "pi_08" => pi08_tot,
+    "pi_cc" => picc_tot
+)
+ALPHAdobs_write(fb, data)
+ALPHAdobs_close(fb)
+println("# Saving complete!")
+
+## test reading
+fb = BDIO_open(joinpath(path_store_pi_fin, "PI_all_phys_res.bdio"), "r")
+res = Dict{String, Array{uwreal}}()
+while ALPHAdobs_next_p(fb)
+    d = ALPHAdobs_read_parameters(fb)
+    nobs = d["nobs"]
+    dims = d["dimensions"]
+    sz = tuple(d["size"]...)
+    ks = collect(d["keys"])
+    # push!(res, ALPHAdobs_read_next(fb, size=sz, keys=ks))
+    res =  ALPHAdobs_read_next(fb, size=sz, keys=ks)
+end
+BDIO_close!(fb)
 
 ## comparison of charm plot
 

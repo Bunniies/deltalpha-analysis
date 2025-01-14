@@ -8,9 +8,9 @@ import ADerrors: err
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 rcParams["text.usetex"] =  true
 rcParams["mathtext.fontset"]  = "cm"
-rcParams["font.size"] =13
-rcParams["axes.labelsize"] =22
-rcParams["axes.titlesize"] = 18
+rcParams["font.size"] = 20
+rcParams["axes.labelsize"] = 26
+rcParams["axes.titlesize"] = 22
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 
@@ -19,12 +19,12 @@ include("../../utils/types.jl")
 include("../../utils/plot_utils.jl")
 include("../../utils/IO_BDIO.jl")
 include("../../utils/tools.jl")
-include("./func_comb_PI88.jl")
+include("./func_comb_PI3388_SD.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/low_q_kernel/scale_error_multimom/BM"
-path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isoscalar/piQ4_piQ0/"
-path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_multimom/piQ4_piQ0/"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/low_q_kernel/scale_error_artificial/"
+path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isoscalar/piQ4_piQ0/SD/"
+path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_artificial/piQ4_piQ0/"
 
 #======= PHYSICAL CONSTANTS ====================#
 const MPI_ph = uwreal([134.9768, 0.0005], "mpi phys")
@@ -36,14 +36,14 @@ const phi4_ph = (sqrt(8)*t0sqrt_ph)^2 * ((MK_ph/hc)^2 + 0.5*(MPI_ph/hc)^2)
 # const Qgev = [3., 5., 9.] # Q^2
 const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] ./ 4 # Q^2
 
-const Qmgev = 36.0 # Qm^2
+const Qmgev = 9.0 # Qm^2
 
 
-enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
-         "N451", "D451", "D452", # B450, D450 removed
-         "N202", "N203", "N200", "D251", "D200", "D201", "E250",
-         "J303", "J304", "E300",
-         "J500", "J501"])
+enslist = sort([ "H102", "N101", "C101", "C102", "D150",
+        "N451", "D450", "D451", "D452",
+        "N200", "D251", "D200", "D201", "E250", # N203 removed
+        "J303", "J304", "E300",
+        "J501"])
 
 ensinfo = EnsInfo.(enslist)
 
@@ -76,7 +76,7 @@ pi_88_lc_s1 = Vector{Vector{uwreal}}(undef, 0)
 pi_88_ll_s2 = Vector{Vector{uwreal}}(undef, 0)
 pi_88_lc_s2 = Vector{Vector{uwreal}}(undef, 0)
 
-fb = BDIO_open(joinpath(path_store_pi, "PI_88.bdio"), "r")
+fb = BDIO_open(joinpath(path_store_pi, "PI_3388_SD.bdio"), "r")
 res = Dict()
 count=0
 while ALPHAdobs_next_p(fb)
@@ -101,7 +101,7 @@ end
 BDIO_close!(fb)
 
 ##  cancelling fluctuations from t0_ph
-NOERR = true
+NOERR = false
 if NOERR
     for (k,ens) in enumerate(ensinfo)
         uwerr.(pi_88_ll_s1[k])
@@ -172,17 +172,16 @@ for q in 1:NMOM
         ydata_lc_s1 = fitcat_pi88_lc_s1[q][k_cat].ydata
         ydata_lc_s2 = fitcat_pi88_lc_s2[q][k_cat].ydata
 
-        for (k_mod, model) in enumerate(f_tot_isov)
+        for (k_mod, model) in enumerate(f_tot_dltiso)
             println(k_mod)
-            fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_isov[k_mod], pval=false)
-            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_isov[k_mod], pval=false)
-            fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_isov[k_mod], pval=false)
-            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=false)
+            fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_dltiso[k_mod], pval=true)
+            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_dltiso[k_mod], pval=true)
+            fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_dltiso[k_mod], pval=true)
+            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_dltiso[k_mod], pval=true)
             push!(fitcat_pi88_ll_s1[q][k_cat].fit, fit_ll_s1)
             push!(fitcat_pi88_ll_s2[q][k_cat].fit, fit_ll_s2)
             push!(fitcat_pi88_lc_s1[q][k_cat].fit, fit_lc_s1)
             push!(fitcat_pi88_lc_s2[q][k_cat].fit, fit_lc_s2)
-
         end
     end
 end
@@ -191,13 +190,13 @@ end
 ## PLOTS
 #########################
 using Statistics
-ll = L"$\mathit{\bar\Pi}^{8,8}_{\mathrm{sub}}(-Q^2/4) $"
-plot_cl_all_set(fitcat_pi88_ll_s1, fitcat_pi88_ll_s2, fitcat_pi88_lc_s1, fitcat_pi88_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi88_lc_s2, path_plot=path_plot, nmom=3, tt=["Set", "2", "LC"], f_tot_isov=f_tot_isov, ylab=ll)
+ll = L"$-\Delta_{ls}(\Delta\alpha)$"
+plot_cl_all_set(fitcat_pi88_ll_s1, fitcat_pi88_ll_s2, fitcat_pi88_lc_s1, fitcat_pi88_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_dltiso)
+plot_chiral_best_fit(fitcat_pi88_ll_s1, path_plot=path_plot, nmom=3, tt=["Set", "1", "LL"], f_tot_isov=f_tot_dltiso, ylab=ll)
 plot_cl_best_fit(fitcat_pi88_ll_s1, path_plot=path_plot, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
 
 cattot = [vcat(fitcat_pi88_ll_s1[k], fitcat_pi88_lc_s1[k], fitcat_pi88_ll_s2[k],fitcat_pi88_lc_s2[k]...) for k in eachindex(fitcat_pi88_lc_s2)]
-plot_mAve_summary(cattot, xlab=vcat(label_tot_isov,label_tot_isov,label_tot_isov,label_tot_isov), charge_factor=1/3, ylab=ll, tt=["Set", "1-2", "LL-LC"], path_plot=path_plot)
+plot_mAve_summary(cattot, xlab=vcat(label_tot_dltiso,label_tot_dltiso,label_tot_dltiso,label_tot_dltiso), charge_factor=1/3, ylab=ll, tt=["Set", "1-2", "LL-LC"], path_plot=path_plot)
 plot_mAve_summary(fitcat_pi33_lc_s1, xlab=label_tot_isov, charge_factor=1., ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{ILD}}$")
 
 
@@ -214,26 +213,33 @@ for q in 1:NMOM
                 fitcat_pi88_lc_s1[q],
                 fitcat_pi88_lc_s2[q])...)
 
-    ww_tot = get_w_from_fitcat(fitcat_pi88_tot)
+    # ww_tot = get_w_from_fitcat(fitcat_pi88_tot)
+
+    ww_ll_s1 = get_w_from_fitcat(fitcat_pi88_ll_s1[q])
+    ww_ll_s2 = get_w_from_fitcat(fitcat_pi88_ll_s2[q])
+    ww_lc_s1 = get_w_from_fitcat(fitcat_pi88_lc_s1[q])
+    ww_lc_s2 = get_w_from_fitcat(fitcat_pi88_lc_s2[q])
+
+    ww_tot = vcat(ww_ll_s1, ww_ll_s2, ww_lc_s1, ww_lc_s2)
 
     w, widx  =  findmax(ww_tot)
   
-    model_idx = mod(widx, length(f_tot_isov))
+    model_idx = mod(widx, length(f_tot_dltiso))
     if model_idx == 0 
-        model_idx = length(f_tot_isov)
+        model_idx = length(f_tot_dltiso)
     end
     println("   wmax: ", w, " model_idx: ", model_idx)
-    model = f_tot_isov[model_idx]
+    model = f_tot_dltiso[model_idx]
     
     
-    cat_idx = Int((widx - model_idx ) / length(f_tot_isov))+1
+    cat_idx = Int((widx - model_idx ) / length(f_tot_dltiso))+1
     if cat_idx < 0
         cat_idx +=1
     end
     println("   best χ2/χ2exp: ", fitcat_pi88_tot[cat_idx].fit[model_idx].chi2 / fitcat_pi88_tot[cat_idx].fit[model_idx].chi2exp)
     println("   widx: ", widx, " model_idx: ", model_idx, " catidx: ", cat_idx)
     ## Best Res
-    best_mod = f_tot_isov[model_idx]
+    best_mod = f_tot_dltiso[model_idx]
     xdata = fitcat_pi88_tot[cat_idx].xdata
     param = fitcat_pi88_tot[cat_idx].fit[model_idx].param
 
@@ -244,7 +250,7 @@ for q in 1:NMOM
 
     all_res = Vector{uwreal}()
     for (k, cat) in enumerate(fitcat_pi88_tot)
-        for (j, mod) in enumerate(f_tot_isov)
+        for (j, mod) in enumerate(f_tot_dltiso)
             push!(all_res, mod([0.0 phi2_ph phi4_ph], cat.fit[j].param)[1])
             # push!(all_res, mod([0.0 value(phi2_ph) value(phi4_ph)], cat.fit[j].param)[1])
         end
@@ -258,8 +264,16 @@ for q in 1:NMOM
     println("")
 
 
-    hist(value.(all_res), bins=800, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot)
+    hist(value.(all_res) ./ 3, bins=40, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot, zorder=3)
+    fill_betweenx([0,0.6], value(final_res).+err(final_res), value(final_res).-err(final_res), alpha=0.4, color="gold", zorder=2)
+    errtot = sqrt(err(final_res)^2 + syst^2)
+    fill_betweenx([0,0.6], value(final_res).+errtot, value(final_res).-errtot, alpha=0.4, color="tomato", zorder=1)
+    xlim(value(final_res)-6*err(final_res), value(final_res)+6*err(final_res))
+    ylabel(L"$\mathrm{Frequency}$")
+    xlabel(L"$-\Delta_{ls}(\Delta\alpha)$")
+    tight_layout()
     display(gcf())
+    savefig(joinpath(path_plot, "hist", "hist_q$(q).pdf"))
     close()
 
 end
@@ -274,9 +288,9 @@ end
 
 io = IOBuffer()
 write(io, "PI88  physical results")
-fb = ALPHAdobs_create(joinpath(path_phys_res, "PI88_physRes.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_phys_res, "PI3388_SD_physRes.bdio"), io)
 for k in eachindex(RES)
-    aux = RES[k] #+ uwreal([0.0, SYST[k]], "Syst Pi33 ILD")
+    aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi3388 SD lowq")
     ALPHAdobs_write(fb, aux)
 end
 ALPHAdobs_close(fb)

@@ -166,6 +166,7 @@ for (k, ens) in enumerate(ensinfo)
 
     
     for (j,q) in enumerate(Qlat)
+
         pi_88_ll_conn[k][j] =  tmr_integrand(g88_ll_conn[k], q, KRNL, pl=true, t0ens=t0ens[k]) *1e5
         pi_88_lc_conn[k][j] =  tmr_integrand(g88_lc_conn[k], q, KRNL, pl=true, t0ens=t0ens[k]) *1e5
 

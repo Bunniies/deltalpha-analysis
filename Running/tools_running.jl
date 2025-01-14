@@ -27,3 +27,24 @@ function read_systematics(path)
 
     return dict_syst
 end
+
+function add_t0_err!(obs, t0phys)
+    uwerr(t0phys)
+    uwerr.(obs)
+    for k in eachindex(obs)
+        err_t0 = abs.(mchist(obs[k], "sqrtt0 [fm]") * 1e8 * err(t0phys))
+        obs[k] = obs[k] + uwreal([0.0, err_t0[1]], "sqrtt0 [fm]")
+    end
+    return nothing
+end
+
+function add_t0_phi2_phi4_err!(obs, t0phys)
+    uwerr(t0phys)
+    uwerr.(obs)
+    for k in eachindex(obs)
+        err_t0_aux = mchist(obs[k], "sqrtt0 [fm]") * 1e8
+        err_t0 = sqrt(err_t0_aux[1]^2 * err(t0phys)^2)
+        obs[k] = obs[k] + uwreal([0.0, err_t0], "err t0")
+    end
+    return nothing
+end

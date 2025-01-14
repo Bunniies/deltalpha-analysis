@@ -137,7 +137,6 @@ for (k, ens) in enumerate(ensinfo)
 
     # Qlat  = Qgev .* value.(t0sqrt_ph.^2) ./ t0ens[k] ./ hc^2 * 1e6
     # qmlat = Qmgev * value(t0sqrt_ph^2) / t0ens[k] / hc^2 * 1e6
-
     for (j,q) in enumerate(Qlat)
         pi_3388_ll_s1[k][j] =  tmr_integrand(g3388_dlt_ll_s1[k], q, KRNL, pl=false, t0ens=t0ens[k])
         pi_3388_lc_s1[k][j] =  tmr_integrand(g3388_dlt_lc_s1[k], q, KRNL, pl=false, t0ens=t0ens[k])

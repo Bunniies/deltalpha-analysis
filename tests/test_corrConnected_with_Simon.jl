@@ -35,7 +35,7 @@ v3t30 = get_corr(path_data, ensinfo, "light", "V3T30", path_rw=path_rw, frw_bcwd
 # frwd_bckwrd_antisymm!(v1t10)
 # frwd_bckwrd_antisymm!(v2t20)
 # frwd_bckwrd_antisymm!(v3t30)
-vt = Corr((v1t10.obs .+ v2t30.obs .+ v3t30.obs)./3, v1t10.id, "Gvt")
+vt = Corr((v1t10.obs .+ v2t20.obs .+ v3t30.obs)./3, v1t10.id, "Gvt")
 frwd_bckwrd_antisymm!(vt)
 deriv_vt= HVPobs.Obs.improve_derivative(vt.obs, std=false)
 uwerr.(deriv_vt)
@@ -55,7 +55,7 @@ v1t10 = get_corr(path_data, ensinfo, "light", "V1T10", path_rw=path_rw, frw_bcwd
 v2t20 = get_corr(path_data, ensinfo, "light", "V2T20", path_rw=path_rw, frw_bcwd=false, L=1)
 v3t30 = get_corr(path_data, ensinfo, "light", "V3T30", path_rw=path_rw, frw_bcwd=false, L=1)
 
-vt = Corr((v1t10.obs .+ v2t30.obs .+ v3t30.obs)./3, v1t10.id, "Gvt")
+vt = Corr((v1t10.obs .+ v2t20.obs .+ v3t30.obs)./3, v1t10.id, "Gvt")
 
 cv_l = cv_loc(ensinfo.beta)
 improve_corr_vkvk!(gvv, vt, -2*cv_l, std=false)

@@ -66,8 +66,8 @@ for (k, ens) in enumerate(ensinfo)
         res_s1 = ALPHAdobs_read_next(fbs1, size=sz, keys=ks)
     end
     BDIO_close!(fbs1)
-    gcc_ll_s1[k] = res_s1["gcc_ll_conn"]
-    gcc_lc_s1[k] = res_s1["gcc_lc_conn"]
+    gcc_ll_s1[k] = res_s1["gcc_ll_conn_plus"]
+    gcc_lc_s1[k] = res_s1["gcc_lc_conn_plus"]
     
     fbs2 = BDIO_open(path_s2[k], "r")
     res_s2 = Dict()
@@ -78,8 +78,8 @@ for (k, ens) in enumerate(ensinfo)
         res_s2 = ALPHAdobs_read_next(fbs2, size=sz, keys=ks)
     end
     BDIO_close!(fbs2)
-    gcc_ll_s2[k] = res_s2["gcc_ll_conn"]
-    gcc_lc_s2[k] = res_s2["gcc_lc_conn"]
+    gcc_ll_s2[k] = res_s2["gcc_ll_conn_plus"]
+    gcc_lc_s2[k] = res_s2["gcc_lc_conn_plus"]
 end
 
 ##
@@ -106,15 +106,16 @@ pi_cc_lc_s2 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)]
 for (k, ens) in enumerate(ensinfo)
     println("Ensemble: ", ens.id)
 
-    # Qlat  = Qgev .* value.(t0sqrt_ph.^2) ./ t0ens[k] ./ hc^2 * 1e6
-    # qmlat = Qmgev * value(t0sqrt_ph^2) / t0ens[k] / hc^2 * 1e6
-
-    Qlat  = Qgev .* t0sqrt_ph.^2 ./ t0ens[k] ./ hc^2 * 1e6
-    qmlat = Qmgev * t0sqrt_ph^2 / t0ens[k] / hc^2 * 1e6
+    # println("using ensemble by ensemble t0/a^2")
+    # Qlat  = Qgev .* t0sqrt_ph.^2 ./ t0ens[k] ./ hc^2 * 1e6
+    # qmlat = Qmgev * t0sqrt_ph^2 / t0ens[k] / hc^2 * 1e6
+    println("using t0/a^2 at symm point from Regensburg" )
+    Qlat  = Qgev .* t0sqrt_ph.^2 ./ t0(ens.beta) ./ hc^2 * 1e6
+    qmlat = Qmgev * t0sqrt_ph^2 / t0(ens.beta) / hc^2 * 1e6
 
 
     for (j,q) in enumerate(Qlat)
-        if j == 12 || j == 2
+        if j == 12 
             pl_bool=true
         else
             pl_bool=false
@@ -132,7 +133,7 @@ end
 
 io = IOBuffer()
 write(io, "PI charm-charm connected. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PIcc_conn.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PIcc_conn_plus.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

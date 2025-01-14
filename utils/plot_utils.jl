@@ -52,10 +52,11 @@ weights given by the model average. One plot for each value of the momenta is ge
 function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", nmom::Int64=3, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
     
     for q in [6,8,12]#1:nmom
+        fig = figure(figsize=(10,7.))
         for k_cat in eachindex(fc_lc_s1[q])
 
-            # ww_ll_s1 = get_w_from_fitcat(fc_ll_s1[q], norm=true)
-            # ww_ll_s2 = get_w_from_fitcat(fc_ll_s2[q], norm=true)
+            ww_ll_s1 = get_w_from_fitcat(fc_ll_s1[q], norm=true)
+            ww_ll_s2 = get_w_from_fitcat(fc_ll_s2[q], norm=true)
             ww_lc_s1 = get_w_from_fitcat(fc_lc_s1[q], norm=true)
             ww_lc_s2 = get_w_from_fitcat(fc_lc_s2[q], norm=true)
 
@@ -73,36 +74,36 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
                     # k_mod = k_modaux
                 # end
             
-                # fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod].param
-                # fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod].param
+                fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod].param
+                fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod].param
                 fit_param_lc_s1 = fc_lc_s1[q][k_cat].fit[k_mod].param
                 fit_param_lc_s2 = fc_lc_s2[q][k_cat].fit[k_mod].param
     
-                # yy_ll_s1  = model(xarr, fit_param_ll_s1)
-                # yy_ll_s2  = model(xarr, fit_param_ll_s2)
+                yy_ll_s1  = model(xarr, fit_param_ll_s1)
+                yy_ll_s2  = model(xarr, fit_param_ll_s2)
                 yy_lc_s1  = model(xarr, fit_param_lc_s1)
                 yy_lc_s2  = model(xarr, fit_param_lc_s2)
     
-                # plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="forestgreen")
-                # plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="royalblue")
-                plot(xarr[:,1], value.(yy_lc_s1),alpha=ww_lc_s1[k_mod], color="purple")
-                plot(xarr[:,1], value.(yy_lc_s2),alpha=ww_lc_s2[k_mod], color="gold")
+                plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="#009E73")
+                plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="#0072B2")
+                plot(xarr[:,1], value.(yy_lc_s1),alpha=ww_lc_s1[k_mod], color="#D55E00")
+                plot(xarr[:,1], value.(yy_lc_s2),alpha=ww_lc_s2[k_mod], color="#E69F00")
     
             end
         end
         axvline.(unique(value.(fc_lc_s1[q][1].xdata[:,1])), linewidth=1.5, alpha=0.5, color="gray", ls=":")
         xlim(0.0,0.008)
         L2D = PyPlot.matplotlib.lines.Line2D
-        custom_lines = [L2D([0], [0], color="forestgreen", lw=2),
-                L2D([0], [0], color="royalblue", lw=2),
-                L2D([0], [0], color="purple", lw=2),
-                L2D([0], [0], color="gold", lw=2)]
+        custom_lines = [L2D([0], [0], color="#009E73", lw=2),
+                L2D([0], [0], color="#0072B2", lw=2),
+                L2D([0], [0], color="#D55E00", lw=2),
+                L2D([0], [0], color="#E69F00", lw=2)]
         legend( custom_lines,  [L"$\mathrm{LL,\ set\ 1}$", L"$\mathrm{LL,\ set\ 2}$", L"$\mathrm{LC,\ set\ 1}$", L"$\mathrm{LC,\ set\ 2}$"], ncol=2)
         # xlabel(L"$a^2/(8t_0)$")
         xlabel(L"$a^2 \ \mathrm{[fm]}$")
         ylabel(ylab)
         tight_layout()
-        display(gcf())
+        display(fig)
         if !isnothing(path_plot)
             fname = string("cont_lim_tot_pi88_q", q, ".pdf")
             savefig(joinpath(path_plot, "continuum-lim", fname))
@@ -114,7 +115,8 @@ end
 function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::Int64=0, ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", tt::Union{Nothing,Vector{String}}=nothing, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
 
     for q in [6,8,12]#1:nmom
-        println("using the first three momenta")
+        fig = figure(figsize=(10,7.))
+        # println("using the first three momenta")
         println("\n- Momentum: $(q)")
         fccat = vcat(fc[q]...)
         w_tot  = get_w_from_fitcat(fccat)
@@ -147,11 +149,13 @@ function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::I
 
         if maximum(value.(xdata[:,1])) >  0.006#0.04
             betatot =  [3.4, 3.46, 3.55, 3.7, 3.85] 
-            color = ["tomato", "forestgreen", "violet", "orange", "navy"]
+            # color = ["tomato", "forestgreen", "violet", "orange", "navy"]
+            color = ["#E69F00", "#56B4E9",  "#009E73", "#CC79A7", "#D55E00"] 
             fmttot = ["d", "s", "^", "h", "8"]
         else
             betatot =  [3.46, 3.55, 3.7, 3.85]
-            color = ["forestgreen", "violet", "orange", "navy"]
+            # color = ["forestgreen", "violet", "orange", "navy"]
+            color = [ "#56B4E9",  "#009E73", "#CC79A7", "#D55E00"] 
             fmttot = ["s", "^", "h", "8"]
         end
         # plot data points
@@ -184,14 +188,14 @@ function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::I
         axvline(value(phi2_ph), ls="dashed", color="black", lw=0.2, alpha=0.7) 
         
         xlim(0.04, 0.8)
-        legend(ncol=2, loc="upper right")
+        legend(ncol=2)#, loc="upper right")
         xlabel(L"$\phi_2$")
         ylabel(ylab)
         if !isnothing(tt)
             title(join(tt, " "))
         end
         tight_layout()
-        display(gcf())
+        display(fig)
         if !isnothing(path_plot)
             fname = string("chiral_lim_", join(tt,"_"), "q_$(q).pdf") 
             savefig(joinpath(path_plot, "chiral-lim", fname ))
@@ -203,6 +207,7 @@ end
 function plot_cl_best_fit(fc::Vector{Vector{FitCat}}; nmom=3, ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", tt::Union{Nothing,Vector{String}}=nothing, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov )
     
     for q in [6,8,12]#1:nmom
+        fig = figure(figsize=(10,7.))
         println("\n- Momentum: $(q)")
         fccat = vcat(fc[q]...)
         w_tot  = get_w_from_fitcat(fccat)
@@ -248,7 +253,7 @@ function plot_cl_best_fit(fc::Vector{Vector{FitCat}}; nmom=3, ylab::LaTeXString=
             title(join(tt, " "))
         end
         tight_layout()
-        display(gcf())
+        display(fig)
         if !isnothing(path_plot)
             fname = string("cont_lim_", join(tt,"_"), "q_$(q).pdf") 
             savefig(joinpath(path_plot, "continuum-lim", fname ))
@@ -285,7 +290,7 @@ function plot_mAve_summary(fc::Vector{Vector{FitCat}}; nmom=3, ylab::Union{Nothi
         # sort weights and discard 5% tail
         idxW = sortperm(w_tot, rev=true)
         cumulative_w = cumsum(w_tot[idxW])
-        idxcumw = findfirst(x -> x > 0.9, cumulative_w)
+        idxcumw = findfirst(x -> x > 0.95, cumulative_w)
         idxW = sort(idxW[1:idxcumw])
         
         all_res = all_res[idxW] .* charge_factor; uwerr.(all_res)
@@ -303,7 +308,7 @@ function plot_mAve_summary(fc::Vector{Vector{FitCat}}; nmom=3, ylab::Union{Nothi
         end
         ax1 = gca()
         setp(ax1.get_xticklabels(),visible=false) # Disable x tick labels
-        setp(ax1.get_xticklines(),visible=false) # Disable x tick labels
+        setp(ax1.get_xticklines(),visible=false) # Disable x tick lines
         x = collect(1:length(all_res))
         v = value.(all_res)
         e = err.(all_res)

@@ -397,9 +397,10 @@ function get_w_from_fitcat(catvec::Vector{FitCat}; norm::Bool=false)
 end
 
 function model_average(results::Vector{uwreal}, ww)
-    fin_res = sum(ww .* results)
-    aux1 = sum( ww .* results.^2)
-    aux2 = sum( ww .* results)^2
+    ww = ww ./ sum(ww)
+    fin_res = sum(ww .* results)  
+    aux1 = sum( ww .* results.^2) 
+    aux2 = sum( ww .* results)^2 
     syst = sqrt(abs(value(aux1 - aux2)))
     #syst = sum( )
     return fin_res, syst
@@ -430,15 +431,19 @@ function corrBounding(corr::Vector{uwreal}, mUp::uwreal, mLow::uwreal, tcut::Int
     upperBound = corr[:]
     lowerBound = corr[:]
 
-    @. G_PBC(x0, p) = exp(-p*(x0-tcut)) + exp(-p*(T-x0+tcut))
-    @. G_OBC(x0, p) = exp(-p*(x0-tcut))
+    # @. G_PBC(x0, p) = exp(-p*(x0-tcut)) + exp(-p*(T-x0+tcut))
+    # @. G_OBC(x0, p) = exp(-p*(x0-tcut))
+    @. G_PBC(x0, p) = exp(-p*(x0)) + exp(-p*(T-x0))
+    @. G_OBC(x0, p) = exp(-p*(x0))
+
 
     if ens.bc == "obc"
-        upperBound[tcut:end] = corr[tcut] .* G_OBC(collect(tcut:T), mUp)
-        lowerBound[tcut:end] = corr[tcut] .* G_OBC(collect(tcut:T), mLow)
+        upperBound[tcut:end] = corr[tcut] ./ G_OBC(tcut, mUp) .* G_OBC(collect(tcut:T), mUp)
+        lowerBound[tcut:end] = corr[tcut] ./ G_OBC(tcut, mLow) .* G_OBC(collect(tcut:T), mLow)
     elseif ens.bc == "pbc"
-        upperBound[tcut:end] = corr[tcut] .* G_PBC(collect(tcut:T), mUp)
-        lowerBound[tcut:end] = corr[tcut] .* G_PBC(collect(tcut:T), mLow)
+        # println("G_PBC(tcut, mUp): ", G_PBC(tcut, mUp))
+        upperBound[tcut:end] = corr[tcut] ./G_PBC(tcut, mUp) .* G_PBC(collect(tcut:T), mUp)
+        lowerBound[tcut:end] = corr[tcut] ./G_PBC(tcut, mLow) .* G_PBC(collect(tcut:T), mLow)
     else
         error("Boundary conditions for ensemble $(ens.id) are not recognised. Supported values are \"obc\" or \"pbc\" ")
     end
@@ -503,13 +508,14 @@ function boundingMethod(corr::Vector{uwreal}, ens::EnsInfo, krnl::Vector{Union{T
     end
 
     for tcut in tcut_arr
-        if  HVPobs.Data.get_a(ens.beta)*tcut < 1.5
+        if  HVPobs.Data.get_a(ens.beta)*tcut < 1.8
             mLow =  meffdata[tcut]
         else
-            tcutaux = ceil(Int64, 1.5 / HVPobs.Data.get_a(ens.beta) )
+            tcutaux = ceil(Int64, 1.8 / HVPobs.Data.get_a(ens.beta) )
             mLow = meffdata[tcutaux]
         end
-        
+        #println("M_eff low bound at t=$(tcut): ", mLow)
+
         if sector == "3388"
             lowerBound, upperBound = corrBounding(corr, mUp33, mUp88, mLow, tcut, ens)
         else
@@ -520,7 +526,7 @@ function boundingMethod(corr::Vector{uwreal}, ens::EnsInfo, krnl::Vector{Union{T
         tmrLow_tmp = lowerBound .* krnl
 
         if !isnothing(wind)
-            t_fm = T .* HVPobs.Data.get_a(ens.beta)
+            t_fm = Float64.(collect(0:T-1)) .* HVPobs.Data.get_a(ens.beta)
             tmrUp_tmp .*= wind(t_fm)
             tmrLow_tmp .*= wind(t_fm)
         end
@@ -546,7 +552,7 @@ function boundingMethod(corr::Vector{uwreal}, ens::EnsInfo, krnl::Vector{Union{T
         tmax = tmin + ceil(Int64, 0.8 / HVPobs.Data.get_a(ens.beta)) # 0.8fm is the length of the averaged interval
         res = plat_av(0.5*(store_tmrLow[tmin:tmax] .+ store_tmrUp[tmin:tmax])) 
     catch
-        tmax = tmin + ceil(Int64, 0.4 / HVPobs.Data.get_a(ens.beta)) # 0.8fm is the length of the averaged interval
+        tmax = tmin + ceil(Int64, 0.4 / HVPobs.Data.get_a(ens.beta)) # 0.4fm is the length of the averaged interval
         res = plat_av(0.5*(store_tmrLow[tmin:tmax] .+ store_tmrUp[tmin:tmax])) 
     end
 

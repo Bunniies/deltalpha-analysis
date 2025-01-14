@@ -9,9 +9,9 @@ import ADerrors: err
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 rcParams["text.usetex"] =  true
 rcParams["mathtext.fontset"]  = "cm"
-rcParams["font.size"] =13
-rcParams["axes.labelsize"] =22
-rcParams["axes.titlesize"] = 18
+rcParams["font.size"] = 20
+rcParams["axes.labelsize"] =26
+rcParams["axes.titlesize"] = 22
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 
@@ -24,7 +24,7 @@ include("func_comb_PI33.jl")
 
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
 path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial/"
-path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isovector/SD"
+path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/isovector/piQ_piQ4/SD/"
 path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_artificial/piQ_Q4/"
 
 #======= PHYSICAL CONSTANTS ====================#
@@ -322,7 +322,14 @@ for q in 1:NMOM
                 fitcat_pi33_lc_s1[q],
                 fitcat_pi33_lc_s2[q])...)
 
-    ww_tot = get_w_from_fitcat(fitcat_pi33_tot)
+    # ww_tot = get_w_from_fitcat(fitcat_pi33_tot)
+
+    ww_ll_s1 = get_w_from_fitcat(fitcat_pi33_ll_s1[q])
+    ww_ll_s2 = get_w_from_fitcat(fitcat_pi33_ll_s2[q])
+    ww_lc_s1 = get_w_from_fitcat(fitcat_pi33_lc_s1[q])
+    ww_lc_s2 = get_w_from_fitcat(fitcat_pi33_lc_s2[q])
+
+    ww_tot = vcat(ww_ll_s1, ww_ll_s2, ww_lc_s1, ww_lc_s2)
 
     w, widx  =  findmax(ww_tot)
   
@@ -365,7 +372,7 @@ for q in 1:NMOM
     println("\n")
 
 
-    hist(value.(all_res), bins=80, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot, zorder=3)
+    hist(value.(all_res), bins=40, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot, zorder=3)
     fill_betweenx([0,0.6], value(final_res).+err(final_res), value(final_res).-err(final_res), alpha=0.4, color="gold", zorder=2)
     errtot = sqrt(err(final_res)^2 + syst^2)
     fill_betweenx([0,0.6], value(final_res).+errtot, value(final_res).-errtot, alpha=0.4, color="tomato", zorder=1)
@@ -405,12 +412,31 @@ while ALPHAdobs_next_p(fb)
 end
 BDIO_close!(fb)
 
-## READ ILD results
+## READ SD results
+path_phys_res_2 = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_multimom/piQ_Q4/"
 
-fb = BDIO_open(joinpath(path_phys_res, "PI33_SD_physRes.bdio"), "r")
-res = []
+fb = BDIO_open(joinpath(path_phys_res_2, "PI33_SD_physRes.bdio"), "r")
+res_SD = []
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)
-    push!(res, ALPHAdobs_read_next(fb))
+    push!(res_SD, ALPHAdobs_read_next(fb))
 end
 BDIO_close!(fb)
+
+## READ SD results
+
+fb = BDIO_open(joinpath(path_phys_res_2, "PI33_ILD_physRes.bdio"), "r")
+res_ILD = []
+while ALPHAdobs_next_p(fb)
+    d = ALPHAdobs_read_parameters(fb)
+    push!(res_ILD, ALPHAdobs_read_next(fb))
+end
+BDIO_close!(fb)
+
+## combining short and long distance
+Qmgev = 36.0
+b33qqm_highq = [(q/(4*Qmgev)) * log(2) / (4pi^2) for q in Qgev]
+
+res = res_SD .+ res_ILD .+ b33qqm_highq
+uwerr.(res)
+details(res[12])

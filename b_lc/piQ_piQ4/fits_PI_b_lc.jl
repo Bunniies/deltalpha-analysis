@@ -9,9 +9,9 @@ import ADerrors: err
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 rcParams["text.usetex"] =  true
 rcParams["mathtext.fontset"]  = "cm"
-rcParams["font.size"] =13
-rcParams["axes.labelsize"] =22
-rcParams["axes.titlesize"] = 18
+rcParams["font.size"] = 20
+rcParams["axes.labelsize"] = 26
+rcParams["axes.titlesize"] = 22
 plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 
 
@@ -37,13 +37,13 @@ const phi4_ph = (sqrt(8)*t0sqrt_ph)^2 * ((MK_ph/hc)^2 + 0.5*(MPI_ph/hc)^2)
 
 # const Qgev = [3., 5., 9.] # Q^2
 # const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
-const Qgev = [36.0] # (2Qm)^2 with Qm=6
+const Qgev = [36.0] # (2Qm)^2 with Qm=3
 const Qmgev = 36.0 # Qm^2
 
 enslist = sort([ "H101", "H102", "N101", "C101",
             "B450", "D450", "D452", # "B450 removed
          "N202", "N203", "N200", "D200",  "E250",
-           "N300", "J303", "E300",  # J303 removed
+           "N300", "E300",  # J303 removed
          "J500"
 ])
 
@@ -78,8 +78,9 @@ pi_blc_lc_s1 = Vector{Vector{uwreal}}(undef, 0)
 pi_blc_ll_s2 = Vector{Vector{uwreal}}(undef, 0)
 pi_blc_lc_s2 = Vector{Vector{uwreal}}(undef, 0)
 
-fb = BDIO_open(joinpath(path_store_pi, "PI_blc_2Qm.bdio"), "r")
+fb = BDIO_open(joinpath(path_store_pi, "PI_blc_2Qm_interp.bdio"), "r")
 res = Dict()
+tmp_res = Dict{Any, Any}()
 count=0
 while ALPHAdobs_next_p(fb)
     count+=1
@@ -93,14 +94,29 @@ while ALPHAdobs_next_p(fb)
         println(extra["Ens"], " ", enslist)
         continue
     end
-    push!(pi_blc_ll_s1, res["pi_blc_ll_s1"])
-    push!(pi_blc_lc_s1, res["pi_blc_lc_s1"])
-    push!(pi_blc_ll_s2, res["pi_blc_ll_s2"])
-    push!(pi_blc_lc_s2, res["pi_blc_lc_s2"])
+    tmp_res[extra["Ens"]] = Dict{String, Array{uwreal}}(
+        "pi_blc_ll_s1" => res["pi_blc_ll_s1"], 
+        "pi_blc_lc_s1" => res["pi_blc_lc_s1"], 
+        "pi_blc_ll_s2" => res["pi_blc_ll_s2"], 
+        "pi_blc_lc_s2" => res["pi_blc_lc_s2"] 
+    )
+    # push!(pi_blc_ll_s1, res["pi_blc_ll_s1"])
+    # push!(pi_blc_lc_s1, res["pi_blc_lc_s1"])
+    # push!(pi_blc_ll_s2, res["pi_blc_ll_s2"])
+    # push!(pi_blc_lc_s2, res["pi_blc_lc_s2"])
 
 end
 BDIO_close!(fb)
 
+# rearrange the order 
+
+for (k, ens) in enumerate(enslist)
+    push!(pi_blc_ll_s1, tmp_res[ens]["pi_blc_ll_s1"])
+    push!(pi_blc_lc_s1, tmp_res[ens]["pi_blc_lc_s1"])
+    push!(pi_blc_ll_s2, tmp_res[ens]["pi_blc_ll_s2"])
+    push!(pi_blc_lc_s2, tmp_res[ens]["pi_blc_lc_s2"])
+
+end
 ##  cancelling fluctuations from t0_ph
 NOERR = false
 if NOERR
@@ -195,11 +211,11 @@ end
 using Statistics
 yll =L"$\Delta_{lc}b(-Q^2)$"
 plot_cl_all_set(fitcat_cc_ll_s1, fitcat_cc_ll_s2, fitcat_cc_lc_s1, fitcat_cc_lc_s2, nmom=1, path_plot=path_plot, ylab=yll, f_tot_isov=f_tot_charm)
-plot_chiral_best_fit(fitcat_cc_lc_s2, path_plot=path_plot, nmom=1, tt=["Set", "2", "LC"], f_tot_isov=f_tot_charm, ylab=yll)
+plot_chiral_best_fit(fitcat_cc_ll_s1, path_plot=path_plot, nmom=1, tt=["Set", "1", "LL"], f_tot_isov=f_tot_charm, ylab=yll)
 plot_cl_best_fit(fitcat_cc_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_charm, ylab=yll)
 
 cattot = [vcat(fitcat_cc_lc_s1[k], fitcat_cc_lc_s2[k]...) for k in eachindex(fitcat_cc_lc_s1)]
-plot_mAve_summary(cattot, xlab=vcat(label_tot_charm,label_tot_charm), charge_factor=4/9, ylab=L"$\frac{4}{9}\Delta_{lc}b(-Q^2)$", tt=["Set", "1-2", "LC"], path_plot=path_plot)
+plot_mAve_summary(cattot, nmom=1, xlab=vcat(label_tot_charm,label_tot_charm), charge_factor=4/9, ylab=L"$\frac{4}{9}\Delta_{lc}b(-Q^2)$", tt=["Set", "1-2", "LC"], path_plot=path_plot)
 plot_mAve_summary(fitcat_cc_lc_s2, xlab=label_tot_charm, charge_factor=4/9, ylab=L"$\frac{4}{9}(\Delta\alpha^{c,c})_{\mathrm{sub}}$")
 
 ###################################
@@ -215,7 +231,11 @@ for q in 1:NMOM
                 fitcat_cc_lc_s1[q],
                 fitcat_cc_lc_s2[q])...)
 
-    ww_tot = get_w_from_fitcat(fitcat_cc_tot)
+    # ww_tot = get_w_from_fitcat(fitcat_cc_tot)
+
+    ww_lc_s1 = get_w_from_fitcat(fitcat_cc_lc_s1[q])
+    ww_lc_s2 = get_w_from_fitcat(fitcat_cc_lc_s2[q])
+    ww_tot = vcat(ww_lc_s1, ww_lc_s2)
 
     w, widx  =  findmax(ww_tot)
   
@@ -257,9 +277,17 @@ for q in 1:NMOM
     println("   systematic: ", syst)
 
 
-    #hist(value.(all_res), bins=800, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot)
-    #display(gcf())
-    #close()
+    hist(value.(all_res) .* 4 ./ 9 , bins=80, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot, zorder=3)
+    fill_betweenx([0,0.6], value(final_res).+err(final_res), value(final_res).-err(final_res), alpha=0.4, color="gold", zorder=2)
+    errtot = sqrt(err(final_res)^2 + syst^2)
+    fill_betweenx([0,0.6], value(final_res).+errtot, value(final_res).-errtot, alpha=0.4, color="tomato", zorder=1)
+    xlim(value(final_res)-6*err(final_res), value(final_res)+6*err(final_res))
+    ylabel(L"$\mathrm{Frequency}$")
+    xlabel(L"$b_{lc}(Q^2)$")
+    tight_layout()
+    display(gcf())
+    # savefig(joinpath(path_plot, "hist", "hist_q$(q).pdf"))
+    close()
 
 end
 

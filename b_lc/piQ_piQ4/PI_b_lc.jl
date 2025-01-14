@@ -66,8 +66,8 @@ for (k, ens) in enumerate(ensinfo)
         res_s1 = ALPHAdobs_read_next(fbs1, size=sz, keys=ks)
     end
     BDIO_close!(fbs1)
-    blc_ll_s1[k] = res_s1["g33_ll"] .- res_s1["gcc_ll_conn"]
-    blc_lc_s1[k] = res_s1["g33_lc"] .- res_s1["gcc_lc_conn"]
+    blc_ll_s1[k] = res_s1["g33_ll"] .- res_s1["gcc_ll_conn_plus"]
+    blc_lc_s1[k] = res_s1["g33_lc"] .- res_s1["gcc_lc_conn_plus"]
     
     fbs2 = BDIO_open(path_s2[k], "r")
     res_s2 = Dict()
@@ -78,8 +78,8 @@ for (k, ens) in enumerate(ensinfo)
         res_s2 = ALPHAdobs_read_next(fbs2, size=sz, keys=ks)
     end
     BDIO_close!(fbs2)
-    blc_ll_s2[k] = res_s2["g33_ll"] .- res_s2["gcc_ll_conn"]
-    blc_lc_s2[k] = res_s2["g33_lc"] .- res_s2["gcc_lc_conn"]
+    blc_ll_s2[k] = res_s2["g33_ll"] .- res_s2["gcc_ll_conn_plus"]
+    blc_lc_s2[k] = res_s2["g33_lc"] .- res_s2["gcc_lc_conn_plus"]
 end
 
 ##
@@ -181,7 +181,7 @@ end
 @info("Saving PI b_lc results in BDIO")
 io = IOBuffer()
 write(io, "PI blc high q. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_blc_2Qm.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_blc_2Qm_plus.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

@@ -49,7 +49,7 @@ picc_highq = picc_highq_sub .+ Qgev ./ (4*Qmgev) .* bcc_highq .+ 2 .* charge_fac
 b33qqm_lowq = [(q/(4*Qmgev)) * log(2) / (4pi^2) for q in Qgev ./4]
 # cc connected
 picc_lowq_sub = read_phys_res(path_phys_res_lowq, "PIcc_conn_physRes.bdio")
-picc_lowq = picc_highq_sub .+ 4/3 * Qgev ./4 ./ (4*Qmgev) .* bcc_highq .+ 2 .* charge_factor["cc"] .* b33qqm_lowq
+picc_lowq = picc_lowq_sub .+ 4/3 * Qgev ./4 ./ (4*Qmgev) .* bcc_highq .+ 2 .* charge_factor["cc"] .* b33qqm_lowq
 
 ######################
 ## TOTAL Q
