@@ -40,9 +40,9 @@ const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
 const Qmgev = 9.0 # Qm^2
 
 enslist = sort([ "H102", "N101", "C101", "C102", "D150",
-         "N451", "D450", "D452", #  D451 removed
-           "N200", "D251", "D200", "D201", "E250", # N203 removed
-         "J303", "J306", "J304", "E300", 
+         "N451", "D450", "D451", "D452", #  D451 D450 removed
+         "N200", "D251", "D200", "D201", "E250", # N203 removed
+         "J303", "J304", "E300", 
          "J501"
          ])
 
@@ -78,6 +78,7 @@ pi_3388_ll_s2 = Vector{Vector{uwreal}}(undef, 0)
 pi_3388_lc_s2 = Vector{Vector{uwreal}}(undef, 0)
 
 fb = BDIO_open(joinpath(path_store_pi, "PI_3388_dlt.bdio"), "r")
+tmp_res = Dict()
 res = Dict()
 count=0
 while ALPHAdobs_next_p(fb)
@@ -89,17 +90,27 @@ while ALPHAdobs_next_p(fb)
     res = ALPHAdobs_read_next(fb, size=sz, keys=ks)
     if extra["Ens"] ∉ enslist # != enslist[count]
         @info("Mismatch with EnsID in current BDIO uinfo2 ")
-        #println(extra["Ens"], " ", enslist[count])
+        println(extra["Ens"], " ", enslist)
         continue
     end
-    push!(pi_3388_ll_s1, res["pi3388_ll_s1"])
-    push!(pi_3388_lc_s1, res["pi3388_lc_s1"])
-    push!(pi_3388_ll_s2, res["pi3388_ll_s2"])
-    push!(pi_3388_lc_s2, res["pi3388_lc_s2"])
+    tmp_res[extra["Ens"]] = Dict{String, Array{uwreal}}(
+
+        "pi3388_ll_s1" => res["pi3388_ll_s1"],
+        "pi3388_lc_s1" => res["pi3388_lc_s1"],
+        "pi3388_ll_s2" => res["pi3388_ll_s2"],
+        "pi3388_lc_s2" => res["pi3388_lc_s2"]
+    )
 
 end
 BDIO_close!(fb)
 
+# rearrange order
+for (k,ens) in enumerate(enslist)
+    push!(pi_3388_ll_s1, tmp_res[ens]["pi3388_ll_s1"])
+    push!(pi_3388_lc_s1, tmp_res[ens]["pi3388_lc_s1"])
+    push!(pi_3388_ll_s2, tmp_res[ens]["pi3388_ll_s2"])
+    push!(pi_3388_lc_s2, tmp_res[ens]["pi3388_lc_s2"])
+end
 
 ##  cancelling fluctuations from t0_ph
 NOERR = false
@@ -161,6 +172,28 @@ for s in 1:2
     end
 end
 
+## cuts in phi2<0.45
+i_cutphi2 = findall(x->x<0.45, value.(phi2))
+for s in 1:2
+    xdata = [a28t0[i_cutphi2] phi2[i_cutphi2] phi4[i_cutphi2]]
+    if s == 1
+        for q in 1:NMOM
+            str = "mpicut_set$(s)_q$(q)"
+            # pi 33
+            push!(fitcat_3388_ll_s1[q], FitCat(xdata, getindex.(pi_3388_ll_s1, q)[i_cutphi2], str))
+            push!(fitcat_3388_lc_s1[q], FitCat(xdata, getindex.(pi_3388_lc_s1, q)[i_cutphi2], str))
+        end
+    elseif s == 2
+        for q in 1:NMOM
+            str = "mpicut_set$(s)_q$(q)"
+            # pi 33
+            push!(fitcat_3388_ll_s2[q], FitCat(xdata, getindex.(pi_3388_ll_s2, q)[i_cutphi2], str))
+            push!(fitcat_3388_lc_s2[q], FitCat(xdata, getindex.(pi_3388_lc_s2, q)[i_cutphi2], str))
+        end
+
+    end
+end
+
 ##
 #================= FITTING ====================#
 for q in 1:NMOM
@@ -196,11 +229,12 @@ end
 ## PLOTS
 #########################
 using Statistics
-plot_cl_all_set(fitcat_3388_ll_s1, fitcat_3388_ll_s2, fitcat_3388_lc_s1, fitcat_3388_lc_s2, path_plot=path_plot, nmom=3, ylab=L"$-\Delta_{ls}(\Delta\alpha)$", f_tot_isov=f_tot_dltiso)
-plot_chiral_best_fit(fitcat_3388_ll_s1, path_plot=path_plot, nmom=3, tt=["Set", "1", "LL"], f_tot_isov=f_tot_dltiso , ylab=L"$-\Delta_{ls}(\Delta\alpha)$")
-plot_cl_best_fit(fitcat_3388_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$-\Delta_{ls}(\Delta\alpha)$")
+ll = L"$-\widehat{\Delta}_{ls}(\Delta\alpha)$"
+plot_cl_all_set(fitcat_3388_ll_s1, fitcat_3388_ll_s2, fitcat_3388_lc_s1, fitcat_3388_lc_s2, path_plot=path_plot, nmom=3, ylab=ll, f_tot_isov=f_tot_dltiso)
+plot_chiral_best_fit(fitcat_3388_ll_s2, path_plot=nothing, nmom=3, tt=["Set", "2", "LL"], f_tot_isov=f_tot_dltiso , ylab=ll)
+plot_cl_best_fit(fitcat_3388_lc_s2, path_plot=nothing, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=ll)
 
-cattot = [vcat(fitcat_3388_ll_s1[k], fitcat_3388_lc_s1[k], fitcat_3388_ll_s2[k],  fitcat_3388_lc_s2[k]...) for k in eachindex(fitcat_3388_lc_s1)]
+cattot = [vcat(fitcat_3388_ll_s1[k],  fitcat_3388_lc_s2[k]...) for k in eachindex(fitcat_3388_lc_s1)]
 plot_mAve_summary(cattot, xlab=vcat(label_tot_dltiso,label_tot_dltiso, label_tot_dltiso, label_tot_dltiso), models=f_tot_dltiso, charge_factor=1/3, ylab=L"$-\frac{1}{3}\Delta_{ls}(\Delta\alpha)$", tt=["Set", "1-2", "LC"], path_plot=path_plot)
 
 ###################################
@@ -208,14 +242,18 @@ plot_mAve_summary(cattot, xlab=vcat(label_tot_dltiso,label_tot_dltiso, label_tot
 ##################################
 
 RES = []
+RES_all = []
 SYST = []
 for q in 1:NMOM
     @info "Momentum no. $(q): $(Qgev[q]) GeV^2"
-    fitcat_pi3388_tot = vcat(vcat(fitcat_3388_ll_s1[q],
-                fitcat_3388_ll_s2[q],
-                fitcat_3388_lc_s1[q],
-                fitcat_3388_lc_s2[q])...)
-
+    fitcat_pi3388_mean = vcat(vcat(fitcat_3388_ll_s2[q],
+                fitcat_3388_lc_s2[q])...
+    )
+    fitcat_pi3388_syst = vcat(vcat(fitcat_3388_ll_s1[q],
+    fitcat_3388_ll_s2[q],
+    fitcat_3388_lc_s1[q],
+    fitcat_3388_lc_s2[q])...
+    )
     # ww_tot = get_w_from_fitcat(fitcat_pi3388_tot)
 
     ww_ll_s1 = get_w_from_fitcat(fitcat_3388_ll_s1[q])
@@ -223,10 +261,10 @@ for q in 1:NMOM
     ww_lc_s1 = get_w_from_fitcat(fitcat_3388_lc_s1[q])
     ww_lc_s2 = get_w_from_fitcat(fitcat_3388_lc_s2[q])
 
-    ww_tot = vcat(ww_ll_s1, ww_ll_s2, ww_lc_s1, ww_lc_s2)
-    println(sum(ww_tot))
+    ww_tot_mean = vcat(ww_ll_s2, ww_lc_s2)
+    ww_tot_syst = vcat(ww_ll_s1, ww_ll_s2, ww_lc_s1, ww_lc_s2)
 
-    w, widx  =  findmax(ww_tot)
+    w, widx  =  findmax(ww_tot_mean)
   
     model_idx = mod(widx, length(f_tot_dltiso))
     if model_idx == 0 
@@ -240,35 +278,45 @@ for q in 1:NMOM
     if cat_idx < 0
         cat_idx +=1
     end
-    println("   best χ2/χ2exp: ", fitcat_pi3388_tot[cat_idx].fit[model_idx].chi2 / fitcat_pi3388_tot[cat_idx].fit[model_idx].chi2exp)
+    println("   best χ2/χ2exp: ", fitcat_pi3388_mean[cat_idx].fit[model_idx].chi2 / fitcat_pi3388_mean[cat_idx].fit[model_idx].chi2exp)
     println("   widx: ", widx, " model_idx: ", model_idx, " catidx: ", cat_idx)
     
     ## Best Res
     best_mod = f_tot_dltiso[model_idx]
-    xdata = fitcat_pi3388_tot[cat_idx].xdata
-    param = fitcat_pi3388_tot[cat_idx].fit[model_idx].param
+    xdata = fitcat_pi3388_mean[cat_idx].xdata
+    param = fitcat_pi3388_mean[cat_idx].fit[model_idx].param
 
     ph_res_best =  1 / 3 * best_mod([0.0 phi2_ph phi4_ph], param)[1]; uwerr(ph_res_best)
     println("   best res: ", ph_res_best )
     ## histogram
 
-    all_res = Vector{uwreal}()
-    for (k, cat) in enumerate(fitcat_pi3388_tot)
+    all_res_mean = Vector{uwreal}()
+    for (k, cat) in enumerate(fitcat_pi3388_mean)
         for (j, mod) in enumerate(f_tot_dltiso)
-            push!(all_res, mod([0.0 phi2_ph phi4_ph], cat.fit[j].param)[1])
+            push!(all_res_mean, mod([0.0 phi2_ph phi4_ph], cat.fit[j].param)[1])
+            #push!(all_res, mod([0.0 value(phi2_ph) value(phi4_ph)], cat.fit[j].param)[1])
+        end
+    end
+    all_res_syst = Vector{uwreal}()
+    for (k, cat) in enumerate(fitcat_pi3388_syst)
+        for (j, mod) in enumerate(f_tot_dltiso)
+            push!(all_res_syst, mod([0.0 phi2_ph phi4_ph], cat.fit[j].param)[1])
             #push!(all_res, mod([0.0 value(phi2_ph) value(phi4_ph)], cat.fit[j].param)[1])
         end
     end
 
-    final_res, syst =  1 ./ 3 .* model_average(all_res, ww_tot); uwerr(final_res)
+    final_res, _ =  1 ./ 3 .* model_average(all_res_mean, ww_tot_mean); uwerr(final_res)
+    final_res_all, syst =  1 ./ 3 .* model_average(all_res_syst, ww_tot_syst); uwerr(final_res)
+
     push!(RES, final_res)
+    push!(RES_all, final_res_all)
     push!(SYST, syst)
     println("   Model ave:  ", final_res)
     println("   systematic: ", syst)
     println("\n")
 
 
-    hist(value.(all_res) ./ 3, bins=40, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot, zorder=3)
+    hist(value.(all_res_mean) ./ 3, bins=40, histtype="stepfilled", alpha=0.5, ec="k", color="navy", weights=ww_tot_mean, zorder=3)
     fill_betweenx([0,0.6], value(final_res).+err(final_res), value(final_res).-err(final_res), alpha=0.4, color="gold", zorder=2)
     errtot = sqrt(err(final_res)^2 + syst^2)
     fill_betweenx([0,0.6], value(final_res).+errtot, value(final_res).-errtot, alpha=0.4, color="tomato", zorder=1)
@@ -301,7 +349,7 @@ open(joinpath(path_phys_res, "systematics.txt"), "a") do io
 end
 
 ## test reading
-fb = BDIO_open(joinpath(path_phys_res, "no_err/PI3388_physRes.bdio"), "r")
+fb = BDIO_open(joinpath(path_phys_res, "PI3388_physRes.bdio"), "r")
 res = []
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

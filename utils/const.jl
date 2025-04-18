@@ -11,6 +11,7 @@ const Zvc_l = Dict(
 "D150" => uwreal([1.18500, 0.00044], "Zvc"), # TO BE UPDATED!
 
 "B450" => uwreal([1.12972, 0.00083], "Zvc"),
+"N452" => uwreal([1.11412, 0.00058], "Zvc"), # TO BE UPDATED !
 "S400" => uwreal([1.11159, 0.00089], "Zvc"),
 "N451" => uwreal([1.11412, 0.00058], "Zvc"),
 "D450" => uwreal([1.10790, 0.00026], "Zvc"),

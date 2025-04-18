@@ -23,7 +23,7 @@ include("../../utils/tools.jl")
 
 path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial/tmp/"
 path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
 
 #======= PHYSICAL CONSTANTS ====================#
@@ -36,13 +36,13 @@ const KRNL = krnl_dα_qhalf # subtracted kernel
 
 #============== READ CORRELATORS FROM BDIO FILES =================#
 
-enslist = sort([ "H101", "H102", "N101", "C101",
-         "B450", "N451", "D450", "D452",
-         "N202", "N203", "N200", "D200",  "E250",
-         "N300", "J303", "E300",
-         "J500"
-])
-
+# enslist = sort([ "H101", "H102", "N101", "C101",
+#          "B450", "N451", "D450", "D452",
+#          "N202", "N203", "N200", "D200",  "E250",
+#          "N300", "J303", "E300",
+#          "J500"
+# ])
+enslist = ["E300"]
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_corr, join=true)) for k in eachindex(enslist)]...)
@@ -181,7 +181,7 @@ end
 @info("Saving PI b_lc results in BDIO")
 io = IOBuffer()
 write(io, "PI blc high q. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_blc_2Qm_plus.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_blc_2Qm_plus_newEnsStat.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

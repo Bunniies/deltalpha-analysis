@@ -89,6 +89,7 @@ xarr = range(0,9,length=100)
 yarr33 = func33(xarr, fit33.param); uwerr.(yarr33)
 fill_between(xarr, value.(yarr33).-err.(yarr33), value.(yarr33).+err.(yarr33), alpha=0.5, color="dodgerblue", label=L"$I=1$")
 plot(xarr, value.(yarr33), color="dodgerblue")
+axhline(0.00161, ls="dashed", color="black", lw=1 )
 
 # isoscalar 
 errorbar(Qgev, value.(alpha_88_highq), err.(alpha_88_highq), fmt="d", color="forestgreen", mfc="none", ms=5)

@@ -43,7 +43,7 @@ path_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/d
         #  "N300", "J303", "E300",
         #  "J500"
 # ])
-enslist = sort(["E250"])
+enslist = sort(["D450"])
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_charm_corr, join=true)) for k in eachindex(enslist)]...)

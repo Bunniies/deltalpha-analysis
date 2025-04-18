@@ -50,15 +50,26 @@ subplot(131) # 3 GeV^2
 title(L"$Q^2 = 3 \ \mathrm{GeV}^2$")
 # pi33
 rel_err = ( err(res["pi_33"][6]) ) / value(res["pi_33"][6]) * 100
+rel_err_no_scale = 0.00024227952970388953 / value(res["pi_33"][6]) * 100
 rel_err_paper = 0.0006 / 0.0488 * 100
-axhline(5, 0.0, rel_err / 2.5, color="#0072B2", lw=3, label=L"$\mathrm{This \ work}$")
-axhline(4.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3, label=L"$\mathrm{2022\ paper}$")
+rel_err_paper_no_scale=0.0005 / 0.0488 * 100
+axhline(5, 0.0, rel_err / 2.5, color="#0072B2", lw=3,alpha=0.5, label=L"$\mathrm{This \ work}$")
+axhline(5, 0.0, rel_err_no_scale / 2.5, color="#0072B2", lw=5, label=L"$\mathrm{This \ work}$")
+
+axhline(4.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3, alpha=0.5, label=L"$\mathrm{2022\ paper}$")
+axhline(4.9, 0.0, rel_err_paper_no_scale / 2.5, color="#009E73", lw=5, label=L"$\mathrm{2022\ paper}$")
 
 # pi88
 rel_err = ( err(res["pi_88"][6]) ) / value(res["pi_88"][6]) * 100
+rel_err_no_scale = 0.00022784386239015593 / value(res["pi_88"][6]) * 100
 rel_err_paper = 0.0006 / 0.0374 * 100
-axhline(4, 0.0, rel_err / 2.5, color="#0072B2", lw=3)
-axhline(3.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3)
+rel_err_paper_noscale = 0.0005 / 0.0374 * 100
+
+axhline(4, 0.0, rel_err / 2.5, color="#0072B2", alpha=0.5, lw=3)
+axhline(4, 0.0, rel_err_no_scale / 2.5, color="#0072B2", lw=5)
+
+axhline(3.9, 0.0, rel_err_paper / 2.5, alpha=0.5, color="#009E73", lw=3)
+axhline(3.9, 0.0, rel_err_paper_no_scale / 2.5, color="#009E73", lw=5)
 
 # pi 08
 rel_err = ( err(res["pi_08"][6]) ) / value(res["pi_08"][6]) * 100
@@ -100,15 +111,27 @@ setp(ax1.get_yticklabels(),visible=false) # Disable x tick labels
 
 # pi33
 rel_err = ( err(res["pi_33"][8]) ) / value(res["pi_33"][8]) * 100
+rel_err_no_scale = 0.00026082519574522223 / value(res["pi_33"][8]) * 100
+
 rel_err_paper = 0.0008 / 0.0560 * 100
-axhline(5, 0.0, rel_err / 2.5, color="#0072B2", lw=3)
-axhline(4.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3)
+rel_err_paper_no_scale = 0.00061 / 0.0560 * 100
+
+axhline(5, 0.0, rel_err / 2.5, color="#0072B2", lw=3, alpha=0.5)
+axhline(5, 0.0, rel_err_no_scale / 2.5, color="#0072B2", lw=5)
+axhline(4.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3, alpha=0.5)
+axhline(4.9, 0.0, rel_err_paper_no_scale / 2.5, color="#009E73", lw=3)
 
 # pi88
 rel_err = ( err(res["pi_88"][8]) ) / value(res["pi_88"][8]) * 100
+rel_err_no_scale = 0.0002517374410905558 / value(res["pi_88"][8]) * 100
+
 rel_err_paper = 0.0008 / 0.0445 * 100
-axhline(4, 0.0, rel_err / 2.5, color="#0072B2", lw=3)
-axhline(3.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3)
+rel_err_paper_no_scale = 0.00062 / 0.0445 * 100
+axhline(4, 0.0, rel_err / 2.5, color="#0072B2", lw=3, alpha=0.5)
+axhline(4, 0.0, rel_err_no_scale / 2.5, color="#0072B2", lw=5)
+
+axhline(3.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3, alpha=0.5)
+axhline(3.9, 0.0, rel_err_paper_no_scale / 2.5, color="#009E73", lw=5)
 
 # pi 08
 rel_err = ( err(res["pi_08"][8]) ) / value(res["pi_08"][8]) * 100
@@ -150,15 +173,28 @@ setp(ax1.get_yticklabels(),visible=false) # Disable x tick labels
 
 # pi33
 rel_err = ( err(res["pi_33"][10]) ) / value(res["pi_33"][10]) * 100
+rel_err_no_scale = 0.00025591981780368785 / value(res["pi_33"][10]) * 100
+
 rel_err_paper = 0.0008 / 0.0608 * 100
-axhline(5, 0.0, rel_err / 2.5, color="#0072B2", lw=3)
-axhline(4.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3)
+rel_err_paper_no_scale = 0.00063 / 0.0608 * 100
+axhline(5, 0.0, rel_err / 2.5, color="#0072B2", lw=3, alpha=0.5)
+axhline(5, 0.0, rel_err_no_scale / 2.5, color="#0072B2", lw=5)
+
+axhline(4.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3, alpha=0.5)
+axhline(4.9, 0.0, rel_err_paper_no_scale / 2.5, color="#009E73", lw=5)
 
 # pi88
 rel_err = ( err(res["pi_88"][10]) ) / value(res["pi_88"][10]) * 100
+rel_err_no_scale = 0.0002752680320349962 / value(res["pi_88"][10]) * 100
+
 rel_err_paper = 0.0008 / 0.0493 * 100
-axhline(4, 0.0, rel_err / 2.5, color="#0072B2", lw=3)
-axhline(3.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3)
+rel_err_paper_no_scale = 0.00064 / 0.0493 * 100
+
+axhline(4, 0.0, rel_err / 2.5, color="#0072B2", lw=3, alpha=0.5)
+axhline(4, 0.0, rel_err_no_scale / 2.5, color="#0072B2", lw=5)
+
+axhline(3.9, 0.0, rel_err_paper / 2.5, color="#009E73", lw=3, alpha=0.5)
+axhline(3.9, 0.0, rel_err_paper_no_scale / 2.5, color="#009E73", lw=5)
 
 # pi 08
 rel_err = ( err(res["pi_08"][10]) ) / value(res["pi_08"][10]) * 100
@@ -196,4 +232,173 @@ xlabel(L"$\mathrm{err} \ [\%]$")
 tight_layout()
 display(fig)
 savefig(joinpath(path_plot, "error_comparison.pdf"))
+close("all")
+
+
+
+## PIE CHART PI33
+
+fig = figure(figsize=(10, 4))
+subplots_adjust(wspace=0.0)
+
+subplot(131) # 3 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(3,3)}(Q^2 = 3 \ \mathrm{GeV}^2)$", fontsize=12)
+
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [64.8, 18.1, 15.7]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+subplot(132) # 5 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(3,3)}(Q^2 = 5 \ \mathrm{GeV}^2)$", fontsize=12)
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [69.5, 17.1, 12.4]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+subplot(133) # 9 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(3,3)}(Q^2 = 9 \ \mathrm{GeV}^2)$", fontsize=12)
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [65.5, 21.5, 11.8]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+tight_layout()
+display(fig)
+savefig(joinpath(path_plot, "piechart_pi33.pdf"))
+close("all")
+
+
+## PIE CHART PI88
+
+fig = figure(figsize=(10, 4))
+subplots_adjust(wspace=0.0)
+
+subplot(131) # 3 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(8,8)}(Q^2 = 3 \ \mathrm{GeV}^2)$", fontsize=12)
+
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [37.5, 27.2 , 34.12]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+subplot(132) # 5 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(8,8)}(Q^2 = 5 \ \mathrm{GeV}^2)$", fontsize=12)
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [36.4, 26.0, 36.9]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+subplot(133) # 9 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(8,8)}(Q^2 = 9 \ \mathrm{GeV}^2)$", fontsize=12)
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [31.5, 25.6, 41.8]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+tight_layout()
+display(fig)
+savefig(joinpath(path_plot, "piechart_pi88.pdf"))
+close("all")
+
+
+## PIE CHART PI08
+
+fig = figure(figsize=(10, 4))
+subplots_adjust(wspace=0.0)
+
+subplot(131) # 3 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(0,8)}(Q^2 = 3 \ \mathrm{GeV}^2)$", fontsize=12)
+
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [3, 75.2 , 20.69]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+subplot(132) # 5 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(0,8)}(Q^2 = 5 \ \mathrm{GeV}^2)$", fontsize=12)
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [2.8, 75.2, 20.77]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+subplot(133) # 9 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(0,8)}(Q^2 = 9 \ \mathrm{GeV}^2)$", fontsize=12)
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [5, 75.1, 18.7]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+tight_layout()
+display(fig)
+savefig(joinpath(path_plot, "piechart_pi08.pdf"))
+close("all")
+
+
+## PIE CHART PICC
+
+fig = figure(figsize=(10, 4))
+subplots_adjust(wspace=0.0)
+
+subplot(131) # 3 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(c,c)}(Q^2 = 3 \ \mathrm{GeV}^2)$", fontsize=12)
+
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [16, 57.6 , 25.56]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+subplot(132) # 5 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(c,c)}(Q^2 = 5 \ \mathrm{GeV}^2)$", fontsize=12)
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [11, 63., 25.2]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+subplot(133) # 9 GeV^2
+title(L"$ \mathit{\bar{\Pi}}^{(c,c)}(Q^2 = 9 \ \mathrm{GeV}^2)$", fontsize=12)
+labels = ("Systematics",  string("Stat. +",L"$\chi$", "-cont. limit"), "Scale setting", "Others")
+sizes = [6, 60.7, 32.3]
+push!(sizes, 100-sum(sizes))
+explode = fill(0.03,4)
+colors = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7"]
+pie(sizes, explode=explode, colors=colors)
+legend(labels, fontsize=8, bbox_to_anchor=(0.5,0.9), loc="upper right")
+
+tight_layout()
+display(fig)
+savefig(joinpath(path_plot, "piechart_picc.pdf"))
 close("all")

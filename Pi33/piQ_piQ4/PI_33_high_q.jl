@@ -41,13 +41,13 @@ const WindSD = Window("SD")
 const WindILD = Window("ILD")
 
 
-enslist = sort([ #"H101", "H102", "N101", "C101", "C102", "D150"])
+# enslist = sort([ #"H101", "H102", "N101", "C101", "C102", "D150"])
         #   "B450", "N451", "D450", "D451", "D452"])
          #"N202", "N203", "N200", "D251", "D200", "D201", "E250"])
-          "J307", "J306", "J303", "J304", "E300", "F300"])
+        #   "J307", "J306", "J303", "J304", "E300", "F300"])
          #"J500", "J501"])
 # enslist = ["E300"]
-# enslist = ["H101"]
+enslist = sort(["D251", "E300", "F300", "J306", "J307"])
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_corr, join=true)) for k in eachindex(enslist)]...)
@@ -162,7 +162,7 @@ for (k, ens) in enumerate(ensinfo)
 
 
     for (j,q) in enumerate(Qlat)
-        pi_33_ll_SD_s1[k][j] = tmr_integrand(g33_ll_s1[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k], wind=WindSD)
+        pi_33_ll_SD_s1[k][j] = tmr_integrand(g33_ll_s1[k], q, qmlat, KRNLsub, pl=true, t0ens=t0ens[k], wind=WindSD)
         pi_33_lc_SD_s1[k][j] = tmr_integrand(g33_lc_s1[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k], wind=WindSD)
         pi_33_ll_SD_s2[k][j] = tmr_integrand(g33_ll_s2[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k], wind=WindSD)
         pi_33_lc_SD_s2[k][j] = tmr_integrand(g33_lc_s2[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k], wind=WindSD)
@@ -197,7 +197,7 @@ end
 @info("Saving PI 33 results in BDIO")
 io = IOBuffer()
 write(io, "PI delta 33. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_33_beta4.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_33_newStatEns.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)
@@ -219,7 +219,7 @@ println("# Saving complete!")
 
 ##
 #========= TEST READING =========#
-fb = BDIO_open(joinpath(path_store_pi, "PI_33_beta1.bdio"), "r")
+fb = BDIO_open(joinpath(path_store_pi, "PI_33_D450.bdio"), "r")
 res = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

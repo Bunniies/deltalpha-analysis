@@ -44,12 +44,12 @@ WindILD = Window("ILD")
 #============== READ CORRELATORS FROM BDIO FILES =================#
 @info("Reading Correlators")
 
- enslist = sort([#"H101", "H102", "N101", "C101", "C102",  "D150"]) # C102 non computed
+enslist = sort([#"H101", "H102", "N101", "C101", "C102",  "D150"]) # C102 non computed
         #"B450", "N451", "D450", "D451", "D452"]) # D451 not computed 
         #"N202", "N203", "N200", "D251", "D200", "D201", "E250"]) # D201 enot computed
         #"J307", "J303", "J304", "E300"]) # J304 not computed
          "J500", "J501"])
-#enslist = sort(["C102", "D451", "D201", "J304"])
+enslist = sort([ "D450", "E300", "D251", "J307"])
 
 
 ensinfo = EnsInfo.(enslist)
@@ -205,7 +205,7 @@ end
 @info("Saving PI (88) results in BDIO")
 io = IOBuffer()
 write(io, "PI delta 88. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_88_ILD_beta5.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_88_ILD_newEnsStat.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

@@ -41,8 +41,10 @@ const IMPR_SET = "1"
 const STD_DERIV = false
 const RENORM = true
 
-const KRNL = krnl_dα_qhalf      # standard kernel 
-Qgev = [3., 5., 9.] # Q^2
+# const KRNL = krnl_dα_qhalf      # standard kernel High q
+const KRNL = krnl_dα      # standard kernel low q
+
+Qgev = [3., 5., 9.] ./ 4 # Q^2
 Qmgev = 9.0 # Qm^2
 
 ensinfo = EnsInfo("E250")
@@ -82,6 +84,7 @@ end
 
 gdelta_iso_ll = Corr(-g88_ll_conn.obs - g88_ll_disc.obs + 0.5*gll_ll.obs, gll_ll.id, "deltaiso_ll")
 gdelta_iso_lc = Corr(-g88_lc_conn.obs - g88_lc_disc.obs + 0.5*gll_lc.obs, gll_lc.id, "deltaiso_lc")
+g88_tot = Corr(+g88_lc_conn.obs + g88_lc_disc.obs, gll_lc.id, "g88")
 
 
 ## COMPUTE TMR
@@ -94,13 +97,15 @@ for (j,q) in enumerate(Qlat)
         continue
     end
     _, data33 = tmr_integrand(gll_lc, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true)
-    _, datadltiso = tmr_integrand(gdelta_iso_lc, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true)
+    _, datadltiso = tmr_integrand(gdelta_iso_lc, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true) # for high energy kernel
+    _, data88 = tmr_integrand(g88_tot, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true) # for low energy kernel
     _, datacc_conn = tmr_integrand(gcc_lc_conn, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true)
     _, datacc_disc = tmr_integrand(gcc_cc_disc, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true, wind=Window("SD"))
-    _, datac8_disc = tmr_integrand(gc8_cc_disc, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true)
+    _, datac8_disc = tmr_integrand(gc8_cc_disc, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true, wind=Window("SD"))
     _, data08 = tmr_integrand(g08_lc, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true )
 
     data33 .*= 0.5 ; uwerr.(data33)
+    data88 ./= 3; uwerr.(data88)
     datadltiso .*= 10; uwerr.(datadltiso)
     datacc_conn .*= 4/9; uwerr.(datacc_conn)
     datacc_disc .*= -1000*4/9; uwerr.(datacc_disc)
@@ -109,7 +114,8 @@ for (j,q) in enumerate(Qlat)
 
     xx = collect(0:length(data33)-1) .* value(a(ensinfo.beta))
     errorbar(xx, value.(data33), err.(data33), fmt="v", color="#E69F00", capsize=4, label=L"$G^{(3,3)}$")
-    errorbar(xx, value.(datadltiso), err.(datadltiso), fmt="^", color="#56B4E9", capsize=4, label=L"$10\cdot(G^{(3,3)} - G^{(8,8)})$")
+    # errorbar(xx, value.(datadltiso), err.(datadltiso), fmt="^", color="#56B4E9", capsize=4, label=L"$10\cdot(G^{(3,3)} - G^{(8,8)})$") # high energy kernel
+    errorbar(xx, value.(data88), err.(data88), fmt="^", color="#56B4E9", capsize=4, label=L"$\frac{1}{3}G^{(8,8)}$") # low energy kernel
     errorbar(xx, value.(datacc_conn), err.(datacc_conn), fmt="d", color="#009E73", capsize=4, label=L"$\frac{4}{9}G^{(c,c)}_{\mathrm{conn}}$")
     errorbar(xx, value.(data08), err.(data08), fmt="o", color="#D55E00", capsize=4, label=L"$10\cdot\frac{1}{3}G^{(0,8)}$")
     errorbar(xx, value.(datacc_disc), err.(datacc_disc), fmt="d", color="#0072B2", capsize=4, label=L"$1000\cdot\frac{4}{9}G^{(c,c)}_{\mathrm{disc}}$")
@@ -118,11 +124,12 @@ for (j,q) in enumerate(Qlat)
 
     xlabel(L"$t \ [\mathrm{fm}]$")
     ylabel(L"$G^{(d,e)}(t) \cdot K(t, Q^2)$")
-    xlim(-0.05,2.0) 
+    xlim(-0.05,3.5) 
+    ylim(-0.0004, 0.0031)
     legend(ncol=1)
     tight_layout()
     display(gcf())
-    savefig(joinpath(path_plot, ensinfo.id, "$(ensinfo.id)_dalpha_kernel_highq.pdf"))
+    savefig(joinpath(path_plot, ensinfo.id, "$(ensinfo.id)_dalpha_kernel_lowq.pdf"))
     close()
 end
 

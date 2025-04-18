@@ -42,7 +42,7 @@ IMPR      = true
 RENORM    = true
 STD_DERIV = false
 
-enslist = ["E300"]
+enslist = ["N452"]
 ensinfo = EnsInfo.(enslist)
 
 
@@ -60,6 +60,8 @@ obs = Vector(undef, length(ensinfo))
 
 
 #================ READING DATA ====================#
+wpmm = Dict{String, Vector{Float64}}()
+wpmm["F300"]  = [5.0, -2.0, -1.0, -1.0]
 
 @info("Reading data...")
 @time begin
@@ -76,7 +78,7 @@ obs = Vector(undef, length(ensinfo))
 
         println("   - Gradient flow t0")
         obs[k] = OrderedDict()
-        obs[k]["t0"] = get_t0(path_ms, ens, path_rw=path_rw, pl=true)
+        obs[k]["t0"] = get_t0(path_ms, ens, path_rw=path_rw, pl=true, wpm=wpmm)
     end
 end
 
@@ -86,7 +88,7 @@ errorbar(collect(1:length(yy)), value.(yy), err.(yy), fmt="s")
 display(gcf())
 close("all")
 ##
-aa = meff(g_pi[1],[25,45], pl=true)
+aa = meff(g_pi[1],[10,40], pl=true)
 meff(g_k[1],[25,45], pl=true)
 ##
 # =========== COMPUTING Meff ============#

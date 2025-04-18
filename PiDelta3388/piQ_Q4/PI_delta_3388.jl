@@ -24,7 +24,7 @@ include("./func_comb.jl")
 path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
 path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial/tmp"
 ##
 #======= PHYSICAL CONSTANTS ====================#
 # const Qgev = [3., 5., 9.] # Q^2
@@ -37,12 +37,16 @@ const KRNL = krnl_dα_qhalf # non-subtracted kernel
 #============== READ CORRELATORS FROM BDIO FILES =================#
 @info("Reading Correlators")
 
-enslist = sort([ "H102", "N101", "C101", "C102", "D150",
-         "N451", "D450", "D451", "D452",
-         "N203", "N200", "D251", "D200", "D201", "E250",
-         "J303", "J306", "J304", "E300", "F300",
-         "J501"
-         ])
+# enslist = sort([ "H102", "N101", "C101", "C102", "D150",
+        #  "N451", "D450", "D451", "D452",
+        #  "N203", "N200", "D251", "D200", "D201", "E250",
+        #  "J303", "J306", "J304", "E300", "F300",
+        #  "J501"
+        #  ]
+# )
+# enslist = ["D450"]
+enslist = sort(["D251", "E300", "F300", "J306"])
+
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_corr, join=true)) for k in eachindex(enslist)]...)
@@ -162,7 +166,7 @@ end
 @info("Saving PI (33-88) results in BDIO")
 io = IOBuffer()
 write(io, "PI delta 33-88. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_3388_dlt.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_3388_dlt_newStatEns.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

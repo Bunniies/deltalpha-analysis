@@ -16,7 +16,7 @@ import statistics
 
 ## create configs 
 SAMPLES = 1000
-NBIN = 100
+NBIN = 10
 
 MZ_config = bootstrap.bootstrap(91.1876, 0.0021, SAMPLES, NBIN ) # Z boson mass PDG
 aZ_config = bootstrap.bootstrap(0.1183, 0.0007, SAMPLES, NBIN ) # alpha_z at Z pole from FLAG24
@@ -41,7 +41,7 @@ GG_config = bootstrap.bootstrap(0.012, 0.012, SAMPLES, NBIN)  # gluon condensate
 QQ_config = bootstrap.bootstrap(0.0013, 0.007, SAMPLES, NBIN) # quark condensate https://arxiv.org/pdf/2302.01359
 
 alpha0=1/137.035999180
-QVAL = 8. # GeV
+QVAL = 5. # GeV
 mmu=0.105658 # muon mass
 
 isov_contrib = np.empty(NBIN)
@@ -75,7 +75,7 @@ for k in range(0, NBIN):
 
     GG=0.0#GG_config[k];
     qq=0.0#QQ_config[k];
-    nloops=5
+    nloops=2
     QED=True
     a=aZ/np.pi
     changelight=1/137.036/np.pi*(6.305580589584867*a**2 + 25.72254648430382*a**3)

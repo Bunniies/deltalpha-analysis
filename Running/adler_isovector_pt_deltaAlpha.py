@@ -74,7 +74,7 @@ for k in range(0, NBIN):
 
     GG=GG_config[k];
     qq=QQ_config[k];
-    nloops=5
+    nloops=3
     QED=True
 
 
@@ -82,8 +82,8 @@ for k in range(0, NBIN):
     isov_contrib[k] *= 1e5
 
 
-Q2LIST = [1., 3., 5., 7., 9.]
-# Q2LIST = [5.]
+#Q2LIST = [1., 3., 5., 7., 9.]
+Q2LIST = [5.]
 
 
 for k in range(0, len(Q2LIST)):

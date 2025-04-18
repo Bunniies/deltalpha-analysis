@@ -11,13 +11,12 @@ function krnl_dα_sub(t::Union{Float64, uwreal}, Q2::Union{Float64,uwreal}, Q2m:
     return K
 end
 
-
-
 function krnl_dα_qhalf(t::Union{Float64, uwreal}, Q2::Union{Float64,uwreal})
 
     K = 16. / Q2 * sin((sqrt(Q2)*t)/4)^4
     return K
 end
+
 function krnl_dα_qhalf_sub(t::Union{Float64, uwreal}, Q2::Union{Float64,uwreal}, Q2m::Union{Float64,uwreal})
     K = 16. / Q2 * sin((sqrt(Q2)*t)/4)^4 - (Q2/Q2m^2) * sin((sqrt(Q2m)*t)/2)^4
     return K
@@ -166,8 +165,8 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
 
     
  
-    if ens.id in ["A653", "A654", "D150", "B450", "N451", "D450", "D451", "D452", "D251", "E250"]
-        taux = collect(5:30) 
+    if ens.id in ["A653", "A654", "D150", "B450", "N451", "N452", "D450", "D451", "D452", "D251", "E250"]
+        taux = collect(10:40) 
         Thalf = Int(length(corr[1].obs)/2)+1
         T = length(corr[1].obs)
         tmin = Thalf .- taux
@@ -178,13 +177,13 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
         param=2
         pbc = true
     else
-       # @. const_fit(x, p) = p[1] + 0 * x
+        #@. const_fit(x, p) = p[1] + 0 * x
         param = 1
 
         # tmin and tmax tuned on H101 and then scaled 
-        tminaux = collect(20:42) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
+        tminaux = collect(40:90) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
         T = length(corr[1].obs)
-        tmaxaux = collect(50:70) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
+        tmaxaux = collect(50:90) #* round(Int64, sqrt(value(t0(ens.beta) / t0(3.4))))
         tmax = T .- collect(reverse(tmaxaux))
         tmax = tmax[1:2:end]
         tmin = tminaux[1:2:end] 
@@ -196,7 +195,7 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
 
     for k in eachindex(corr)
         t = string(L"$\kappa_1 = $" ,L" $\kappa_2 = $" )   
-        if ens.id in ["A653", "A654","D150", "B450", "N451", "D450", "D451", "D452", "D251", "E250"]
+        if ens.id in ["A653", "A654","D150", "B450", "N451", "N452", "D450", "D451", "D452", "D251", "E250"]
             # data = -1. .* corr[k].obs
             data = -1. .* corr[k].obs
         else
@@ -213,7 +212,7 @@ function get_meff_BMA(corr::Vector{Corr}, ens::EnsInfo; pl::Bool=true,
             modstot = FitDict["mods"]
             AIC  = FitDict["AIC"]
             Wtot = FitDict["W"]
-            IDX  = partialsortperm(AIC, 1:3)
+            IDX  = partialsortperm(AIC, 1:2)
             mods = modstot[IDX]
             main_res = all_res[IDX]
             W = Wtot[IDX]

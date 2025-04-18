@@ -23,7 +23,7 @@ include("../../utils/tools.jl")
 
 path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/low_q_kernel/scale_error_artificial"
+path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/low_q_kernel/scale_error_artificial/tmp/"
 
 
 #======= PHYSICAL CONSTANTS ====================#
@@ -35,13 +35,13 @@ const KRNLsub = krnl_dα_sub # subtracted kernel Q4 - Q0
 
 #============== READ CORRELATORS FROM BDIO FILES =================#
 
-enslist = sort([ "H101", "H102", "N101", "C101",
-         "B450", "D450", "D452",
-         "N202", "N203", "N200", "D200",  "E250",
-         "N300", "J303", "E300",
-         "J500"
-])
-
+# enslist = sort([ "H101", "H102", "N101", "C101",
+        #  "B450", "D450", "D452",
+        #  "N202", "N203", "N200", "D200",  "E250",
+        #  "N300", "J303", "E300",
+        #  "J500"
+# ])
+enslist = ["E300", "D450"]
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_corr, join=true)) for k in eachindex(enslist)]...)
@@ -66,8 +66,8 @@ for (k, ens) in enumerate(ensinfo)
         res_s1 = ALPHAdobs_read_next(fbs1, size=sz, keys=ks)
     end
     BDIO_close!(fbs1)
-    gcc_ll_s1[k] = res_s1["gcc_ll_conn_plus"]
-    gcc_lc_s1[k] = res_s1["gcc_lc_conn_plus"]
+    gcc_ll_s1[k] = res_s1["gcc_ll_conn"]
+    gcc_lc_s1[k] = res_s1["gcc_lc_conn"]
     
     fbs2 = BDIO_open(path_s2[k], "r")
     res_s2 = Dict()
@@ -78,8 +78,8 @@ for (k, ens) in enumerate(ensinfo)
         res_s2 = ALPHAdobs_read_next(fbs2, size=sz, keys=ks)
     end
     BDIO_close!(fbs2)
-    gcc_ll_s2[k] = res_s2["gcc_ll_conn_plus"]
-    gcc_lc_s2[k] = res_s2["gcc_lc_conn_plus"]
+    gcc_ll_s2[k] = res_s2["gcc_ll_conn"]
+    gcc_lc_s2[k] = res_s2["gcc_lc_conn"]
 end
 
 ##
@@ -133,7 +133,7 @@ end
 
 io = IOBuffer()
 write(io, "PI charm-charm connected. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PIcc_conn_plus.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PIcc_conn_newEnsStat.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

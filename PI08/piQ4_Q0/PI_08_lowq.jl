@@ -40,13 +40,13 @@ const KRNL= krnl_dα # non-subtracted kernel
 
 
 
-enslist = sort([ #"H102", "N101", "C101", "C102", "D150"
+# enslist = sort([ #"H102", "N101", "C101", "C102", "D150"
           #"N451", "D450", "D451", "D452"
           #"N203", "N200", "D251", "D200", "D201", "E250"
-         "J303", "J304", "E300",
-          "J501"
-        ])
-# enslist = ["H101"]
+        #  "J303", "J304", "E300",
+        #   "J501"
+        # ])
+enslist = ["D450", "E300", "D251"]
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_corr, join=true)) for k in eachindex(enslist)]...)
@@ -184,7 +184,7 @@ end
 @info("Saving PI (08) results in BDIO")
 io = IOBuffer()
 write(io, "PI 08. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_08_beta45.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_08_newEnsStat.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

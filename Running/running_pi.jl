@@ -39,7 +39,7 @@ Qmgev =  9.0  # GeV^2
 pi33_SD = read_phys_res(path_phys_res_highq, "PI33_SD_physRes.bdio")
 pi33_ILD = read_phys_res(path_phys_res_highq, "PI33_ILD_physRes.bdio")
 
-b33qm_pt_5loops = uwreal([1895.26*1e-5, 2.62*1e-5], "b33_qm_pt")
+b33qm_pt_5loops = uwreal([1896.11*1e-5, 2.67*1e-5], "b33_qm_pt") # from wolfram code
 b33qqm_highq = [(q/(4*Qmgev)) * b33qm_pt_5loops for q in Qgev] # using PT result
 # b33qqm_highq = [(q/(4*Qmgev)) * log(2) / (4pi^2) for q in Qgev] # at LO
 pi33_highq = (pi33_ILD + pi33_SD + b33qqm_highq ) 
@@ -295,6 +295,13 @@ savefig(joinpath(path_plot, "hvp_running_totq_scale_err.pdf"))
 close("all")
 
 
+##
+pi_tot = pi33_tot .+ pi88_tot .+ picc_tot
+uwerr.(pi_tot)
+mchist(pi_tot[10], "F300")
+
+uwerr.(pi33_SD)
+mchist(pi33_SD[10], "F300")
 ## SAVING FINAL RESULTS IN BDIO
 
 @info("Saving final PI results")

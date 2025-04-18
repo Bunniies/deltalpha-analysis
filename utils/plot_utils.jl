@@ -63,7 +63,10 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
             # xarr = [Float64.(range(1e-8, 0.05, length=100)) fill(phi2_ph, 100) fill(phi4_ph, 100)]
             xarr = [Float64.(range(1e-8, 0.008, length=100)) fill(phi2_ph, 100) fill(phi4_ph, 100)]
             count=0
-            for (k_mod, model) in enumerate(f_tot_isov)
+            model_tot = vcat([f_tot_isov for _ in 1:length(fc_lc_s1[q])]...)
+            for (k_mod, model) in enumerate(model_tot)
+                k_mod_fit = mod(k_mod,length(f_tot_isov))
+                k_mod_fit == 0.0 ? k_mod_fit=length(f_tot_isov) : k_mod_fit
                 # if q in [1, 2, 3, 4, 5, 6 ] &&  "a3" ∉ label_tot_dltiso[k_modaux]
                     # println("model $(label_tot_dltiso[k_modaux]) skipped")
                     # count +=1
@@ -74,16 +77,16 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
                     # k_mod = k_modaux
                 # end
             
-                fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod].param
-                fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod].param
-                fit_param_lc_s1 = fc_lc_s1[q][k_cat].fit[k_mod].param
-                fit_param_lc_s2 = fc_lc_s2[q][k_cat].fit[k_mod].param
+                fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod_fit].param
+                fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod_fit].param
+                fit_param_lc_s1 = fc_lc_s1[q][k_cat].fit[k_mod_fit].param
+                fit_param_lc_s2 = fc_lc_s2[q][k_cat].fit[k_mod_fit].param
     
                 yy_ll_s1  = model(xarr, fit_param_ll_s1)
                 yy_ll_s2  = model(xarr, fit_param_ll_s2)
                 yy_lc_s1  = model(xarr, fit_param_lc_s1)
                 yy_lc_s2  = model(xarr, fit_param_lc_s2)
-    
+                
                 plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="#009E73")
                 plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="#0072B2")
                 plot(xarr[:,1], value.(yy_lc_s1),alpha=ww_lc_s1[k_mod], color="#D55E00")
@@ -130,9 +133,9 @@ function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::I
             cat_idx = Int((wmax_idx - model_idx ) / length(f_tot_isov))+1
         else
             model_idx = nfit
-            cat_idx = 1
+            # cat_idx = 1
+            cat_idx = Int((wmax_idx - model_idx ) / length(f_tot_isov))+1
         end
-
         println("   - highest weigth: ", wmax)
         println("   - idx max weigth: ", wmax_idx)
         println("   - idx best model: ", model_idx)
@@ -159,35 +162,42 @@ function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::I
             fmttot = ["s", "^", "h", "8"]
         end
         # plot data points
-        for (k, b) in enumerate(betatot)
+        # for (k, b) in enumerate(betatot)
+        for (k,b) in enumerate(sort(unique(value.(xdata[:,1])), rev=true))    
             # if b == 3.85
                 # println("beta 3.85 removed!")
                 # continue
             # end
-            n_ = findall(x->x.beta == b, ensinfo)
+            # n_ = findall(x->x.beta == b, ensinfo)
+            n_ = findall(x->x == b, value.(xdata[:,1]))
             a2_aux  = mean(value.(xdata[:,1][n_]))
-            errorbar(value.(xdata[n_,2]), value.(ydata_proj[n_]), xerr=err.(xdata[n_,2]), yerr=err.(ydata_proj[n_]), fmt=fmttot[k], label=string(L"$\beta = \ $", b), color=color[k], capsize=2, ms=10, mfc="none" )
+            errorbar(value.(xdata[n_,2]), value.(ydata_proj[n_]), xerr=err.(xdata[n_,2]), yerr=err.(ydata_proj[n_]), fmt=fmttot[k], label=string(L"$\beta = \ $", betatot[k]), color=color[k], capsize=2, ms=10, mfc="none" )
             # dashed lines
-            xxx = [fill(a2_aux, 100) Float64.(range(0.001, 0.8, length=100)) fill(phi4_ph, 100)]
-            yy_ll = model(xxx, fit_par)
-            replace!(value.(yy_ll), Inf=>0.0)
-            uwerr.(yy_ll)
-            fill_between(xxx[:,2], value.(yy_ll)-err.(yy_ll), value.(yy_ll)+err.(yy_ll), color=color[k], alpha=0.5)
-            # plot(xxx[:,2], value.(yy_ll), ls="--", color=color[k], lw=0.9)
+            xxx_tot = [fill(a2_aux, 100) Float64.(range(maximum(value.(xdata[:,2][n_])), 0.8, length=100)) fill(phi4_ph, 100)]
+            xxx_chir = [fill(a2_aux, 100) Float64.(range(0.001, maximum(value.(xdata[:,2][n_])), length=100)) fill(phi4_ph, 100)]
+            yy_chir = model(xxx_chir, fit_par)
+            yy_tot = model(xxx_tot, fit_par)
+            replace!(value.(yy_chir), Inf=>0.0)
+            replace!(value.(yy_tot), Inf=>0.0)
+            uwerr.(yy_chir)
+            uwerr.(yy_tot)
+            fill_between(xxx_chir[:,2], value.(yy_chir)-err.(yy_chir), value.(yy_chir)+err.(yy_chir), color=color[k], alpha=0.5)
+            plot(xxx_tot[:,2], value.(yy_tot), ls="--", color=color[k], lw=0.9)
         end
 
         # cont lim band
         xarr = [fill(1e-8, 100) Float64.(range(0.01, 0.8, length=100)) fill(value(phi4_ph),100)]
         yarr = model(xarr, fit_par); uwerr.(yarr)
         fill_between(xarr[:,2], value.(yarr) .- err.(yarr), value.(yarr) .+ err.(yarr), alpha=0.2, color="gray")
-
         # phys res
         ph_res = model([0.0 value(phi2_ph) value(phi4_ph)], fit_par)[1]; uwerr(ph_res)
+        # ph_res = fit_par[1]; uwerr(ph_res) #model([0.0 value(phi2_ph) value(phi4_ph)], fit_par)[1]; uwerr(ph_res)
         println(ph_res)
         errorbar(value(phi2_ph), value(ph_res), err(ph_res), fmt="o", capsize=2, color="red", ms=10, mfc="none")
         axvline(value(phi2_ph), ls="dashed", color="black", lw=0.2, alpha=0.7) 
         
         xlim(0.04, 0.8)
+        #ylim(0.0097, 0.0105)
         legend(ncol=2)#, loc="upper right")
         xlabel(L"$\phi_2$")
         ylabel(ylab)

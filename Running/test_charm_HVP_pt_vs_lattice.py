@@ -93,3 +93,69 @@ print("MSbar\n", mean_tot_msbar, std_tot_msbar, "\n")
 mean_tot_mpole = np.mean(charm_contrib_mpole)
 std_tot_mpole = np.std(charm_contrib_mpole)
 print("Mpole\n", mean_tot_mpole, std_tot_mpole, "\n")
+
+
+## COMPUTE ADLER FUNC ONLY AND NOT THE INTEGRAL - SAVE ADLER FUNC IN TXT FILE
+
+def integrand_charm(aZ, Mz, Q, particles, mpole_on, nloops, cut_high_as3, cut_low_as3, GG):
+    return adler_charm_pert(aZ,Mz,Q=Q,particles=particle_list,mpole_on=mpole_on,nloops=nloops,cut_high_as3=cut_high_as3,cut_low_as3=cut_low_as3,GG=GG, QED=True)
+
+def adlercharm(aZ,Mz,Q,particles,nloops,mpole_on, mulow,GG,qq):
+    adc=adler_charm_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,mulow=mulow,mpole_on=mpole_on,nloops=nloops,GG=GG,QED=True)
+    return adc
+
+q_list = np.linspace(0.4, 100, num=400) # Q in GeV
+
+adler_charm_msbar = np.empty((len(q_list), NBIN))
+adler_charm_mpole = np.empty((len(q_list), NBIN))
+
+for k in range(0,NBIN):
+    Mz = MZ_config[k]
+    aZ = aZ_config[k]
+    mup = mUp_config[k]
+    mdw = mDown_config[k]
+    mst = mStrange_config[k]
+    mc0 = mC_config[k]
+    mb0 = mB_config[k]
+    mc0_pole = mC_Pole_config[k]
+    mb0_pole = mB_Pole_config[k]
+    GG=GG_config[k];
+    #GG = 0.0
+    qq=QQ_config[k];
+    nloops=3 # perturbative order alphas^5
+    mulow=1.273
+
+    #Here you define the SM particles 
+    up=Particle("up",x=[mup,2,3],mudec=0.001,mpole=None,mpole_on=False)
+    down=Particle("down",x=[mdw,2,3],mudec=0.001,mpole=None,mpole_on=False)
+    strange=Particle("strange",x=[mst,2,3],mudec=0.001,mpole=None,mpole_on=False)
+    charm=Particle("charm",x=[mc0,mc0,4],mudec=2*(mc0),mpole=mc0_pole,mpole_on=False)
+    bottom=Particle("bottom",x=[mb0,mb0,5],mudec=2*mb0,mpole=mb0_pole,mpole_on=False)
+    top=Particle("top",x=[164,164,6],mudec=164,mpole=164,mpole_on=False) # not necessary in this case.
+    particle_list=[up,charm,down,strange,bottom,top]
+
+    for q in range(0,len(q_list)):
+        adler_charm_msbar[q,k] = integrand_charm(aZ, Mz, q_list[q], particles=particle_list, nloops=nloops, mpole_on=False, cut_high_as3=20, cut_low_as3=1.0, GG=GG)
+        adler_charm_mpole[q,k] = integrand_charm(aZ, Mz, q_list[q], particles=particle_list, nloops=nloops, mpole_on=True, cut_high_as3=20, cut_low_as3=1.0, GG=GG)
+
+
+# saving data
+ad_mean_msbar = np.mean(adler_charm_msbar, axis=1)
+ad_err_msbar  = np.std(adler_charm_msbar, axis=1)
+
+ad_mean_mpole = np.mean(adler_charm_mpole, axis=1)
+ad_err_mpole  = np.std(adler_charm_mpole, axis=1)
+
+with open("/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/adler_charm_msbar.dat", "w") as ff:
+    print("#idx    q_gev    adler_charm_mean  adler_charm_err", file=ff)
+    count=0
+    for qq, admean, aderr in zip(q_list, ad_mean_msbar, ad_err_msbar):
+        print("%d %e  %e  %e" % (count, qq, admean, aderr), file = ff)
+        count+=1
+
+with open("/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/adler_charm_mpole.dat", "w") as ff:
+    print("#idx    q_gev    adler_charm_mean  adler_charm_err", file=ff)
+    count=0
+    for qq, admean, aderr in zip(q_list, ad_mean_mpole, ad_err_mpole):
+        print("%d %e  %e  %e" % (count, qq, admean, aderr), file = ff)
+        count+=1

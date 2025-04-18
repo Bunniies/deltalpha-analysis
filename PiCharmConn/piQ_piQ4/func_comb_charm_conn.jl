@@ -38,10 +38,10 @@ for n = 2:n_par_var+1
             continue
         end
         if "a3phi2" ∈ model_var_label[a] && "a2phi2" ∉ model_var_label[a]
-            continue
+            #continue
         end
         if "a2phi2" ∈ model_var_label[a]# && "a4" ∉ model_var_label[a]
-            # continue
+            #continue
         end
         if "phi2sqr" ∈ model_var_label[a]
             #continue
@@ -53,7 +53,7 @@ for n = 2:n_par_var+1
             continue
         end
         if model_var_label[a] == [ "a3", "a4", "a2phi2"]
-            #continue
+            continue
         end
         push!(n_par_tot_charm, n_par_tot_charm[1]+n-1)
         push!(label_tot_charm, model_var_label[a])

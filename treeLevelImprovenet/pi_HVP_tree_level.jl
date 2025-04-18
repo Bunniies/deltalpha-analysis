@@ -55,7 +55,7 @@ enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
          "J500", "J501"])
 
 ensinfo = EnsInfo.(enslist)
-ensinfo = EnsInfo.(["H101"])
+# ensinfo = EnsInfo.(["H101"])
 
 dir_path = filter(x-> basename(x) in enslist, readdir(path_bdio, join=true))
 spectrum_path = vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  , readdir(dir_path[k], join=true)) for k in eachindex(dir_path)])...)
@@ -133,8 +133,8 @@ end
 #======== SAVE TO BDIO WITH ALPHAIO =========#
 @info("Saving tree level improvement TMR")
 io = IOBuffer()
-write(io, "TMR 3 level improvement set 1")
-fb = ALPHAdobs_create(joinpath(path_store_3l, "treeLevelSet1.bdio"), io)
+write(io, "TMR 3 level improvement set 2")
+fb = ALPHAdobs_create(joinpath(path_store_3l, "treeLevelSet2.bdio"), io)
 
 for(k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)
