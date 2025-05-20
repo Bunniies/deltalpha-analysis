@@ -110,7 +110,7 @@ fill_between(xarr, value.(yarr08).-err.(yarr08), value.(yarr08).+err.(yarr08), a
 plot(xarr, value.(yarr08), color="plum")
 
 xlabel(L"$Q^2\ [\mathrm{GeV}^2]$")
-ylabel(L"$\Pi(-Q^2) -\Pi(-Q^2/4) $")
+ylabel(L"$\widehat{\Pi}(Q^2)$")
 legend()
 tight_layout()
 display(fig)
@@ -201,7 +201,7 @@ fill_between(xarr, value.(yarr08).-err.(yarr08), value.(yarr08).+err.(yarr08), a
 plot(xarr, value.(yarr08), color="plum")
 
 xlabel(L"$Q^2\ [\mathrm{GeV}^2]$")
-ylabel(L"$\Pi(-Q^2/4) -\Pi(0) $")
+ylabel(L"$\bar\Pi(Q^2/4)$")
 legend()
 tight_layout()
 display(fig)
@@ -286,7 +286,7 @@ fill_between(xarr, value.(yarr08).-err.(yarr08), value.(yarr08).+err.(yarr08), a
 plot(xarr, value.(yarr08), color="plum")
 
 xlabel(L"$Q^2\ [\mathrm{GeV}^2]$")
-ylabel(L"$\mathit{\bar\Pi}(-Q^2)$")
+ylabel(L"$\bar\Pi(Q^2)$")
 legend()
 tight_layout()
 display(fig)
@@ -312,10 +312,14 @@ path_store_pi_fin = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/del
 fb = ALPHAdobs_create(joinpath(path_store_pi_fin, "PI_all_phys_res.bdio"), io)
 
 data = Dict{String, Array{uwreal}}(
-    "pi_33" => pi33_tot,
-    "pi_88" => pi88_tot,
-    "pi_08" => pi08_tot,
-    "pi_cc" => picc_tot
+    "pi_33_highq" => pi33_highq,
+    "pi_33_lowq" => pi33_lowq,
+    "pi_88_highq" => pi88_highq,
+    "pi_88_lowq" => pi88_lowq,
+    "pi_08_highq" => pi08_highq,
+    "pi_08_lowq" => pi08_lowq,
+    "pi_cc_highq" => picc_highq,
+    "pi_cc_lowq" => picc_lowq
 )
 ALPHAdobs_write(fb, data)
 ALPHAdobs_close(fb)
@@ -335,11 +339,45 @@ while ALPHAdobs_next_p(fb)
 end
 BDIO_close!(fb)
 
-## comparison of charm plot
+## test with delta alpha
+alpha_lo = 4*pi / 137.035999084
+deltaalpha_running = alpha_lo .* ( pi33_tot + 4/9*picc_tot + 1/3*pi88_tot); uwerr.(deltaalpha_running)
 
+pt_running_fix = uwreal([0.000045,0.000002], "run_Mz_minus_Mz")
+pt_running = [
+    uwreal([0.023945,0.000223], "q0.05"),
+    uwreal([0.023945,0.000223], "q0.1"),
+    uwreal([0.023945,0.000223], "q0.4"),
+    uwreal([0.023945,0.000223], "q1"),
+    uwreal([0.022565,0.000147], "q2"),
+    uwreal([0.021729,0.000085], "q3"),
+    uwreal([0.021117,0.000062], "q4"),
+    uwreal([0.020628,0.000051], "q5"),
+    uwreal([0.020220,0.000044], "q6"),
+    uwreal([0.019868,0.000040], "q7"),
+    uwreal([0.019558,0.000036], "q8"),
+    uwreal([0.019280,0.000034], "q9")
+]
+
+
+dalpha_fin = deltaalpha_running .+ pt_running .+ pt_running_fix; uwerr.(dalpha_fin)
+dalpha_fin
+
+##
+fill_between(Qgev[4:end], value.(dalpha_fin[4:end]) .-err.(dalpha_fin[4:end]), value.(dalpha_fin[4:end]) .+ err.(dalpha_fin[4:end]), alpha=0.4)
+errorbar(5, 0.02773, 0.00015, fmt="s")
+ylim(0.0270, 0.0282)
+display(gcf())
+close("all")
+
+
+## comparison of charm plot (OLD)
 picc_tot = picc_highq .+ picc_lowq
-picc_tot_fullq = read_phys_res(path_phys_res_fullq, "PIcc_conn_physRes.bdio")
-picc_tot_fullq = picc_tot_fullq .+ [uwreal([0.0, syst_fullq["piccconn"][k]], "syst cc fullq") for k in eachindex(Qgev)]
+change_id(from="D450", to="D450_3")
+change_id(from="E300", to="E300_3")
+
+picc_tot_fullq = read_phys_res("/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/scale_error_multimom/full_q", "PIcc_conn_physRes.bdio")
+picc_tot_fullq = picc_tot_fullq .+ [uwreal([0.0, 0.0], "syst cc fullq") for k in eachindex(Qgev)]
 picc_tot_fullq ./= charge_factor["cc"] # remove charge factor 
 
 funccc = rational_func(M=2, N=3)
@@ -370,5 +408,5 @@ ylabel(L"$\mathit{\bar\Pi}^{cc}(-Q^2)$")
 legend()
 tight_layout()
 display(gcf())
-savefig(joinpath(path_plot, "charm_comparison_totq.pdf"))
+# savefig(joinpath(path_plot, "charm_comparison_totq.pdf"))
 close("all")

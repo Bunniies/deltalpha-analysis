@@ -40,8 +40,8 @@ const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
 const Qmgev = 9.0 # Qm^2
 
 enslist = sort([ "H102", "N101", "C101", "C102", "D150",
-         "N451", "D450", "D451", "D452", #  D451 D450 removed
-         "N200", "D251", "D200", "D201", "E250", # N203 removed
+         "N452", "N451", "D450", "D451", "D452", #  D451 D450 removed
+         "N200", "N203", "D251", "D200", "D201", "E250", # N203 removed
          "J303", "J304", "E300", 
          "J501"
          ])
@@ -231,7 +231,7 @@ end
 using Statistics
 ll = L"$-\widehat{\Delta}_{ls}(\Delta\alpha)$"
 plot_cl_all_set(fitcat_3388_ll_s1, fitcat_3388_ll_s2, fitcat_3388_lc_s1, fitcat_3388_lc_s2, path_plot=path_plot, nmom=3, ylab=ll, f_tot_isov=f_tot_dltiso)
-plot_chiral_best_fit(fitcat_3388_ll_s2, path_plot=nothing, nmom=3, tt=["Set", "2", "LL"], f_tot_isov=f_tot_dltiso , ylab=ll)
+plot_chiral_best_fit(fitcat_3388_lc_s2, path_plot=path_plot, nmom=3, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso , ylab=ll)
 plot_cl_best_fit(fitcat_3388_lc_s2, path_plot=nothing, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=ll)
 
 cattot = [vcat(fitcat_3388_ll_s1[k],  fitcat_3388_lc_s2[k]...) for k in eachindex(fitcat_3388_lc_s1)]

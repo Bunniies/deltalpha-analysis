@@ -43,7 +43,7 @@ const Qmgev = 36.0 # Qm^2
 enslist = sort([ "H101", "H102", "N101", "C101",
             "B450", "D450", "D452", # "B450 removed
          "N202", "N203", "N200", "D200",  "E250",
-           "N300", "E300",  # J303 removed
+           "N300",  "E300",  # J303 removed
          "J500"
 ])
 
@@ -177,7 +177,27 @@ for s in 1:2
         end
     end
 end
+## cuts in beta > 3.4
+i_cutbeta = findall(x->x>3.4, getfield.(ensinfo, :beta))
+for s in 1:2
+    xdata = [a28t0[i_cutbeta] phi2[i_cutbeta] phi4[i_cutbeta]]
+    if s == 1
+        for q in 1:NMOM
+            str = "betacut_set$(s)_q$(q)"
+            # pi 33
+            push!(fitcat_cc_ll_s1[q], FitCat(xdata, getindex.(pi_blc_ll_s1, q)[i_cutbeta], str))
+            push!(fitcat_cc_lc_s1[q], FitCat(xdata, getindex.(pi_blc_lc_s1, q)[i_cutbeta], str))
+        end
+    elseif s == 2
+        for q in 1:NMOM
+            str = "betacut_set$(s)_q$(q)"
+            # pi 33
+            push!(fitcat_cc_ll_s2[q], FitCat(xdata, getindex.(pi_blc_ll_s2, q)[i_cutbeta], str))
+            push!(fitcat_cc_lc_s2[q], FitCat(xdata, getindex.(pi_blc_lc_s2, q)[i_cutbeta], str))
+        end
 
+    end
+end
 ##
 #================= FITTING ====================#
 # pi cc connected
@@ -209,9 +229,9 @@ end
 ## PLOTS
 #########################
 using Statistics
-yll =L"$\Delta_{lc}b(-Q^2)$"
+yll =L"$\Delta_{lc}b(Q^2)$"
 plot_cl_all_set(fitcat_cc_ll_s1, fitcat_cc_ll_s2, fitcat_cc_lc_s1, fitcat_cc_lc_s2, nmom=1, path_plot=path_plot, ylab=yll, f_tot_isov=f_tot_charm)
-plot_chiral_best_fit(fitcat_cc_ll_s1, path_plot=path_plot, nmom=1, tt=["Set", "1", "LL"], f_tot_isov=f_tot_charm, ylab=yll)
+plot_chiral_best_fit(fitcat_cc_ll_s2, path_plot=path_plot, nmom=1, tt=["Set", "2", "LL"], f_tot_isov=f_tot_charm, ylab=yll)
 plot_cl_best_fit(fitcat_cc_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_charm, ylab=yll)
 
 cattot = [vcat(fitcat_cc_lc_s1[k], fitcat_cc_lc_s2[k]...) for k in eachindex(fitcat_cc_lc_s1)]

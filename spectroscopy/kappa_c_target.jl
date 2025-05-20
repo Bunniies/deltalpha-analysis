@@ -102,7 +102,10 @@ for (k,ens) in enumerate(ensinfo)
 end
 
 ## SAVING KAPPA_C_TARGET
+change_id(from="E300", to="E300_kappac")
+change_id(from="D450", to="D450_kappac")
 
+##
 io = IOBuffer()
 write(io, "kappa_charm_target")
 fb = ALPHAdobs_create(joinpath("/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results", "kappa_c_target.bdio"), io)

@@ -25,7 +25,7 @@ path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
 path_corr = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv/"
 path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
 path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial/tmp"
-##
+
 #======= PHYSICAL CONSTANTS ====================#
 # const Qgev = [3., 5., 9.] # Q^2
 const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2
@@ -45,7 +45,7 @@ const KRNL = krnl_dα_qhalf # non-subtracted kernel
         #  ]
 # )
 # enslist = ["D450"]
-enslist = sort(["D251", "E300", "F300", "J306"])
+enslist = sort(["N452"])
 
 ensinfo = EnsInfo.(enslist)
 
@@ -166,7 +166,7 @@ end
 @info("Saving PI (33-88) results in BDIO")
 io = IOBuffer()
 write(io, "PI delta 33-88. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_3388_dlt_newStatEns.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_3388_dlt_N452.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

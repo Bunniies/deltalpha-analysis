@@ -46,7 +46,7 @@ const WindSD = Window("SD")
         #    "J307", "J306", "J303", "J304", "E300", "F300",
         #   "J500", "J501"])
 
-enslist = sort(["F300", "J307", "J306", "D251", "E300", "D450"])
+enslist = sort(["F300", "N452"])
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_corr, join=true)) for k in eachindex(enslist)]...)
@@ -201,7 +201,7 @@ end
 @info("Saving PI 33 results in BDIO")
 io = IOBuffer()
 write(io, "PI delta 33 SD low q. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_33_SD_newEnsStat.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_33_SD_N452_F300.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

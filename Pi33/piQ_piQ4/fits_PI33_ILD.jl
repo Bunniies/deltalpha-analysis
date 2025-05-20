@@ -42,7 +42,7 @@ const Qmgev = 9.0 # Qm^2
 #============== READ CORRELATORS FROM BDIO FILES =================#
 
 enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
-         "B450", "N451", "D450", "D451", "D452",
+         "B450", "N451", "N452", "D450", "D451", "D452",
          "N202", "N203", "N200", "D251", "D200", "E250", # D201 removed
           "J307", "J303", "J306", "J304", "E300", "F300", 
          "J500", "J501"])
@@ -229,7 +229,7 @@ end
 using Statistics
 ll = L"${\widehat{\Pi}}^{(3,3)}_{\mathrm{sub, \ ILD}}(Q^2)$"
 plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi33_ll_s1, path_plot=path_plot, nmom=3, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
+plot_chiral_best_fit(fitcat_pi33_lc_s2, path_plot=path_plot, nmom=3, tt=["Set", "2", "LC"], f_tot_isov=f_tot_isov, ylab=ll)
 plot_cl_best_fit(fitcat_pi33_lc_s1, path_plot=path_plot, tt=["Set", "1", "LC"], f_tot_isov=f_tot_isov, ylab=ll)
 
 # cattot = [vcat(fitcat_pi33_ll_s1[k], fitcat_pi33_lc_s1[k], fitcat_pi33_ll_s2[k],fitcat_pi33_lc_s2[k]...) for k in eachindex(fitcat_pi33_lc_s2)]

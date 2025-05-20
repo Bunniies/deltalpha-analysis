@@ -50,7 +50,7 @@ WindSD = Window("SD")
         # "J501"]
 # )
 
-enslist = sort(["E300", "D450", "D251"])
+enslist = sort(["N452"])
 
 ensinfo = EnsInfo.(enslist)
 
@@ -210,7 +210,7 @@ end
 @info("Saving PI (33-88) results in BDIO")
 io = IOBuffer()
 write(io, "PI delta 33-88. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_3388_SD_newEnsStat.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_3388_SD_N452.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

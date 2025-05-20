@@ -41,9 +41,9 @@ const Qmgev = 9.0 # Qm^2
 
 
 enslist = sort([  "H102", "N101", "C101", "C102", "D150",
-        "N451",  "D452", "D451", # D450 D451 removed
+        "N451",  "D452", "D451", "D450", # D450 D451 removed
         "N203", "N200", "D200", "D201", "E250", # D251 D201 removed 
-        "J303", "J304",  "E300", # J304 removed 
+        "J303", "J304", "E300",  # E300 J304 removed 
         "J501"])
 
 
@@ -80,6 +80,7 @@ pi_08_lc_s2 = Vector{Vector{uwreal}}(undef, 0)
 
 fb = BDIO_open(joinpath(path_store_pi, "PI_08.bdio"), "r")
 res = Dict()
+tmp_res = Dict()
 count=0
 while ALPHAdobs_next_p(fb)
     count+=1
@@ -94,13 +95,21 @@ while ALPHAdobs_next_p(fb)
         continue
     end
 
-    # push!(pi_08_ll_s1, res["pi08_ll_s1"])
-    push!(pi_08_lc_s1, res["pi08_lc_s1"])
-    # push!(pi_08_ll_s2, res["pi08_ll_s2"])
-    push!(pi_08_lc_s2, res["pi08_lc_s2"])
+    tmp_res[extra["Ens"]] = Dict{String, Array{uwreal}}(
+        "pi08_lc_s1" => res["pi08_lc_s1"],
+        "pi08_lc_s2" => res["pi08_lc_s2"]
+    )
+    # push!(pi_08_lc_s1, res["pi08_lc_s1"])
+    # push!(pi_08_lc_s2, res["pi08_lc_s2"])
 
 end
 BDIO_close!(fb)
+
+# reordering data to match ensinfo
+for (k,ens) in enumerate(enslist)
+    push!(pi_08_lc_s1, tmp_res[ens]["pi08_lc_s1"])
+    push!(pi_08_lc_s2, tmp_res[ens]["pi08_lc_s2"])
+end
 
 ##  cancelling fluctuations from t0_ph
 NOERR = false
@@ -162,6 +171,27 @@ for s in 1:2
     end
 end
 
+## cuts in phi<0.45
+i_cutphi2 = findall(x->x<0.45, value.(phi2))
+for s in 1:2
+    xdata = [a28t0[i_cutphi2] phi2[i_cutphi2] phi4[i_cutphi2]]
+    if s == 1
+        for q in 1:NMOM
+            str = "all_data_set$(s)_q$(q)"
+            # pi 08
+            # push!(fitcat_pi08_ll_s1[q], FitCat(xdata, getindex.(pi_08_ll_s1, q), str))
+            push!(fitcat_pi08_lc_s1[q], FitCat(xdata, getindex.(pi_08_lc_s1, q)[i_cutphi2], str))
+        end
+    elseif s == 2
+        for q in 1:NMOM
+            str = "all_data_set$(s)_q$(q)"
+            # pi 08
+            # push!(fitcat_pi08_ll_s2[q], FitCat(xdata, getindex.(pi_08_ll_s2, q), str))
+            push!(fitcat_pi08_lc_s2[q], FitCat(xdata, getindex.(pi_08_lc_s2, q)[i_cutphi2], str))
+        end
+
+    end
+end
 ##
 #================= FITTING ====================#
 # pi 08
@@ -193,8 +223,9 @@ end
 ## PLOTS
 #########################
 using Statistics
-plot_cl_all_set(fitcat_pi08_ll_s1, fitcat_pi08_ll_s2, fitcat_pi08_lc_s1, fitcat_pi08_lc_s2, path_plot=path_plot, nmom=3, ylab=L"$(\Delta\alpha^{0,8})$", f_tot_isov=f_tot_dltiso)
-plot_chiral_best_fit(fitcat_pi08_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$(\Delta\alpha^{0,8})$")
+ll = L"$\bar\Pi^{(0,8)}(Q^2/4)$"
+plot_cl_all_set(fitcat_pi08_ll_s1, fitcat_pi08_ll_s2, fitcat_pi08_lc_s1, fitcat_pi08_lc_s2, path_plot=path_plot, nmom=3, ylab=ll, f_tot_isov=f_tot_dltiso)
+plot_chiral_best_fit(fitcat_pi08_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=ll)
 plot_cl_best_fit(fitcat_pi08_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=L"$(\Delta\alpha^{0,8})$")
 
 cattot = [vcat( fitcat_pi08_lc_s1[k],fitcat_pi08_lc_s2[k]...) for k in eachindex(fitcat_pi08_lc_s1)]

@@ -42,7 +42,7 @@ IMPR      = true
 RENORM    = true
 STD_DERIV = false
 
-enslist = ["N452"]
+enslist = ["J306"]
 ensinfo = EnsInfo.(enslist)
 
 

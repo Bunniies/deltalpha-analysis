@@ -42,10 +42,10 @@ for n = 2:n_par_var+1
         if "a3phi2" ∈ model_var_label[a] #&& "a2phi2" ∉ model_var_label[a]
             continue
         end
-        if ["a3", "a2phi2", "a3phi2", "a2phi4", "phi2sqr", "phi4sqr"] == model_var_label[a]
+        if ["a3", "a2phi2", "a3phi2", "a2phi4", "phi2sqr"] == model_var_label[a]
             continue
         end
-        if "phi2log" ∈ model_var_label[a]
+        if "phi2log" ∈ model_var_label[a] 
             continue
         end
         if "phi2sqr" ∈ model_var_label[a]

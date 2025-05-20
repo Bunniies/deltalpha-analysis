@@ -47,7 +47,7 @@ enslist = sort([ "H102", "N101", "C101", "C102", "D150",
 )
 
 # enslist = ["D450"]
-enslist = sort(["D251", "E300", "F300", "J306"])
+enslist = sort(["N452"])
 
 ensinfo = EnsInfo.(enslist)
 
@@ -172,7 +172,7 @@ end
 @info("Saving PI (08) results in BDIO")
 io = IOBuffer()
 write(io, "PI 08. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_08_newStatEns.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_08_N452.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

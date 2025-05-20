@@ -1,6 +1,8 @@
 using ADerrors
 using ALPHAio, BDIO
+using PyPlot
 import ADerrors:err
+using HVPobs
 
 rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
 rcParams["text.usetex"] =  true
@@ -26,6 +28,19 @@ b33qm_pt_5loops = uwreal([1896.11*1e-5, 2.67*1e-5], "b33_qm_pt") # from wolfram 
 b33qqm_highq = [(q/(4*Qmgev)) * b33qm_pt_5loops for q in Qgev] # using PT result
 
 
-deltalc_highq = read_phys_res(path_phys_res_highq, "PI_blc_2Qm_physRes.bdio")
+deltalc_highq = read_phys_res(joinpath(path_phys_res_highq, "old_statEns/old"), "PI_blc_2Qm_physRes.bdio")
 
 bcc_highq = Qgev ./ (4*Qmgev) .* deltalc_highq .+ 2 .* charge_factor["cc"] .* b33qqm_highq 
+
+
+
+## SD paper bcc
+# at 5 GeV
+full_res = 1.152e-9
+res_with_no_lo = 1.05e-9
+full_res-res_with_no_lo
+
+# at 3.5 GeV
+full_res = 1.152e-9
+res_with_no_lo = 1.59481e-9
+full_res-res_with_no_lo

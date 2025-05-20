@@ -49,7 +49,7 @@ enslist = sort([#"H101", "H102", "N101", "C101", "C102",  "D150"]) # C102 non co
         #"N202", "N203", "N200", "D251", "D200", "D201", "E250"]) # D201 enot computed
         #"J307", "J303", "J304", "E300"]) # J304 not computed
          "J500", "J501"])
-enslist = sort([ "D450", "E300", "D251", "J307"])
+enslist = sort([ "E250"])
 
 
 ensinfo = EnsInfo.(enslist)
@@ -146,6 +146,7 @@ pi_3388_lc_s1 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)
 # set 2 improvement coefficients
 pi_3388_ll_s2 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)]
 pi_3388_lc_s2 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)]
+pi_33_lc_s2_data  = [Vector{Vector{uwreal}}(undef, length(Qgev)) for k in eachindex(ensinfo)]
 
 for (k, ens) in enumerate(ensinfo)
     println("Ensemble: ", ens.id)
@@ -178,6 +179,7 @@ for (k, ens) in enumerate(ensinfo)
         # pi_3388_lc_s1[k][j] =  tmr_integrand(g3388_dlt_lc_s1[k], q, KRNLsub, pl=false, t0ens=t0ens[k])
         # pi_3388_ll_s2[k][j] =  tmr_integrand(g3388_dlt_ll_s2[k], q, KRNLsub, pl=false, t0ens=t0ens[k])
         # pi_3388_lc_s2[k][j] =  tmr_integrand(g3388_dlt_lc_s2[k], q, KRNLsub, pl=false, t0ens=t0ens[k])
+        _, pi_33_lc_s2_data[k][j] =  tmr_integrand(g3388_dlt_lc_s2[k], q, KRNLsub, pl=false, t0ens=t0ens[k], data=true, wind=WindILD)
     end
 end
 
@@ -205,7 +207,7 @@ end
 @info("Saving PI (88) results in BDIO")
 io = IOBuffer()
 write(io, "PI delta 88. ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_88_ILD_newEnsStat.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_88_ILD_N452.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)
@@ -234,3 +236,24 @@ while ALPHAdobs_next_p(fb)
     res[extra["Ens"]] = ALPHAdobs_read_next(fb, size=sz, keys=ks)
 end
 BDIO_close!(fb)
+
+
+## plot comulative sum
+
+fig = figure()
+idx=8
+cum = cumsum(pi_33_lc_s2_data[1][idx])
+xx = collect(1:length(cum)) .* value(a(3.55))
+uwerr.(cum)
+uwerr.(pi_3388_lc_s2[1][idx])
+errorbar(xx, value.(cum), err.(cum), fmt="s", ms=10, mfc="none", color="forestgreen")   
+fill_between(xx, value(pi_3388_lc_s2[1][idx])-err(pi_3388_lc_s2[1][idx]), value(pi_3388_lc_s2[1][idx])+err(pi_3388_lc_s2[1][idx]), color="red",alpha=0.5)
+
+axvline(35*value(a(3.55)), ls="dashed", color="gray")
+xlabel(L"$t \ [\mathrm{fm}]$")
+ylabel(L"$\bar{\Pi}^{(8,8)}_{\mathrm{ILD}}(Q^2/4)$")
+title(L"$Q^2=$" * string(Qgev[idx]*4) * L"$\ \mathrm{GeV}^2$")
+display(gcf())
+tight_layout()
+savefig(joinpath(path_plot,"E250/Pi88_cum_sum_E250_Qgev$(Qgev[idx]*4).pdf"))
+close("all")

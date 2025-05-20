@@ -43,13 +43,13 @@ dir_path = filter(isdir, readdir(path_bdio, join=true))
 
 
 IMPR      = true
-IMPR_SET  = "2" # either "1" or "2"
+IMPR_SET  = "1" # either "1" or "2"
 RENORM    = false
 STD_DERIV = false
 
 
 enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
-         "B450", "N451", "D450", "D451", "D452",
+         "B450", "N451", "D450", "D451", "D452", "N452",
          "N202", "N203", "N200", "D251", "D200", "D201", "E250",
           "J307", "J306", "J303", "J304", "E300", "F300",
          "J500", "J501"])
@@ -133,8 +133,8 @@ end
 #======== SAVE TO BDIO WITH ALPHAIO =========#
 @info("Saving tree level improvement TMR")
 io = IOBuffer()
-write(io, "TMR 3 level improvement set 2")
-fb = ALPHAdobs_create(joinpath(path_store_3l, "treeLevelSet2.bdio"), io)
+write(io, "TMR 3 level improvement set 1")
+fb = ALPHAdobs_create(joinpath(path_store_3l, "treeLevelSet1.bdio"), io)
 
 for(k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

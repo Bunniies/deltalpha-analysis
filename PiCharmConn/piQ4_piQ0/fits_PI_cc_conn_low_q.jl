@@ -68,8 +68,7 @@ for (k, ens) in enumerate(ensinfo)
     a28t0[k] =  a(ens.beta)^2 #1 / (8*t0ens_aux)
     t0ens[k] = t0ens_aux
 end
-@warn "D450 id is temporarely changed. Fix this!"
-change_id(from="D450", to="D450_")
+
 
 #============= READ PI CHARM CHARM FROM BDIO =================#
 # set 1 improvement coefficients
@@ -175,25 +174,24 @@ for s in 1:2
         end
     end
 end
-## cuts in phi2<0.6 
-i_cutphi2 = findall(x->x<0.6, value.(phi2))
+## cuts in beta > 3.4
+i_cutbeta = findall(x->x>3.4, getfield.(ensinfo, :beta))
 for s in 1:2
-    xdata = [a28t0[i_cutphi2] phi2[i_cutphi2] phi4[i_cutphi2]]
+    xdata = [a28t0[i_cutbeta] phi2[i_cutbeta] phi4[i_cutbeta]]
     if s == 1
         for q in 1:NMOM
-            str = "mpicut_set$(s)_q$(q)"
+            str = "cutbeta_set$(s)_q$(q)"
             # pi 33
-            push!(fitcat_cc_ll_s1[q], FitCat(xdata, getindex.(pi_cc_ll_s1, q)[i_cutphi2], str))
-            push!(fitcat_cc_lc_s1[q], FitCat(xdata, getindex.(pi_cc_lc_s1, q)[i_cutphi2], str))
+            push!(fitcat_cc_ll_s1[q], FitCat(xdata, getindex.(pi_cc_ll_s1, q)[i_cutbeta], str))
+            push!(fitcat_cc_lc_s1[q], FitCat(xdata, getindex.(pi_cc_lc_s1, q)[i_cutbeta], str))
         end
     elseif s == 2
         for q in 1:NMOM
-            str = "mpicut_set$(s)_q$(q)"
+            str = "cutbeta_set$(s)_q$(q)"
             # pi 33
-            push!(fitcat_cc_ll_s2[q], FitCat(xdata, getindex.(pi_cc_ll_s2, q)[i_cutphi2], str))
-            push!(fitcat_cc_lc_s2[q], FitCat(xdata, getindex.(pi_cc_lc_s2, q)[i_cutphi2], str))
+            push!(fitcat_cc_ll_s2[q], FitCat(xdata, getindex.(pi_cc_ll_s2, q)[i_cutbeta], str))
+            push!(fitcat_cc_lc_s2[q], FitCat(xdata, getindex.(pi_cc_lc_s2, q)[i_cutbeta], str))
         end
-
     end
 end
 ##
@@ -227,9 +225,9 @@ end
 ## PLOTS
 #########################
 using Statistics
-ll = L"$\bar{\mathit{\Pi}}^{(c,c)}(Q^2/4)$"
+ll = L"$\bar{\Pi}^{(c,c)}(Q^2/4)$"
 plot_cl_all_set(fitcat_cc_ll_s1, fitcat_cc_ll_s2, fitcat_cc_lc_s1, fitcat_cc_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_charm)
-plot_chiral_best_fit(fitcat_cc_ll_s2, path_plot=path_plot, tt=["Set", "2", "LL"], f_tot_isov=f_tot_charm, ylab=ll)
+plot_chiral_best_fit(fitcat_cc_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_charm, ylab=ll)
 plot_cl_best_fit(fitcat_cc_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_charm, ylab=ll)
 
 cattot = [vcat(fitcat_cc_lc_s1[k], fitcat_cc_lc_s2[k]...) for k in eachindex(fitcat_cc_lc_s1)]

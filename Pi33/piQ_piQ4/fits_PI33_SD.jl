@@ -45,7 +45,7 @@ const TREELEVEL = true
 #============== READ CORRELATORS FROM BDIO FILES =================#
 
 enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
-         "B450", "N451", "D450", "D451", "D452",
+         "B450", "N452", "N451", "D450", "D451", "D452",
          "N202", "N203", "N200", "D251", "D200", "D201", "E250", # D201 removed
           "J307", "J303", "J306", "J304", "E300", "F300", 
          "J500", "J501"])
@@ -105,8 +105,6 @@ while ALPHAdobs_next_p(fb)
         "pi33_ll_SD_s2" => res["pi33_ll_SD_s2"],
         "pi33_lc_SD_s2" => res["pi33_lc_SD_s2"]
     )
-
-
 end
 BDIO_close!(fb)
 
@@ -296,10 +294,10 @@ for q in 1:NMOM
 
         for (k_mod, model) in enumerate(f_tot_isov)
             println(k_mod)
-            fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_isov[k_mod], pval=true)
-            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_isov[k_mod], pval=true)
-            fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_isov[k_mod], pval=true)
-            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=true)
+            fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_isov[k_mod], pval=false)
+            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_isov[k_mod], pval=false)
+            fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_isov[k_mod], pval=false)
+            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=false)
             push!(fitcat_pi33_ll_s1[q][k_cat].fit, fit_ll_s1)
             push!(fitcat_pi33_ll_s2[q][k_cat].fit, fit_ll_s2)
             push!(fitcat_pi33_lc_s1[q][k_cat].fit, fit_lc_s1)
@@ -326,7 +324,7 @@ end
 using Statistics
 ll = L"${\widehat{\Pi}}^{(3,3)}_{\mathrm{sub, \ SD}}(Q^2)$"
 plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi33_ll_s2, path_plot=path_plot, tt=["Set", "2", "LL"], nfit=0, f_tot_isov=f_tot_isov, nmom=NMOM, ylab=ll) # nfit=28 used for 2024 proceedings
+plot_chiral_best_fit(fitcat_pi33_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], nfit=0, f_tot_isov=f_tot_isov, nmom=NMOM, ylab=ll) # nfit=28 used for 2024 proceedings
 plot_cl_best_fit(fitcat_pi33_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_isov, ylab=ll)
 
 cattot = [vcat(fitcat_pi33_ll_s2[k],fitcat_pi33_lc_s2[k]...) for k in eachindex(fitcat_pi33_lc_s1)]

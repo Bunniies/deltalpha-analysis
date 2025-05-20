@@ -63,12 +63,12 @@ for (k, ens) in enumerate(ensinfo)
     m_k   = read_BDIO(spectrum_path[k], "spectrum", "mk")[1]
     t0ens_aux = read_BDIO(spectrum_path[k], "spectrum", "t0")[1]
 
-    # println("using t0/a^2 for each ens")
-    # phi2[k]  = 8 * t0ens_aux * m_pi^2
-    # phi4[k]  = 8 * t0ens_aux * (m_k^2 + 0.5*m_pi^2 )
-    println("using t0/a^2 from t0_sym Regensburg")
-    phi2[k]  = 8 * t0(ens.beta) * m_pi^2
-    phi4[k]  = 8 * t0(ens.beta) * (m_k^2 + 0.5*m_pi^2 )
+    println("using t0/a^2 for each ens")
+    phi2[k]  = 8 * t0ens_aux * m_pi^2
+    phi4[k]  = 8 * t0ens_aux * (m_k^2 + 0.5*m_pi^2 )
+    # println("using t0/a^2 from t0_sym Regensburg")
+    # phi2[k]  = 8 * t0(ens.beta) * m_pi^2
+    # phi4[k]  = 8 * t0(ens.beta) * (m_k^2 + 0.5*m_pi^2 )
 
     a28t0[k] =  a(ens.beta)^2 #1 / (8*t0ens_aux)
     t0ens[k] = t0ens_aux
@@ -83,8 +83,8 @@ pi_cc_lc_s1 = Vector{Vector{uwreal}}(undef, 0)
 pi_cc_ll_s2 = Vector{Vector{uwreal}}(undef, 0)
 pi_cc_lc_s2 = Vector{Vector{uwreal}}(undef, 0)
 
-@warn "you are reading data not interpolated to target k_c! Should read PIcc_conn_interp.bdio! "
-fb = BDIO_open(joinpath(path_store_pi, "PIcc_conn.bdio"), "r")
+# @warn "you are reading data not interpolated to target k_c! Should read PIcc_conn_interp.bdio! "
+fb = BDIO_open(joinpath(path_store_pi, "PIcc_conn_interp.bdio"), "r")
 tmp_res = Dict{Any, Any}()
 res = Dict()
 count=0
@@ -180,23 +180,25 @@ for s in 1:2
         end
     end
 end
-## cuts in phi2<0.6 
-i_cutphi2 = findall(x->x<0.6, value.(phi2))
+## cuts in beta > 3.4
+i_cutbeta = findall(x->x>3.4, getfield.(ensinfo, :beta))
+# i_cutbeta = findall(x->x<0.6, value.(phi2))
+
 for s in 1:2
-    xdata = [a28t0[i_cutphi2] phi2[i_cutphi2] phi4[i_cutphi2]]
+    xdata = [a28t0[i_cutbeta] phi2[i_cutbeta] phi4[i_cutbeta]]
     if s == 1
         for q in 1:NMOM
-            str = "mpicut_set$(s)_q$(q)"
+            str = "betacut_set$(s)_q$(q)"
             # pi 33
-            push!(fitcat_cc_ll_s1[q], FitCat(xdata, getindex.(pi_cc_ll_s1, q)[i_cutphi2], str))
-            push!(fitcat_cc_lc_s1[q], FitCat(xdata, getindex.(pi_cc_lc_s1, q)[i_cutphi2], str))
+            push!(fitcat_cc_ll_s1[q], FitCat(xdata, getindex.(pi_cc_ll_s1, q)[i_cutbeta], str))
+            push!(fitcat_cc_lc_s1[q], FitCat(xdata, getindex.(pi_cc_lc_s1, q)[i_cutbeta], str))
         end
     elseif s == 2
         for q in 1:NMOM
-            str = "mpicut_set$(s)_q$(q)"
+            str = "betacut_set$(s)_q$(q)"
             # pi 33
-            push!(fitcat_cc_ll_s2[q], FitCat(xdata, getindex.(pi_cc_ll_s2, q)[i_cutphi2], str))
-            push!(fitcat_cc_lc_s2[q], FitCat(xdata, getindex.(pi_cc_lc_s2, q)[i_cutphi2], str))
+            push!(fitcat_cc_ll_s2[q], FitCat(xdata, getindex.(pi_cc_ll_s2, q)[i_cutbeta], str))
+            push!(fitcat_cc_lc_s2[q], FitCat(xdata, getindex.(pi_cc_lc_s2, q)[i_cutbeta], str))
         end
 
     end
@@ -216,15 +218,15 @@ for q in 1:NMOM
         for (k_mod, model) in enumerate(f_tot_charm)
             println(k_mod)
             try
-                fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_charm[k_mod], pval=false)
-                fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_charm[k_mod], pval=false)
-                fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_charm[k_mod], pval=false)
-                fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_charm[k_mod], pval=false)
+                # fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_charm[k_mod], pval=false)
+                # fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_charm[k_mod], pval=false)
+                # fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_charm[k_mod], pval=false)
+                # fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_charm[k_mod], pval=false)
                 
-                # fit_ll_s1 = fit_data(model, xdata, ydata_ll_s1, n_par_tot_charm[k_mod])
-                # fit_ll_s2 = fit_data(model, xdata, ydata_ll_s2, n_par_tot_charm[k_mod])
-                # fit_lc_s1 = fit_data(model, xdata, ydata_lc_s1, n_par_tot_charm[k_mod])
-                # fit_lc_s2 = fit_data(model, xdata, ydata_lc_s2, n_par_tot_charm[k_mod])
+                fit_ll_s1 = fit_data(model, value.(xdata), ydata_ll_s1, n_par_tot_charm[k_mod], correlated=false)
+                fit_ll_s2 = fit_data(model, value.(xdata), ydata_ll_s2, n_par_tot_charm[k_mod], correlated=false)
+                fit_lc_s1 = fit_data(model, value.(xdata), ydata_lc_s1, n_par_tot_charm[k_mod], correlated=false)
+                fit_lc_s2 = fit_data(model, value.(xdata), ydata_lc_s2, n_par_tot_charm[k_mod], correlated=false)
                 
                 push!(fitcat_cc_ll_s1[q][k_cat].fit, fit_ll_s1)
                 push!(fitcat_cc_ll_s2[q][k_cat].fit, fit_ll_s2)
@@ -241,9 +243,9 @@ end
 ## PLOTS
 #########################
 using Statistics
-ll = L"$\widehat{\mathit{\Pi}}^{(c,c)}(Q^2)$"
+ll = L"$\widehat{\Pi}^{(c,c)}(Q^2)$"
 plot_cl_all_set(fitcat_cc_ll_s1, fitcat_cc_ll_s2, fitcat_cc_lc_s1, fitcat_cc_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_charm)
-plot_chiral_best_fit(fitcat_cc_ll_s1, path_plot=path_plot, tt=["Set", "1", "LL"], f_tot_isov=f_tot_charm, ylab=ll)
+plot_chiral_best_fit(fitcat_cc_lc_s1, path_plot=path_plot, tt=["Set", "1", "LC"], f_tot_isov=f_tot_charm, ylab=ll)
 plot_cl_best_fit(fitcat_cc_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_charm, ylab=L"$(\Delta\alpha^{c,c})_{\mathrm{sub}}$")
 
 cattot = [vcat(fitcat_cc_lc_s1[k], fitcat_cc_lc_s2[k]...) for k in eachindex(fitcat_cc_lc_s1)]
@@ -258,7 +260,7 @@ RES = []
 SYST = []
 for q in 1:NMOM
     @info "Momentum no. $(q): $(Qgev[q]) GeV^2"
-    fitcat_cc_mean = vcat(vcat(#fitcat_cc_ll_s1[q],
+    fitcat_cc_mean = vcat(vcat(fitcat_cc_ll_s1[q],
                 #fitcat_cc_ll_s2[q],
                 fitcat_cc_lc_s2[q])...
     )
@@ -270,7 +272,7 @@ for q in 1:NMOM
     ww_lc_s1 = get_w_from_fitcat(fitcat_cc_lc_s1[q])
     ww_lc_s2 = get_w_from_fitcat(fitcat_cc_lc_s2[q])
 
-    ww_tot_mean = vcat(ww_lc_s2)
+    ww_tot_mean = vcat(ww_lc_s2, ww_lc_s1)
     ww_tot_syst = vcat(ww_lc_s1, ww_lc_s2)
 
     w, widx  =  findmax(ww_tot_mean)
@@ -284,7 +286,7 @@ for q in 1:NMOM
     
     
     cat_idx = Int((widx - model_idx ) / length(f_tot_charm))+1
-    if cat_idx < 0
+    if cat_idx <= 0
         cat_idx +=1
     end
     println("   best χ2/χ2exp: ", fitcat_cc_mean[cat_idx].fit[model_idx].chi2 / fitcat_cc_mean[cat_idx].fit[model_idx].chi2exp)

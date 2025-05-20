@@ -21,7 +21,7 @@ include("../utils/IO_BDIO.jl")
 include("../utils/tools.jl")
 
 
-path_data_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/high_q_kernel/scale_error_artificial"
+path_data_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/low_q_kernel/scale_error_artificial"
 path_kappa_target = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/kappa_c_target.bdio"
 
 ## reading kappa charm target
@@ -38,7 +38,7 @@ BDIO_close!(fb)
 # reading HVP data for kappaC_sim and kappaC_sim_plus
 
 #kappaC_sim
-fb = BDIO_open(joinpath(path_data_pi, "PI_blc_2Qm.bdio"), "r")
+fb = BDIO_open(joinpath(path_data_pi, "PIcc_conn.bdio"), "r")
 hvp_charm_sim = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)
@@ -52,7 +52,7 @@ end
 BDIO_close!(fb)
 
 #kappaC_sim_plus
-fb = BDIO_open(joinpath(path_data_pi, "PI_blc_2Qm_plus.bdio"), "r")
+fb = BDIO_open(joinpath(path_data_pi, "PIcc_conn_plus.bdio"), "r")
 hvp_charm_sim_plus = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)
@@ -111,16 +111,16 @@ end
 
 ## save data
 io = IOBuffer()
-write(io, "PI_blc charm-conn interp ")
+write(io, "PIcc lowq charm-conn interp ")
 
-fb = ALPHAdobs_create(joinpath(path_data_pi, "PI_blc_2Qm_interp.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_data_pi, "PIcc_conn_interp.bdio"), io)
 for (k,ens) in enumerate(enslist)
     extra = Dict{String,Any}("Ens" => ens)
     data = Dict{String, Array{uwreal}}(
-        "pi_blc_ll_s1" => store_res[ens]["pi_blc_ll_s1"],
-        "pi_blc_lc_s1" => store_res[ens]["pi_blc_lc_s1"],
-        "pi_blc_ll_s2" => store_res[ens]["pi_blc_ll_s2"],
-        "pi_blc_lc_s2" => store_res[ens]["pi_blc_lc_s2"],
+        "picc_ll_s1" => store_res[ens]["picc_ll_s1"],
+        "picc_lc_s1" => store_res[ens]["picc_lc_s1"],
+        "picc_ll_s2" => store_res[ens]["picc_ll_s2"],
+        "picc_lc_s2" => store_res[ens]["picc_lc_s2"],
     )
     ALPHAdobs_write(fb, data, extra=extra)
 end

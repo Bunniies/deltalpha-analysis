@@ -38,7 +38,7 @@ println("STD_DERIV: ", STD_DERIV)
         # "J500", "J501"])
 
 # enslist = sort(["A653"])        
-enslist = sort(["F300"])        
+enslist = sort(["J306"])        
 ensinfo = EnsInfo.(enslist)
 ##
 #============ OBSERVABLE ALLOCATIONS ============#
@@ -216,7 +216,7 @@ end # end time begin
 
 ## TEST WITH READING
 
-fb = BDIO_open(joinpath(path_store_bdio,  "D450_corr_set2"), "r")
+fb = BDIO_open(joinpath(path_store_bdio,  "E300_corr_set1"), "r")
 
 # res = Dict()
 count=0

@@ -42,7 +42,7 @@ const Qmgev = 9.0 # Qm^2
 
 
 enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
-         "B450", "N451", "D450", "D451", "D452",
+         "B450", "N451", "N452", "D450", "D451", "D452",
          "N202", "N203", "N200", "D251", "D200", "D201", "E250",
           "J307", "J306", "J303", "J304", "E300", "F300",
          "J500", "J501"])
@@ -227,7 +227,7 @@ using Statistics
 # ll = L"$\mathit{\Pi}^{3,3}_{\mathrm{sub}}(Q^2/4) - \mathit{\Pi}^{3,3}_{\mathrm{sub}}(0)$"
 ll = L"${\bar\Pi}^{(3,3)}_{\mathrm{sub}}(Q^2/4)$"
 plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi33_ll_s1, path_plot=path_plot, nmom=3, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
+plot_chiral_best_fit(fitcat_pi33_ll_s2, path_plot=path_plot, nmom=3, tt=["Set", "2", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
 plot_cl_best_fit(fitcat_pi33_ll_s2, path_plot=path_plot, tt=["Set", "2", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
 
 cattot = [vcat(fitcat_pi33_ll_s1[k], fitcat_pi33_lc_s1[k], fitcat_pi33_ll_s2[k],fitcat_pi33_lc_s2[k]...) for k in eachindex(fitcat_pi33_lc_s2)]
@@ -249,7 +249,7 @@ for q in 1:NMOM
     fitcat_pi33_ll_s2[q],
     fitcat_pi33_lc_s1[q],
     fitcat_pi33_lc_s2[q])...
-)
+    )
     # ww_tot = get_w_from_fitcat(fitcat_pi33_tot)
 
     ww_ll_s1 = get_w_from_fitcat(fitcat_pi33_ll_s1[q])
@@ -331,6 +331,7 @@ end
 
 io = IOBuffer()
 write(io, "PI33 low q physical results")
+
 fb = ALPHAdobs_create(joinpath(path_phys_res, "PI33_physRes.bdio"), io)
 for k in eachindex(RES)
     aux = RES[k] + uwreal([0.0, SYST[k]], "Syst Pi33 low q")

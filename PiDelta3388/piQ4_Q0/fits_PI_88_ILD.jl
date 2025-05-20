@@ -40,8 +40,8 @@ const Qmgev = 9.0 # Qm^2
 
 # su3 symm point removed
 enslist = sort([  "H101", "H102", "N101", "C101", "C102", "D150",  #  C102  removed, 
-           "N451", "D452", "D450", "D451",   # B450 D450, D451 removed
-         "N202", "N203", "N200", "D200", "D251", "D201", "E250",  # D251 D201,  removed
+          "N451",  "D452", "D450", "D451",   # B450 D450, D451 N452 removed
+         "N202", "N203", "N200", "D200",  "D201", "E250",  #  D251 removed
           "J307", "J303", "J304", "E300",  # J304 removed
         "J500", "J501"]) 
 
@@ -224,14 +224,14 @@ end
 ## PLOTS
 #########################
 using Statistics
-ll = L"$(\bar\Pi^{(8,8)})^{\mathrm{ILD}}(Q^2/4)$"
+ll = L"$\bar\Pi^{(8,8)}_{\mathrm{ILD}}(Q^2/4)$"
 plot_cl_all_set(fitcat_pi88_ll_s1, fitcat_pi88_ll_s2, fitcat_pi88_lc_s1, fitcat_pi88_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi88_ll_s1, path_plot=path_plot, nmom=3, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
+plot_chiral_best_fit(fitcat_pi88_ll_s2, path_plot=path_plot, nmom=3, tt=["Set", "2", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
 plot_cl_best_fit(fitcat_pi88_ll_s1, path_plot=path_plot, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
 
 cattot = [vcat(fitcat_pi88_ll_s2[k],fitcat_pi88_lc_s2[k]...) for k in eachindex(fitcat_pi88_lc_s2)]
 plot_mAve_summary(cattot, xlab=vcat(label_tot_isov,label_tot_isov,label_tot_isov,label_tot_isov), charge_factor=1/3, ylab=ll, tt=["Set", "1-2", "LL-LC"], path_plot=path_plot)
-plot_mAve_summary(fitcat_pi88_lc_s1, xlab=label_tot_isov, charge_factor=1., ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{ILD}}$")
+plot_mAve_summary(fitcat_pi88_lc_s1, xlab=vcat(label_tot_isov,label_tot_isov), charge_factor=1., ylab=L"$(\Delta\alpha^{3,3})_{\mathrm{sub}}^{\mathrm{ILD}}$")
 
 
 ###################################
