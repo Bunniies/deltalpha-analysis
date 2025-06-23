@@ -34,7 +34,7 @@ const path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/delta
 const path_spec = "/Users/alessandroconigli/Lattice/data/HVP/corr_recostruction"
 
 #======= PHYSICAL CONSTANTS ====================#
-const Qgev = [9, 12, 15, 18] ./ 16 # Q^2/16 # 
+const Qgev = [4, 5, 6, 7, 8, 9, 12] ./ 16   # Q^2 # additional very high values
 # const Qgev = [1.0] # Q^2
 const Qmgev = 9.0 # Qm^2
 

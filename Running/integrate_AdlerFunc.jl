@@ -43,6 +43,7 @@ function read_pQCD_datfile(path; N=400, errinp=true, pl=false)
     mean_val = (fname[1:N,3])
 
     err_npc = (fname[N+1:2N, 3] .- fname[2*N+1:end, 3]) #./2
+    # err_npc = (mean_val .- fname[N+1:2*N, 3])
     tot_err = err_npc
 
     if errinp
@@ -138,7 +139,7 @@ end
 
 qval_adpy, dfunc_adpy_msbar = read_adlerpy_datfile(path_adpy_msbar, path_4loops=path_adpy_msbar_4loops)  
 qval_adpy, dfunc_adpy_msbar_km_input = read_adlerpy_datfile(path_adpy_msbar_km_input, path_4loops=path_adpy_msbar_4loops_km_input)  
-qval_pqcd, dfunc_pqcd_bfom = read_pQCD_datfile(path_pQCD_bfmom)
+qval_pqcd, dfunc_pqcd_bfom = read_pQCD_datfile(path_pQCD_bfmom, errinp=true)
 qval_pqcd, dfunc_pqcd_msbar = read_pQCD_datfile(path_pQCD_msbar)
 qval_pqcd, dfunc_pqcd1_bfom = read_pQCD1_datfile(path_pQCD1_bfmom)
 qval_pqcd, dfunc_pqcd1_my_input = read_pQCD1_datfile(path_pQCD1_my_input)
@@ -171,7 +172,7 @@ itp_adpy_msbar = get_interp(log.(qval_adpy.^2), dfunc_adpy_msbar)(log.(Q_val_adl
 itp_adpy_msbar_km_input = get_interp(qval_adpy, dfunc_adpy_msbar_km_input)(Q_val_adl_km)
 itp_km_myval = get_interp(log.(Q_val_adl_km.^2), dfunc_adl_km)
 
-for mom in range(1,9)
+for mom in range(1,9)# loop in q^2 GeV^2
     # ub=findall(x-> x - Mz >= 0, Q_val_adl_km)[1] -1
     # lb=findall(x-> x - sqrt(mom) >= 0, Q_val_adl_km)[1] -1
     ub=findall(x-> x - Mz >= 0, Q_val_adl_km)[1] -1
@@ -219,7 +220,14 @@ for mom in range(1,9)
     # AdPy MSBAR KM input
     push!(store_res_adpy_msbar_km_input, get_integral(itp_adpy_msbar_km_input[lb:ub], distq) * (alpha0/(3*pi)))
     # pqcd1 BF-MOM
-    push!(store_res_pqcd1_bfmom, get_integral(dfunc_pqcd1_bfom[lb:ub], distq) * (alpha0/(3*pi)))
+    mres1 = get_integral(dfunc_pqcd1_bfom[lb:ub], distq) * (alpha0 / (3pi))
+    if mom ==1 
+        push!(store_res_pqcd1_bfmom, mres1)
+    else
+        mres2 = get_integral(dfunc_pqcd1_bfom[lb-1:ub], distq) * (alpha0 / (3pi))
+        mres = mres2 + (mres1 - mres2) / (qval_pqcd[lb-1] - qval_pqcd[lb]) * (qval_pqcd[lb-1] - sqrt(mom))
+        push!(store_res_pqcd1_bfmom, mres)
+    end
     # pqcd1 BF-MOM my input
     push!(store_res_pqcd1_my_input, get_integral(dfunc_pqcd1_my_input[lb:ub], distq)* (alpha0/(3*pi)))
     # test my method with KM data
@@ -243,8 +251,8 @@ errorbar(QQ, value.(store_res_km), err.(store_res_km), fmt="s", ms=8, mfc="none"
 errorbar(QQ .+ 0.15, value.(store_res_adpy_msbar), err.(store_res_adpy_msbar), fmt="s", ms=8, mfc="none", label="AdPy (my input)")
 errorbar(QQ .+ 0.3 , value.(store_res_adpy_msbar_km_input), err.(store_res_adpy_msbar_km_input), fmt="s", ms=8, mfc="none", label="AdPy (KM input)")
 #errorbar(QQ , value.(store_res_pqcd_msbar), err.(store_res_pqcd_msbar), fmt="s", ms=8, mfc="none", label="pQCD(MSbar)")
-#errorbar(QQ .+ 0.3, value.(store_res_pqcd_bfmom), err.(store_res_pqcd_bfmom), fmt="s", ms=8, mfc="none", label="pQCD(BF-MOM)")
-errorbar(QQ .+ 0.45, value.(store_res_pqcd1_bfmom), err.(store_res_pqcd1_bfmom), fmt="s", ms=8, mfc="none", label="pQCD1(BF-MOM)")
+errorbar(QQ .+ 0.45, value.(store_res_pqcd_bfmom), err.(store_res_pqcd_bfmom), fmt="s", ms=8, mfc="none", label="pQCD(BF-MOM)")
+errorbar(QQ .+ 0.6, value.(store_res_pqcd1_bfmom), err.(store_res_pqcd1_bfmom), fmt="s", ms=8, mfc="none", label="pQCD1(BF-MOM)")
 # errorbar(QQ .+ 0.6, value.(store_res_pqcd1_my_input), err.(store_res_pqcd1_my_input), fmt="s", ms=8, mfc="none", label="pQCD1(my input)")
 
 xlabel(L"$Q_0^2 \ \mathrm{[GeV]^2}$")
@@ -252,7 +260,7 @@ ylabel(L"$\Delta\alpha_{\mathrm{had}}^{(5)}(-M_Z^2) - \Delta\alpha_{\mathrm{had}
 legend()
 tight_layout()
 display(fig)
-savefig(joinpath(path_plot,"running_comparison.pdf"))
+# savefig(joinpath(path_plot,"running_comparison.pdf"))
 close("all")
 
 ## TEST FOLLOWING  RGE eq in https://arxiv.org/pdf/2308.05740

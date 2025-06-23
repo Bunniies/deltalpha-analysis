@@ -37,7 +37,7 @@ const phi2_ph = (sqrt(8)*t0sqrt_ph * MPI_ph / hc)^2
 const phi4_ph = (sqrt(8)*t0sqrt_ph)^2 * ((MK_ph/hc)^2 + 0.5*(MPI_ph/hc)^2)
 
 # const Qgev = [3., 5., 9.] # Q^2
-const Qgev = [9.0, 12.0, 15.0, 18.0] ./ 4 # Q^2
+const Qgev = [4, 5, 6, 7, 8, 9, 12] ./ 4   # Q^2 # additional very high values
 
 const Qmgev = 9.0 # Qm^2
 
@@ -119,7 +119,7 @@ end
 
 ##
 #========= ADD FVE CORRECTIONS ==========#
-fb = BDIO_open(joinpath(path_store_pi, "FVE_HP_Q_ID.bdio"), "r")
+fb = BDIO_open(joinpath(path_store_pi, "FVE_HP_Q_ID_sub_kernel.bdio"), "r")
 fvc = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)
@@ -239,9 +239,9 @@ for q in 1:NMOM
         for (k_mod, model) in enumerate(f_tot_isov)
             println(k_mod)
             fit_ll_s1 = fit_routine(model, value.(xdata), ydata_ll_s1, n_par_tot_isov[k_mod], pval=false)
-            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_isov[k_mod], pval=true)
+            fit_ll_s2 = fit_routine(model, value.(xdata), ydata_ll_s2, n_par_tot_isov[k_mod], pval=false)
             fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_isov[k_mod], pval=false)
-            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=true)
+            fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=false)
 
             if  "a4" ∈ label_tot_isov[k_mod] #&& Qgev[q].*4 ∈ [9.0, 12.0]
                 # fit_ll_s1.chi2 = 1e6

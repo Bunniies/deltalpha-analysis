@@ -38,7 +38,7 @@ ensembles = sort(collect(keys(res_dict)))
 
 io = IOBuffer()
 write(io, "PI 33 Q_LD")
-fb = ALPHAdobs_create(joinpath(path_pi_final, "PI_33_no_BM.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_pi_final, "PI_33.bdio"), io)
 for (k, ens) in enumerate(ensembles)
     extra = Dict{String, Any}("Ens"=> ens)
     data = Dict{String, Array{uwreal}}(

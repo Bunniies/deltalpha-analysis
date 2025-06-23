@@ -51,7 +51,7 @@ weights given by the model average. One plot for each value of the momenta is ge
 """
 function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", nmom::Int64=3, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
     
-    for q in 1:nmom
+    for q in [1,3,5,7]#1:nmom
         fig = figure(figsize=(10,7.))
         for k_cat in eachindex(fc_lc_s1[q])
 
@@ -119,7 +119,7 @@ end
 
 function plot_chiral_best_fit(fc::Vector{Vector{FitCat}}; nmom::Int64=3, nfit::Int64=0, ylab::LaTeXString=L"$\bar{\Pi}^{88,\mathrm{sub}}(-Q^2)$", tt::Union{Nothing,Vector{String}}=nothing, path_plot::Union{String,Nothing}=nothing, f_tot_isov=f_tot_isov)
 
-    for q in 1:nmom
+    for q in [1,3,5,7]#1:nmom
         fig = figure(figsize=(10,7.))
         # println("using the first three momenta")
         println("\n- Momentum: $(q)")
@@ -275,7 +275,7 @@ function plot_cl_best_fit(fc::Vector{Vector{FitCat}}; nmom=3, ylab::LaTeXString=
 end
 
 function plot_mAve_summary(fc::Vector{Vector{FitCat}}; nmom=3, ylab::Union{Nothing, LaTeXString}=nothing, xlab::Union{Nothing, Vector{Vector{String}}}=nothing, charge_factor::Float64=1., models::Union{Vector{Function}, Nothing}=nothing, path_plot::Union{String,Nothing}=nothing, tt::Union{Nothing,Vector{String}}=nothing)
-    for q in 1:nmom
+    for q in [1,3,5,7] #1:nmom
         println("\n- Momentum: $(q)")
         fccat = vcat(fc[q]...)
         w_tot  = get_w_from_fitcat(fccat)
@@ -344,7 +344,7 @@ function plot_mAve_summary(fc::Vector{Vector{FitCat}}; nmom=3, ylab::Union{Nothi
         subplot(413)
         ax3 = gca()
         setp(ax3.get_xticklabels(),visible=false) # Disable x tick labels
-        #pval = fill(1., length(w_tot))
+        pval = fill(1., length(w_tot))
         bar(x, pval, alpha=0.4, color="forestgreen", edgecolor="darkgreen", linewidth=1.5)
         ylim(0,1)
         ylabel(L"$p-values$")

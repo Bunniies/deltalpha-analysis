@@ -33,18 +33,18 @@ const path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/d
 const path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/new_strategy/ensembles"
 
 #======= PHYSICAL CONSTANTS ====================#
-const Qgev = [9, 12, 15, 18] ./ 16 # Q^2/16 # 
+const Qgev = [4, 5, 6, 7, 8, 9, 12] ./ 16 # Q^2/16 # 
 # const Qgev = [1.0] # Q^2
 const Qmgev = 9.0 # Qm^2
 
 const KRNLsub = krnl_dα_sub # subtracted kernel
 # const KRNLsub = krnl_dα # non-subtracted kernel
 
-enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
-         "B450", "N451", "N452", "D450", "D451", "D452",
-        "N202", "N203", "N200", "D251", "D201", # D200, E250 removed, use spectroscopy instead
-        "J307", "J306", "J303", "J304", "E300","F300", 
-        "J500", "J501"]
+enslist = sort([ #"H101", "H102", "N101", "C101", "C102", "D150"]
+        #   "B450", "N451", "N452", "D450", "D451", "D452"]
+        # "N202", "N203", "N200", "D251", "D201"] # D200, E250 removed, use spectroscopy instead
+         "J307", "J306", "J303", "J304", "E300","F300"]
+        #"J500", "J501"]
 )
 
 ensinfo = EnsInfo.(enslist)
@@ -126,15 +126,15 @@ for (k, ens) in enumerate(ensinfo)
             ss = nothing
             qqq = ""
         end
-        # pi_33_ll_s1[k][j] = boundingMethod(g33_ll_s1[k], ens, kk, "33", path_pl=ss, qval=qqq)
-        # pi_33_lc_s1[k][j] = boundingMethod(g33_lc_s1[k], ens, kk, "33")
-        # pi_33_ll_s2[k][j] = boundingMethod(g33_ll_s2[k], ens, kk, "33")
-        # pi_33_lc_s2[k][j] = boundingMethod(g33_lc_s2[k], ens, kk, "33")
+        pi_33_ll_s1[k][j] = boundingMethod(g33_ll_s1[k], ens, kk, "33", path_pl=ss, qval=qqq)
+        pi_33_lc_s1[k][j] = boundingMethod(g33_lc_s1[k], ens, kk, "33")
+        pi_33_ll_s2[k][j] = boundingMethod(g33_ll_s2[k], ens, kk, "33")
+        pi_33_lc_s2[k][j] = boundingMethod(g33_lc_s2[k], ens, kk, "33")
 
-        pi_33_ll_s1[k][j] = tmr_integrand(g33_ll_s1[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k])
-        pi_33_lc_s1[k][j] = tmr_integrand(g33_lc_s1[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k])
-        pi_33_ll_s2[k][j] = tmr_integrand(g33_ll_s2[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k])
-        pi_33_lc_s2[k][j] = tmr_integrand(g33_lc_s2[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k])
+        # pi_33_ll_s1[k][j] = tmr_integrand(g33_ll_s1[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k])
+        # pi_33_lc_s1[k][j] = tmr_integrand(g33_lc_s1[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k])
+        # pi_33_ll_s2[k][j] = tmr_integrand(g33_ll_s2[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k])
+        # pi_33_lc_s2[k][j] = tmr_integrand(g33_lc_s2[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k])
     end 
 end
 
@@ -143,7 +143,7 @@ end
 @info("Saving PI 33 results in BDIO")
 io = IOBuffer()
 write(io, "PI 33 Q_LD ")
-fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_33_no_BM.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "PI_33_batch4.bdio"), io)
 
 for (k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)

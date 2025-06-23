@@ -31,7 +31,7 @@ const path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
 
 #======= PHYSICAL CONSTANTS ====================#
 # const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] # Q^2 # standard values used 
-const Qgev = [9, 12, 15, 18] # Q^2 # additional very high values
+const Qgev = [4, 5, 6, 7, 8, 9, 12]  # Q^2 GeV^2 additional very high values
 const Qmgev = 9.0 # Qm^2
 
 const KRNLsub = krnl_dα_qhalf_sub # subtracted kernel
@@ -119,7 +119,6 @@ for (k, ens) in enumerate(ensinfo)
 
     # Qlat  = Qgev .* value.(t0sqrt_ph.^2) ./ t0ens[k] ./ hc^2 * 1e6
     # qmlat = Qmgev * value(t0sqrt_ph^2) / t0ens[k] / hc^2 * 1e6
-
 
     for (j,q) in enumerate(Qlat)
         pi_33_ll_SD_s1[k][j] = tmr_integrand(g33_ll_s1[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k], wind=WindSD)

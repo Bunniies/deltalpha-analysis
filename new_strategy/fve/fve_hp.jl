@@ -22,12 +22,12 @@ include("../../utils/plot_utils.jl")
 include("../../utils/IO_BDIO.jl")
 include("../../utils/tools.jl")
 
-const path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE"
+const path_fvc  = "/Users/alessandroconigli/Lattice/data/HVP/FSE/fv_hp_Linf/"
 const path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/data"
-const path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_ID"
+const path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_LD/"
 
 #======= PHYSICAL CONSTANTS ====================#
-const Qgev = [9, 12, 15, 18] ./4  # Q^2 # additional very high values
+const Qgev = [4, 5, 6, 7, 8, 9, 12] ./ 16   # Q^2 # additional very high values
 
 
 enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
@@ -40,7 +40,7 @@ enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
 ensinfo = EnsInfo.(enslist)
 const Qmgev = 9.0 # Qm^2
 
-const KRNLsub = krnl_dα_qhalf_sub # subtracted kernel
+const KRNLsub = krnl_dα_sub # non-subtracted kernel
 const WindSD = Window("SD")
 const WindILD = Window("ILD")
 
@@ -84,7 +84,11 @@ for (k,ens) in enumerate(ensinfo)
     T = Float64.(collect(1:length(fvc_pi)))
 
     for (j,q) in enumerate(Qlat)
-        krnl = KRNLsub.(T,q, qmlat)
+        krnl = try
+            KRNLsub.(T,q, qmlat)
+        catch
+            KRNLsub.(T,q)
+        end
         pi_fvc_pi_SD[k][j]  = abs(sum(fvc_pi .* krnl))
         pi_fvc_k_SD[k][j]   = abs(sum(fvc_k  .* krnl))
 
@@ -102,7 +106,7 @@ end
 io = IOBuffer()
 write(io, "FVE HP")
 
-fb = ALPHAdobs_create(joinpath(path_store_pi, "FVE_HP_Q_ID.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_pi, "FVE_HP_Q_LD_sub_kernel.bdio"), io)
 
 for (k,ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)
@@ -119,7 +123,7 @@ println("# Saving complete")
 
 ##
 #========= TEST READING =========#
-fb = BDIO_open(joinpath(path_store_pi, "FVE_HP_Q_LD.bdio"), "r")
+fb = BDIO_open(joinpath(path_store_pi, "FVE_HP_Q_SD_sub_kernel.bdio"), "r")
 res = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

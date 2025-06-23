@@ -43,7 +43,7 @@ dir_path = filter(isdir, readdir(path_bdio, join=true))
 
 
 IMPR      = true
-IMPR_SET  = "2" # either "1" or "2"
+IMPR_SET  = "1" # either "1" or "2"
 RENORM    = false
 STD_DERIV = false
 
@@ -64,7 +64,7 @@ spectrum_path = vcat(filter(!isempty, [filter(x-> occursin("spectrum.bdio", x)  
 beta_val = getfield.(ensinfo, :beta)
 NENS = length(ensinfo)
 # Qgev = [3., 5., 9.] # Q^2
-Qgev = [9.0, 12, 15, 18] # Q^2
+const Qgev = [4, 5, 6, 7, 8, 9, 12]  # Q^2 / 16 # additional very high values
 
 Qmgev = 9.0 # Qm^2
 
@@ -133,8 +133,8 @@ end
 #======== SAVE TO BDIO WITH ALPHAIO =========#
 @info("Saving tree level improvement TMR")
 io = IOBuffer()
-write(io, "TMR 3 level improvement set 2")
-fb = ALPHAdobs_create(joinpath(path_store_3l, "treeLevelSet2.bdio"), io)
+write(io, "TMR 3 level improvement set 1")
+fb = ALPHAdobs_create(joinpath(path_store_3l, "treeLevelSet1.bdio"), io)
 
 for(k, ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)
