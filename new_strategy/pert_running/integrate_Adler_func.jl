@@ -32,10 +32,10 @@ path_pQCD1_bfmom = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/delt
 path_pQCD1_modified = "/Users/alessandroconigli/Desktop/postdoc-mainz/projects/deltalpha/running_jegerlhener/test_pQCDAdler/dalibor_pQCD1_v1_bfmom/pQCDAdler.dat53"
 
 # AdlerPy my input
-# path_adpy_my_input = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/using_my_input_values/log_spaced_mom_correct_quark_cond_sign/adlerPy.dat" # with bootstrap
-# path_adpy_my_input_4loops = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/using_my_input_values/log_spaced_mom_correct_quark_cond_sign/adlerPy_4loops.dat" # with bootstrap
+path_adpy_my_input = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/old_tests/using_my_input_values/log_spaced_mom/adlerPy.dat" # with bootstrap
+path_adpy_my_input_4loops = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/old_tests/using_my_input_values/log_spaced_mom/adlerPy_4loops.dat" # with bootstrap
 # path_adpy_my_input = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/using_my_input_values/log_spaced_mom_no_bootstrap/adlerPy.dat" # no boostrap, error in quadrature
-path_adpy_my_input = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/using_my_input_values/log_spaced_mom_noBoot_maxErr/adlerPy.dat" # no bootstrap, maxErr
+# path_adpy_my_input = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/using_my_input_values/log_spaced_mom_noBoot_maxErr/adlerPy.dat" # no bootstrap, maxErr
 # Kohtaroh's values
 path_adl_km = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/kohtaroh/pqcd_adler_jeg.dat"
 
@@ -148,8 +148,8 @@ qval_pQCD1_bfmom, adler_pQCD1_bfmom = read_pQCD1_datfile(path_pQCD1_bfmom)
 # pQCD1 modified
 qval_pQCD_modified, adler_pQCD1_modified = read_pQCD1_datfile(path_pQCD1_modified)
 # AdPy 
-# qval_adpy_my_input, adler_adpy_my_input = read_adlerpy_datfile(path_adpy_my_input, path_4loops=path_adpy_my_input_4loops) # with bootstrap
-qval_adpy_my_input, adler_adpy_my_input = read_adlerpy_datfile(path_adpy_my_input) # no bootstrap
+qval_adpy_my_input, adler_adpy_my_input = read_adlerpy_datfile(path_adpy_my_input, path_4loops=path_adpy_my_input_4loops) # with bootstrap
+# qval_adpy_my_input, adler_adpy_my_input = read_adlerpy_datfile(path_adpy_my_input) # no bootstrap
 
 # Kohtaroh's values
 fname_adl_km= readdlm(path_adl_km, comments=true)
@@ -173,8 +173,8 @@ Emin, Emax = extrema(Q_val_adl_km)
 distq = mean(diff(log.(qval_pQCD1_bfmom.^2)))
 
 for mom in range(1,9)# loop in q^2 GeV^2
-    # ub=findall(x-> x - Mz >= 0, Q_val_adl_km)[1] -1
-    # lb=findall(x-> x - sqrt(mom) >= 0, Q_val_adl_km)[1] -1
+    # ub=findall(x-> x - Mz >= 0, qval_pQCD1_bfmom)[1] -1
+    # lb=findall(x-> x - sqrt(mom) >= 0, qval_pQCD1_bfmom)[1] -1
     ub=findall(x-> x - Mz >= 0, Q_val_adl_km)[1] -1
     lb=findall(x-> x - sqrt(mom) >= 0, Q_val_adl_km)[1] -1
 
@@ -315,10 +315,10 @@ close("all")
 
 
 ## saving adler function with error from AdlerPy for Dalibor
-uwerr.(adler_adpy_my_input)
+uwerr.(adler_pQCD1_modified)
 using DelimitedFiles
 
-open("/Users/alessandroconigli/Desktop/adlerpy_adlerfunc.txt", "w") do io
+open("/Users/alessandroconigli/Desktop/pQCD_modified_adlerfunc.txt", "w") do io
     writedlm(io, ["# q     val      err"])
-    [writedlm(io, [round(qval_adpy_my_input[k],digits=4) round(value(adler_adpy_my_input[k]),digits=5) err(adler_adpy_my_input[k])]) for k in eachindex(adler_adpy_my_input)]
+    [writedlm(io, [round(qval_pQCD_modified[k],digits=4) round(value(adler_pQCD1_modified[k]),digits=5) err(adler_pQCD1_modified[k])]) for k in eachindex(adler_pQCD1_modified)]
 end

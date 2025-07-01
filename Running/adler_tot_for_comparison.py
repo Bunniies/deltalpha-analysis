@@ -43,23 +43,24 @@ mB_Pole_config = bootstrap.bootstrap(4.78, 0.06, SAMPLES, NBIN) # scale invarian
 
 # Condensates
 GG_config = bootstrap.bootstrap(0.012, 0.012, SAMPLES, NBIN)  # gluon condensate https://arxiv.org/pdf/2302.01359
-QQ_config = bootstrap.bootstrap(-0.0013, 0.007, SAMPLES, NBIN) # quark condensate https://arxiv.org/pdf/2302.01359
+QQ_config = bootstrap.bootstrap(-0.0013, 0.0007, SAMPLES, NBIN) # quark condensate https://arxiv.org/pdf/2302.01359
 
 alpha0=1/137.035999180
 mmu=0.105658 # muon mass
 
 
-def adlertot(aZ,Mz,Q,particles,nloops,mpole_on, mulow,GG,qq):
-    adlight=adler_light_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,nloops=nloops,GG=GG,qq=qq,QED=True)
-    adc=adler_charm_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,mulow=mulow,mpole_on=mpole_on,nloops=nloops,GG=GG,QED=True)
-    adb = adler_bottom_pert(aZ=aZ, Mz=Mz,Q=Q, particles=particles, mpole_on=mpole_on, cut_low_as3=1.3, nloops=nloops, GG=GG, QED=True)
-    addisc = adler_OZI_pert(aZ=aZ, Mz=Mz,Q=Q, particles=particles,nloops=nloops, QED=True, GG=GG, qq=qq)
+def adlertot(aZ,Mz,Q,particles,mu,nloops,mpole_on, mulow,GG,qq):
+    adlight=adler_light_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,mu=mu,nloops=nloops,GG=GG,qq=qq,QED=True)
+    adc=adler_charm_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,mu=mu,mulow=mulow,mpole_on=mpole_on,nloops=nloops,GG=GG,QED=True)
+    adb = adler_bottom_pert(aZ=aZ, Mz=Mz,Q=Q, particles=particles,mu=mu, mpole_on=mpole_on, cut_low_as3=1.3, nloops=nloops, GG=GG, QED=True)
+    addisc = adler_OZI_pert(aZ=aZ, Mz=Mz,Q=Q, particles=particles,mu=mu,nloops=nloops, QED=True, GG=GG, qq=qq)
     return adc+adlight+adb+addisc
 
 emin = 1.0
 emax = 100.0
-q_list_log = np.linspace(np.log(emin), np.log(emax), num=400) # log(Q) in GeV
-q_list = np.exp(q_list_log) 
+# q_list_log = np.linspace(np.log(emin), np.log(emax), num=400) # log(Q) in GeV
+# q_list = np.exp(q_list_log) 
+q_list = [80.0]
 # q_list = np.linspace(1.0, 100, num=400) # Q in GeV
 
 adler_tot = np.empty((len(q_list), NBIN))

@@ -66,7 +66,9 @@ pi33_LD_new = read_phys_res(joinpath(path_new_strategy, "Q_LD"),"PI33_LD_physRes
 pi33_tot_new = vcat([pi33_LD_new, pi33_LD_new .+ pi33_ID_new, pi33_LD_new .+ pi33_ID_new + pi33_SD_new]...)
 uwerr.(pi33_tot_new)
 
-##
+##############
+## PLOT PI33
+##############
 fig = figure(figsize=(10,7))
 
 prec_old_lowq = err.(pi33_lowq_old) ./ value.(pi33_lowq_old) .* 100
@@ -141,7 +143,103 @@ legend()
 ylim(0,3.0)
 tight_layout()
 display(fig)
-savefig(joinpath(path_plot, "pi88_new_vs_old_strategy_err_comparison.pdf"))
+# savefig(joinpath(path_plot, "pi88_new_vs_old_strategy_err_comparison.pdf"))
+close("all")
+
+##########
+## PI cc
+##########
+# reading old strategy
+picc_old_lowq = read_phys_res(joinpath(path_old_strategy, "PIQ4_piQ0"), "Picc_conn_physRes.bdio")
+add_t0_err!(picc_old_lowq, t0sqrt_ph_err); uwerr.(picc_old_lowq)
+picc_old_highq = read_phys_res(joinpath(path_old_strategy, "PIQ_Q4"), "Picc_conn_physRes.bdio")
+add_t0_err!(picc_old_highq, t0sqrt_ph_err); uwerr.(picc_old_highq)
+picc_old_tot = vcat(picc_old_lowq, picc_old_lowq + picc_old_lowq)
+uwerr.(picc_old_tot)
+
+# reading new strategy
+picc_QSD_new = read_phys_res(joinpath(path_new_strategy, "Q_SD"), "PIcc_conn_QSD_physRes.bdio")
+add_t0_err!(picc_QSD_new, t0sqrt_ph_err); 
+uwerr.(picc_QSD_new)
+
+picc_QID_new = read_phys_res(joinpath(path_new_strategy, "Q_ID"), "PIcc_conn_QID_physRes.bdio")
+add_t0_err!(picc_QID_new, t0sqrt_ph_err); 
+uwerr.(picc_QID_new)
+
+picc_QLD_new = read_phys_res(joinpath(path_new_strategy, "Q_LD"), "PIcc_conn_QLD_physRes.bdio")
+add_t0_err!(picc_QLD_new, t0sqrt_ph_err); 
+uwerr.(picc_QLD_new)
+
+picc_new_tot = vcat(picc_QLD_new, picc_QLD_new + picc_QID_new,picc_QSD_new + picc_QID_new + picc_QLD_new)
+uwerr.(picc_new_tot)
+
+## PLOT PICC
+fig = figure(figsize=(10,7))
+
+prec_old_lowq = err.(picc_old_lowq) ./ value.(picc_old_lowq) .* 100
+plot(Qgev_old[1:12], prec_old_lowq, color="red", marker="<", lw=0.0, ms=10, mfc="None")
+
+prec_old_highq = err.(picc_old_tot) ./ value.(picc_old_tot) .* 100
+plot(Qgev_old[13:end], prec_old_highq[13:end], color="red", marker="<", label="Old strategy", lw=0.0, ms=10)
+
+
+prec_new = err.(picc_new_tot) ./ value.(picc_new_tot) .* 100    
+scatter(Qgev_new, prec_new, color="royalblue", marker="^", label="New strategy", 80)
+
+xlabel(L"$Q^2 \ [\mathrm{GeV}^2]$")
+ylabel(L"$\delta \Pi^{(c,c)}(Q^2) \ [\%]$")
+legend()
+ylim(0,3.0)
+tight_layout()
+display(fig)
+savefig(joinpath(path_plot, "picc_new_vs_old_strategy_err_comparison.pdf"))
 close("all")
 
 
+######################
+## PI 08
+######################
+
+# reading old strategy
+pi08_highq_old = read_phys_res(joinpath(path_old_strategy, "piQ_Q4"), "PI08_physRes.bdio")
+add_t0_err!(pi08_highq_old, t0sqrt_ph_err); uwerr.(pi08_highq_old)
+
+pi08_lowq_old = read_phys_res(joinpath(path_old_strategy, "piQ4_piQ0"), "PI08_physRes.bdio")
+add_t0_err!(pi08_lowq_old, t0sqrt_ph_err); uwerr.(pi08_lowq_old)
+pi08_tot_old = vcat(pi08_lowq_old, pi08_lowq_old + pi08_highq_old); uwerr.(pi08_tot_old)
+
+# reading new strategy
+
+pi08_QSD_new = read_phys_res(joinpath(path_new_strategy, "Q_SD"),"PI08_Q_SD_physRes.bdio" )
+add_t0_err!(pi08_QSD_new, t0sqrt_ph_err); uwerr.(pi08_QSD_new)
+
+pi08_QID_new = read_phys_res(joinpath(path_new_strategy, "Q_ID"),"PI08_Q_ID_physRes.bdio" )
+add_t0_err!(pi08_QID_new, t0sqrt_ph_err); uwerr.(pi08_QID_new)
+
+pi08_QLD_new = read_phys_res(joinpath(path_new_strategy, "Q_LD"),"PI08_Q_LD_physRes.bdio")
+add_t0_err!(pi08_QLD_new, t0sqrt_ph_err); uwerr.(pi08_QLD_new)
+
+pi08_tot_new = vcat(pi08_QLD_new, pi08_QLD_new + pi08_QID_new, pi08_QLD_new + pi08_QID_new + pi08_QSD_new)
+uwerr.(pi08_tot_new)
+
+## PLOT PI08
+fig = figure(figsize=(10,7))
+
+prec_old_lowq = err.(pi08_lowq_old) ./ value.(pi08_lowq_old) .* 100
+plot(Qgev_old[1:12], prec_old_lowq, color="red", marker="<", lw=0.0, ms=10, mfc="None")
+
+prec_old_highq = err.(pi08_tot_old) ./ value.(pi08_tot_old) .* 100
+plot(Qgev_old[13:end], prec_old_highq[13:end], color="red", marker="<", label="Old strategy", lw=0.0, ms=10)
+
+
+prec_new = err.(pi08_tot_new) ./ value.(pi08_tot_new) .* 100    
+scatter(Qgev_new, prec_new, color="royalblue", marker="^", label="New strategy", 80)
+
+xlabel(L"$Q^2 \ [\mathrm{GeV}^2]$")
+ylabel(L"$\delta \Pi^{(0,8)}(Q^2) \ [\%]$")
+legend()
+ylim(0,3.0)
+tight_layout()
+display(fig)
+savefig(joinpath(path_plot, "pi08_new_vs_old_strategy_err_comparison.pdf"))
+close("all")

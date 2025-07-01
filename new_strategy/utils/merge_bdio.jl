@@ -38,14 +38,14 @@ ensembles = sort(collect(keys(res_dict)))
 
 io = IOBuffer()
 write(io, "PI 33 Q_LD")
-fb = ALPHAdobs_create(joinpath(path_pi_final, "PI_33.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_pi_final, "PI_08.bdio"), io)
 for (k, ens) in enumerate(ensembles)
     extra = Dict{String, Any}("Ens"=> ens)
     data = Dict{String, Array{uwreal}}(
-        "pi33_ll_s1" => res_dict[ens]["pi33_ll_s1"],
-        "pi33_ll_s2" => res_dict[ens]["pi33_ll_s2"],
-        "pi33_lc_s1" => res_dict[ens]["pi33_lc_s1"],
-        "pi33_lc_s2" => res_dict[ens]["pi33_lc_s2"]
+        # "pi33_ll_s1" => res_dict[ens]["pi33_ll_s1"],
+        # "pi33_ll_s2" => res_dict[ens]["pi33_ll_s2"],
+        "pi08_lc_s1" => res_dict[ens]["pi08_lc_s1"],
+        "pi08_lc_s2" => res_dict[ens]["pi08_lc_s2"]
 
         # "pi33_ll_ILD_s1" => res_dict[ens]["pi33_ll_ILD_s1"],
         # "pi33_lc_ILD_s1" => res_dict[ens]["pi33_lc_ILD_s1"],
@@ -57,7 +57,7 @@ end
 ALPHAdobs_close(fb)
 
 ## test reading
-fb = BDIO_open(joinpath(path_pi_final, "PI_33_no_BM.bdio"), "r")
+fb = BDIO_open(joinpath(path_pi_final, "PI_08.bdio"), "r")
 res = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

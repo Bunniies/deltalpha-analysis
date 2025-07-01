@@ -49,8 +49,11 @@ for n = 2:n_par_var+1
         if "a3" ∈ model_var_label[a]
             #continue
         end
-        if model_var_label[a] == [ "a3", "a2phi2", "a3phi2"]
+        if model_var_label[a] == [ "a3", "a2phi2", "phi2sqr", "a3phi2"]
             continue
+        end
+        if model_var_label[a] == [ "a3", "a2phi2", "a3phi2"]
+            #continue
         end
         if  model_var_label[a] != [ "a3", "a2phi2"] && model_var_label[a] != [ "a3", "phi2sqr"]
             #continue

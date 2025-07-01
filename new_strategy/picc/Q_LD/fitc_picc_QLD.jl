@@ -41,7 +41,7 @@ const Qgev = [4, 5, 6, 7, 8, 9, 12] ./ 16 # Q^2/4 # additional very high values
 const Qmgev = 9.0 # Qm^2
 
 enslist = sort([ "H101", "H102", "N101", "C101",
-        "B450", "D450", "D452", # B450  removed
+        "D450", "D452", # B450  removed
          "N202", "N203", "N200", "D200",  "E250",
         "N300", "J303", "E300", #  removed
          "J500"
@@ -231,7 +231,7 @@ SYST = []
 for q in 1:NMOM
     @info "Momentum no. $(q): $(Qgev[q]) GeV^2"
     fitcat_cc_mean = vcat(vcat(
-                #fitcat_cc_ll_s2[q],
+                fitcat_cc_lc_s1[q],
                 fitcat_cc_lc_s2[q])...
     )
     fitcat_cc_syst = vcat(vcat(fitcat_cc_lc_s1[q],
@@ -242,7 +242,7 @@ for q in 1:NMOM
     ww_lc_s1 = get_w_from_fitcat(fitcat_cc_lc_s1[q])
     ww_lc_s2 = get_w_from_fitcat(fitcat_cc_lc_s2[q])
 
-    ww_tot_mean = vcat(ww_lc_s2)
+    ww_tot_mean = vcat(ww_lc_s1, ww_lc_s2)
     ww_tot_syst = vcat(ww_lc_s1, ww_lc_s2)
 
     w, widx  =  findmax(ww_tot_mean)
