@@ -28,11 +28,11 @@ for n = 2:n_par_var+1
     f_tot_dltiso[n] = Vector{Function}(undef, length(aux))
     f_aux = []
     for (k, a) in enumerate(aux)
-        if "a4" ∈ model_var_label[a] && "a3" ∉ model_var_label[a]
+        if "a4" ∈ model_var_label[a] #&& "a3" ∉ model_var_label[a]
             continue
         end
         if "phi4-1.5phi2" ∈ model_var_label[a] && "phi4" ∈ model_var_label[a]
-            continue
+            #continue
         end
         
         push!(n_par_tot_dltiso, n_par_tot_dltiso[1]+n-1)

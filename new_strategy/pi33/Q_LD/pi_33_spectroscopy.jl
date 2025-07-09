@@ -34,14 +34,17 @@ const path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/delta
 const path_spec = "/Users/alessandroconigli/Lattice/data/HVP/corr_recostruction"
 
 #======= PHYSICAL CONSTANTS ====================#
-const Qgev = [4, 5, 6, 7, 8, 9, 12] ./ 16   # Q^2 # additional very high values
-# const Qgev = [1.0] # Q^2
+const Qgev = [4, 5, 6, 7, 8, 9, 12] ./ 16   # Q^2/16 # additional very high values
+
+# const Qgev = [4.0] ./ 16 # Q^2 only for plots for the paper
 const Qmgev = 9.0 # Qm^2
 
 const KRNLsub = krnl_dα_sub # subtracted kernel
 # const KRNLsub = krnl_dα # non-subtracted kernel
 
-enslist = sort(["D200", "E250"])
+# enslist = sort(["D200", "E250"])
+enslist = sort(["E250"])
+
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_corr, join=true)) for k in eachindex(enslist)]...)
@@ -230,6 +233,7 @@ for (k,ens) in enumerate(ensinfo)
         uwerr.(lowBound); uwerr.(upBound)
         uwerr(pi_33_ll_s1_rec[k][j])
         uwerr(pi_33_ll_s1[k][j])
+
         fig = figure(figsize=(10,7.))
         errorbar(ttime .*value(a(ens.beta)), value.(lowBound), err.(lowBound), fmt="d", mfc="none", color="#009E73", label=L"$M_{\mathrm{eff}}$", capsize=2)
         errorbar(ttime .*value(a(ens.beta)), value.(upBound), err.(upBound), fmt="d", mfc="none", color="#D55E00", label=L"$E_{\pi\pi}$", capsize=2)
@@ -252,7 +256,9 @@ for (k,ens) in enumerate(ensinfo)
         ylabel(L"$\bar\Pi^{(3,3)}(Q^2/16)$")
         tight_layout()
         display(fig)
-        savefig(joinpath(path_plot, ens.id, "bm_vs_rec_q$(Qgev[j]*16).pdf"))
+        # savefig(joinpath(path_plot, ens.id, "bm_vs_rec_q$(Qgev[j]*16).pdf"))
+        savefig(joinpath(path_plot, ens.id, "bm_vs_re_paper_0.25GeV.pdf"))
+
         close("all")
     end
 end

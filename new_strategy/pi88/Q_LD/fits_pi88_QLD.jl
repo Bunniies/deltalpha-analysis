@@ -24,6 +24,7 @@ path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalp
 path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_LD/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/new_strategy/pi88/Q_LD/"
 path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/new_strategy/Q_LD/"
+path_fvc = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_LD/fvc_Lref"
 
 
 #======= PHYSICAL CONSTANTS ====================#
@@ -116,7 +117,7 @@ end
 
 ##
 #========= ADD FVE CORRECTIONS ==========#
-fb = BDIO_open(joinpath(path_store_pi, "FVE_HP_Q_LD_non_sub_kernel.bdio"), "r")
+fb = BDIO_open(joinpath(path_fvc, "fve_Lref_nonSubKernel_QLD.bdio"), "r")
 fvc = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)
@@ -231,7 +232,7 @@ end
 using Statistics
 ll = L"$\bar\Pi^{(8,8)}(Q^2/16)$"
 plot_cl_all_set(fitcat_pi88_ll_s1, fitcat_pi88_ll_s2, fitcat_pi88_lc_s1, fitcat_pi88_lc_s2, nmom=3, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi88_lc_s1, path_plot=path_plot, nmom=3, tt=["Set", "1", "LC"], f_tot_isov=f_tot_isov, ylab=ll)
+plot_chiral_best_fit(fitcat_pi88_ll_s1, path_plot=path_plot, nmom=3, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
 plot_cl_best_fit(fitcat_pi88_ll_s1, path_plot=path_plot, tt=["Set", "1", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
 
 cattot = [vcat(fitcat_pi88_ll_s2[k],fitcat_pi88_lc_s2[k]...) for k in eachindex(fitcat_pi88_lc_s2)]
@@ -338,3 +339,12 @@ for k in eachindex(RES)
     ALPHAdobs_write(fb, aux)
 end
 ALPHAdobs_close(fb)
+
+## test reading
+fb = BDIO_open(joinpath(path_phys_res, "Linf/PI88_LD_physRes.bdio"), "r")
+res = []
+while ALPHAdobs_next_p(fb)
+    d = ALPHAdobs_read_parameters(fb)
+    push!(res, ALPHAdobs_read_next(fb))
+end
+BDIO_close!(fb)

@@ -59,10 +59,10 @@ top_=Particle("top",x=[164,164,6],mudec=164,mpole=None,mpole_on=False) # not nec
 particle_list_centra_val=[up_,charm_,down_,strange_,bottom_,top_]
 
 def adlertot(aZ,Mz,Q,particles,mu,nloops,mpole_on, mulow,GG,qq):
-    adlight=adler_light_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,mu=mu,nloops=nloops,GG=GG,qq=qq,QED=True)
-    adc=adler_charm_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,mu=mu,mulow=mulow,mpole_on=mpole_on,nloops=nloops,GG=GG,QED=True)
-    adb = adler_bottom_pert(aZ=aZ, Mz=Mz,Q=Q, particles=particles,mu=mu, mpole_on=mpole_on, cut_low_as3=1.3, nloops=nloops, GG=GG, QED=True)
-    addisc = adler_OZI_pert(aZ=aZ, Mz=Mz,Q=Q, particles=particles,mu=mu,nloops=nloops, QED=True, GG=GG, qq=qq)
+    adlight=adler_light_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,mu=mu,nloops=nloops,GG=GG,qq=qq,QED=False)
+    adc=adler_charm_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,mu=mu, mpole_on=mpole_on,nloops=nloops,GG=GG,QED=False, cut_low_as3=1.0, cut_high_as3=20)
+    adb = adler_bottom_pert(aZ=aZ, Mz=Mz,Q=Q, particles=particles,mu=mu, mpole_on=mpole_on, cut_low_as3=1.3, nloops=nloops, GG=GG, QED=False)
+    addisc = adler_OZI_pert(aZ=aZ, Mz=Mz,Q=Q, particles=particles,mu=mu,nloops=nloops, QED=False, GG=GG, qq=qq)
     return adc, adlight, adb, addisc
 
 emin = 1.0
@@ -71,7 +71,7 @@ q_list_log = np.linspace(np.log(emin), np.log(emax), num=400) # log(Q) in GeV
 q_list = np.exp(q_list_log) 
 q_list[391] = Mz # setting to mZ the q_list to ease the integration.
 
-# q_list = [1.02]
+# q_list = [16, 20, 30, 50, 70, 80]
 
 adler_bins_l = np.empty((len(q_list), NBIN))
 adler_bins_c = np.empty((len(q_list), NBIN))
@@ -98,8 +98,11 @@ for q in range(0,len(q_list)):
 
     # Adler mean values
     adc, adlight, adb, adozi = adlertot(aZ_val, Mz, q_list[q],particles=particle_list_centra_val,mu=None,nloops=nloops,mpole_on=mpole_on, mulow=mulow, GG=GG_val, qq=QQ_val)
+    # truncation error light
     adc_trunc, adlight_trunc, adb_trunc, adozi_trunc = adlertot(aZ_val, Mz, q_list[q],particles=particle_list_centra_val,mu=None,nloops=nloops-1,mpole_on=mpole_on, mulow=mulow, GG=GG_val, qq=QQ_val)
-    
+    # truncation error charm
+    adc_trunc, _, adb_trunc, adozi_trunc = adlertot(aZ_val, Mz, q_list[q],particles=particle_list_centra_val,mu=None,nloops=nloops-3,mpole_on=mpole_on, mulow=mulow, GG=GG_val, qq=QQ_val)
+
     adler_central_c[q] = adc
     adler_central_l[q] = adlight
     adler_central_b[q] = adb
@@ -121,9 +124,9 @@ for q in range(0,len(q_list)):
         GG = GG_config[k]
         qq = QQ_config[k]
          
-        up=Particle("up",x=[mUp,2,3],mudec=0.000,mpole=None,mpole_on=False)
-        down=Particle("down",x=[mDown,2,3],mudec=0.000,mpole=None,mpole_on=False)
-        strange=Particle("strange",x=[mStrange,2,3],mudec=0.000,mpole=None,mpole_on=False)
+        up=Particle("up",x=[mUp,2,3],mudec=0.001,mpole=None,mpole_on=False)
+        down=Particle("down",x=[mDown,2,3],mudec=0.001,mpole=None,mpole_on=False)
+        strange=Particle("strange",x=[mStrange,2,3],mudec=0.001,mpole=None,mpole_on=False)
         charm=Particle("charm",x=[mc0,mc0,4],mudec=2*(mc0),mpole=None,mpole_on=False)
         bottom=Particle("bottom",x=[mb0,mb0,5],mudec=2*mb0,mpole=None,mpole_on=False)
         top=Particle("top",x=[164,164,6],mudec=164,mpole=None,mpole_on=False) # not necessary in this case.
@@ -148,12 +151,13 @@ print("# Finished.")
 print("# Nloops: ", nloops)
 print("# mpole_on: ", mpole_on)
 print("# mu set to: ", "None ")
+print("# QED set to False in light charm and bottom")
 
 
 # saving data
 import os
 path_save = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/adler_per_comp/std_trunc_err"
-fname = "adlerPy_trunc_err_included_alpha_old_err.dat"
+fname = "adlerPy_trunc_err_included_alpha_old_err_QED_false.dat"
 
 with open(os.path.join(path_save, fname), "w") as ff:
         print("# idx    q_gev    adl_val    adl_err       adc_val      adc_err     adb_val      adb_err     adozi_val      adozi_err ", file=ff)
@@ -161,3 +165,21 @@ with open(os.path.join(path_save, fname), "w") as ff:
         for q in range(0,len(q_list)): 
             print("%d %e %e %e %e %e %e %e %e %e " % (count, q_list[q], adler_central_l[q], adler_err_l[q], adler_central_c[q], adler_err_c[q], adler_central_b[q], adler_err_b[q], adler_central_ozi[q], adler_err_ozi[q]), file=ff)
             count +=1
+
+
+## check Charm truncation error
+
+# def adler_charm(aZ, Mz, Q, particles, mu, mpole_on, nloops, GG, QED):
+    # adc=adler_charm_pert(aZ=aZ,Mz=Mz,Q=Q,particles=particles,mu=mu,mpole_on=mpole_on,nloops=nloops,GG=GG,QED=QED, cut_high_as3=20, cut_low_as3=1.0)
+    # return adc
+# 
+# qval_c = 30
+# adc = adler_charm(aZ_val, Mz, qval_c, particles=particle_list_centra_val, mu=None, nloops=3, mpole_on=mpole_on, GG=GG_val, QED=True)
+# adc_0l = adler_charm(aZ_val, Mz, qval_c, particles=particle_list_centra_val, mu=None, nloops=0, mpole_on=mpole_on,  GG=GG_val, QED=True)
+# adc_1l = adler_charm(aZ_val, Mz, qval_c, particles=particle_list_centra_val, mu=None, nloops=1, mpole_on=mpole_on,  GG=GG_val, QED=True)
+# adc_2l = adler_charm(aZ_val, Mz, qval_c, particles=particle_list_centra_val, mu=None, nloops=2, mpole_on=mpole_on,  GG=GG_val, QED=True)
+# 
+# print("3loops: ", adc)
+# print("2loops: ", adc_2l)
+# print("1loops: ", adc_1l)
+# print("0loops: ", adc_0l)

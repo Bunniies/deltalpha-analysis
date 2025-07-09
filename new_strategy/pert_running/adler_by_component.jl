@@ -31,7 +31,7 @@ path_data_mu_as_trunc = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects
 path_data_std_trunc = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/adler_per_comp/std_trunc_err/"
 path_data_rodolfo_err = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/running_jegerlhener/running_AdlerPy/adler_per_comp/rodolfo_err"
 name_mu_as_trunc = "adlerPy_mutrunc_alpha_old_err.dat"
-name_std_trunc = "adlerPy_trunc_err_included_alpha_old_err.dat"
+name_std_trunc = "adlerPy_trunc_err_included_alpha_old_err_QED_false.dat"
 name_rodolfo_err = "adlerPy_rodolfo_old_alpha_err.dat"
 
 # pQCD1 modified
@@ -78,7 +78,7 @@ xlabel(L"$Q \ [\mathrm{GeV}]$")
 ylabel(L"$D(Q)$")
 tight_layout()
 display(fig)
-savefig(joinpath(path_plot, "adler_comp_std_trunc_err.pdf"))
+# savefig(joinpath(path_plot, "adler_comp_std_trunc_err.pdf"))
 close("all")
 
 
@@ -101,7 +101,7 @@ ylabel(L"$\sigma_i^2 / \sum\sigma_i^2$")
 
 legend()
 tight_layout()
-savefig(joinpath(path_plot, "variance_contrib_by_component.pdf"))
+# savefig(joinpath(path_plot, "variance_contrib_by_component_charm_trunc.pdf"))
 display(fig)
 close("all")
 
@@ -146,7 +146,7 @@ legend(loc="lower right")
 tight_layout()
 display(fig)
 # savefig(joinpath(path_plot, "adler_lattice_vs_AdlerPy.pdf"))
-savefig(joinpath(path_plot, "adler_lattice_vs_AdlerPy_vs_pQCD.pdf"))
+# savefig(joinpath(path_plot, "adler_lattice_vs_AdlerPy_vs_pQCD.pdf"))
 close("all")
 
 ####################
@@ -221,3 +221,19 @@ uwerr.(res_adtot_mu)
 uwerr.(res_adtot_std)
 uwerr.(store_res_pqcd1_bfmom)
 uwerr.(store_res_pqcd1_modified)
+uwerr.(res_adtot_rodolfo)
+
+
+## PLOT COMPARISON
+fig = figure(figsize=(10,8))
+QQ = collect(1:9)
+errorbar(QQ, value.(store_res_pqcd1_bfmom), err.(store_res_pqcd1_bfmom), fmt="s", ms=8, mfc="none", label="KM")
+errorbar(QQ.+0.2, value.(store_res_pqcd1_modified), err.(store_res_pqcd1_modified), fmt="s", ms=8, mfc="none", label="pQCD1 modified")
+errorbar(QQ.+0.4, value.(res_adtot_std), err.(res_adtot_std), fmt="s", mfc="none", ms=8, label="AdlerPy")
+xlabel(L"$Q_0^2 \ \mathrm{[GeV]^2}$")
+ylabel(L"$\Delta\alpha_{\mathrm{had}}^{(5)}(-M_Z^2) - \Delta\alpha_{\mathrm{had}}^{(5)}(-Q_0^2)$")
+legend()
+tight_layout()
+display(fig)
+savefig(joinpath(path_plot,"running_comparison.pdf"))
+close("all")

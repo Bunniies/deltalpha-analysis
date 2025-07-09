@@ -34,18 +34,13 @@ plt.rc("text", usetex=true) # set to true if a LaTeX installation is present
 const path_data = "/Users/alessandroconigli/Lattice/data/HVP/2ptdata"
 const path_rw   = "/Users/alessandroconigli/Lattice/data/HVP/rwf_deflated"
 const path_store_bdio = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/corr/impr_deriv"
-const path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/ensembles"
+const path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/new_strategy/ensembles"
 
 const IMPR = true
 const IMPR_SET = "1"
 const STD_DERIV = false
 const RENORM = true
 
-# const KRNL = krnl_dα_qhalf      # standard kernel High q
-const KRNL = krnl_dα      # standard kernel low q
-
-Qgev = [3., 5., 9.] ./ 4 # Q^2
-Qmgev = 9.0 # Qm^2
 
 ensinfo = EnsInfo("E250")
 
@@ -89,13 +84,19 @@ g88_tot = Corr(+g88_lc_conn.obs + g88_lc_disc.obs, gll_lc.id, "g88")
 
 ## COMPUTE TMR
 
+# KRNL = krnl_dα_qhalf      # standard kernel High q
+KRNL = krnl_dα      # standard kernel low q
+
+Qgev = [9.] ./ 16   # Q^2
+Qmgev = 9.0 # Qm^2
+
 Qlat = Qgev .* value.(t0sqrt_ph.^2) ./ t0(ensinfo.beta) ./hc^2 *1e6
 qmlat = Qmgev * value(t0sqrt_ph^2) / t0(ensinfo.beta) /hc^2 *1e6
 
 for (j,q) in enumerate(Qlat)
-    if j in [1,3]
-        continue
-    end
+    # if j in [1,3]
+        # continue
+    # end
     _, data33 = tmr_integrand(gll_lc, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true)
     _, datadltiso = tmr_integrand(gdelta_iso_lc, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true) # for high energy kernel
     _, data88 = tmr_integrand(g88_tot, q, KRNL, pl=false, t0ens=t0(ensinfo.beta), data=true) # for low energy kernel
@@ -118,18 +119,19 @@ for (j,q) in enumerate(Qlat)
     errorbar(xx, value.(data88), err.(data88), fmt="^", color="#56B4E9", capsize=4, label=L"$\frac{1}{3}G^{(8,8)}$") # low energy kernel
     errorbar(xx, value.(datacc_conn), err.(datacc_conn), fmt="d", color="#009E73", capsize=4, label=L"$\frac{4}{9}G^{(c,c)}_{\mathrm{conn}}$")
     errorbar(xx, value.(data08), err.(data08), fmt="o", color="#D55E00", capsize=4, label=L"$10\cdot\frac{1}{3}G^{(0,8)}$")
-    errorbar(xx, value.(datacc_disc), err.(datacc_disc), fmt="d", color="#0072B2", capsize=4, label=L"$1000\cdot\frac{4}{9}G^{(c,c)}_{\mathrm{disc}}$")
-    errorbar(xx, value.(datac8_disc), err.(datac8_disc), fmt="o", color="#CC79A7", capsize=4, label=L"$1000\cdot\frac{2}{3\sqrt{3}}G^{(c,8)}_{\mathrm{disc}}$")
+    # errorbar(xx, value.(datacc_disc), err.(datacc_disc), fmt="d", color="#0072B2", capsize=4, label=L"$1000\cdot\frac{4}{9}G^{(c,c)}_{\mathrm{disc}}$")
+    # errorbar(xx, value.(datac8_disc), err.(datac8_disc), fmt="o", color="#CC79A7", capsize=4, label=L"$1000\cdot\frac{2}{3\sqrt{3}}G^{(c,8)}_{\mathrm{disc}}$")
 
 
     xlabel(L"$t \ [\mathrm{fm}]$")
-    ylabel(L"$G^{(d,e)}(t) \cdot K(t, Q^2)$")
+    # ylabel(L"$G^{(d,e)}(t) \cdot \widehat{K}(t, Q^2/4)$")
+    ylabel(L"$G^{(d,e)}(t) \cdot K(t, Q^2/16)$")
     xlim(-0.05,3.5) 
-    ylim(-0.0004, 0.0031)
+    ylim(-0.0004, 0.0044)
     legend(ncol=1)
     tight_layout()
+    savefig(joinpath(path_plot, ensinfo.id, "$(ensinfo.id)_dalpha_kernel_QLD.pdf"))
     display(gcf())
-    savefig(joinpath(path_plot, ensinfo.id, "$(ensinfo.id)_dalpha_kernel_lowq.pdf"))
     close()
 end
 

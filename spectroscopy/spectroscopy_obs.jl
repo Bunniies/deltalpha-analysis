@@ -42,7 +42,7 @@ IMPR      = true
 RENORM    = true
 STD_DERIV = false
 
-enslist = ["J306"]
+enslist = ["H101"]
 ensinfo = EnsInfo.(enslist)
 
 
@@ -72,9 +72,11 @@ wpmm["F300"]  = [5.0, -2.0, -1.0, -1.0]
         println("   - Pion correlator")
         g_pi[k] = get_mesons_corr(path_data, ens, "ll", "PP", path_rw=path_rw, frw_bcwd=false, L=1 )
         g_pi_a0p[k] = get_mesons_corr(path_data, ens, "ll", "A0P", path_rw=path_rw, frw_bcwd=false, L=1 )
+        improve_corr_vkvk!(g_pi_a0p[k], g_pi[k], ca(ens.beta))
+
         println("   - Kaon correlator")
-        g_k[k] = get_mesons_corr(path_data, ens, "ls", "PP", path_rw=path_rw, frw_bcwd=false, L=1 )
-        g_k_a0p[k] = get_mesons_corr(path_data, ens, "ls", "A0P", path_rw=path_rw, frw_bcwd=false, L=1 )
+        g_k[k] = get_mesons_corr(path_data, ens, "ls", "PP", path_rw=path_rw, frw_bcwd=false, L=ens.L )
+        g_k_a0p[k] = get_mesons_corr(path_data, ens, "ls", "A0P", path_rw=path_rw, frw_bcwd=false, L=ens.L )
 
         println("   - Gradient flow t0")
         obs[k] = OrderedDict()
@@ -117,16 +119,6 @@ for k in eachindex(ensinfo)
     end
 end
 
-## test with mpcac
-
-mps = obs[1]["mpi"]
-m12 = -  mpcac(g_pi_a0p[1].obs, g_pi[1].obs, [20,170], ca=-ca(ensinfo[1].beta))
-
-
-fpi = dec_const_mpcac(m12, mps, ensinfo[1], renorm=true); uwerr(fpi); fpi
-## test with decay constant
-fpi = get_dec_const_BMA(g_pi[1], g_pi_a0p[1], obs[1]["mpi"], ensinfo[1], pl=true, ll = L"$f_{\pi}$") 
-fpi_r = fpi * Za_l_sub(ensinfo[1].beta); uwerr(fpi_r); fpi_r
 ##
 #======== SAVE TO BDIO =========#
 for (k, o) in enumerate(obs)
@@ -148,7 +140,54 @@ for (k, o) in enumerate(obs)
     BDIO_close!(fb)
 end
 
-## 
+## 06/2025 extract decay constant with OBC ensembles
+
+mpi = meff(g_pi[1], [20,70], pl=true)
+
+function dec_const_ratio(a0p::Vector{uwreal}, pp::Vector{uwreal}, m::uwreal, plat::Vector{Int64}, y0::Int64; pl::Bool=true)
+
+    a0p = a0p
+    pp = -pp
+    T = length(a0p)
+    # aux = exp.((collect(1:T) .-y0) .* m/2)
+
+    # R = (aux .* a0p ./ sqrt.(pp))
+    R = (((a0p .* reverse(a0p)) ./ (pp[T-y0]) ).^2).^0.25
+    R_av = plat_av(R[2:end-1], plat)
+
+    if pl
+        uwerr.(R)
+        uwerr(R_av)
+        errorbar(collect(1:length(R)), value.(R), err.(R), fmt="s", color="black")
+        fill_between(plat, value(R_av)- err(R_av), value(R_av)+err(R_av), alpha=0.5, color="royalblue")
+        ylim(value(R_av)*0.9, value(R_av)*1.1)
+        display(gcf())
+        close("all")
+    end
+
+    return sqrt(2/m)  * R_av
+end
+
+_, y0_ens = findmax(value.(-g_pi[1].obs)) 
+fpi = dec_const_ratio(g_pi_a0p[1].obs, g_pi[1].obs, mpi, [20,60], y0_ens-1, pl=false) *Za_l_sub(ensinfo[1].beta)
+uwerr(fpi)
+fpi
+##
+plot(collect(1:96), value.(g_pi[1].obs))
+display(gcf())
+close("all")
+## test with mpcac
+
+mps = obs[1]["mpi"]
+m12 = -  mpcac(g_pi_a0p[1].obs, g_pi[1].obs, [20,170], ca=-ca(ensinfo[1].beta))
+
+
+fpi = dec_const_mpcac(m12, mps, ensinfo[1], renorm=true); uwerr(fpi); fpi
+## test with decay constant
+fpi = get_dec_const_BMA(g_pi[1], g_pi_a0p[1], obs[1]["mpi"], ensinfo[1], pl=true, ll = L"$f_{\pi}$") 
+fpi_r = fpi * Za_l_sub(ensinfo[1].beta); uwerr(fpi_r); fpi_r
+
+
 function dec_const_mpcac(m_pcac::uwreal, mps::uwreal, ens::EnsInfo; renorm::Bool=true)
 
     rave = ( ZP(ens.beta))/ mps^2 * m_pcac

@@ -33,7 +33,7 @@ for n = 2:n_par_var+1
             continue
         end
         if "phi4-1.5phi2" ∈ model_var_label[a] && "phi4" ∈ model_var_label[a]
-            continue
+            #continue
         end
         if "phi2sq" ∈ model_var_label[a]
             #continue

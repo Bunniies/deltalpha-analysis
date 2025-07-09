@@ -35,8 +35,8 @@ const path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/delta
 const path_spec = "/Users/alessandroconigli/Lattice/data/HVP/corr_recostruction"
 
 #======= PHYSICAL CONSTANTS ====================#
-const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] ./ 4 # Q^2
-# const Qgev = [1.0] # Q^2
+# const Qgev = [0.05, 0.1, 0.4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] ./ 4 # Q^2
+const Qgev = [4.0] / 16 # Q^2 only for plotting
 const Qmgev = 9.0 # Qm^2
 
 const KRNLsub = krnl_dα_sub # subtracted kernel
@@ -48,7 +48,7 @@ const KRNLsub = krnl_dα_sub # subtracted kernel
         #  "N202", "N203", "N200", "D251", "D200", "D201", "E250",
         #   "J307", "J306", "J303", "J304", "E300", "F300",
         #  "J500", "J501"])
-enslist = sort(["D200"])
+enslist = sort(["E250"])
 ensinfo = EnsInfo.(enslist)
 
 path_ens = vcat([filter(x-> occursin(enslist[k], basename(x)), readdir(path_corr, join=true)) for k in eachindex(enslist)]...)
@@ -383,7 +383,7 @@ savefig(joinpath(path_plot, ensinfo[1].id, "comparison_bm_rec_set2.pdf"))
 close("all")
 
 ## RECONSTRUCT THE TMR
-
+using Statistics
 # set 1 improvement coefficients
 pi_33_ll_s1 = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)] 
 pi_33_ll_s1_rec = [Vector{uwreal}(undef, length(Qgev)) for k in eachindex(ensinfo)] 
@@ -414,7 +414,7 @@ for (k, ens) in enumerate(ensinfo)
         _, data_orig = tmr_integrand(g33_ll_s1[k], q, qmlat, KRNLsub, pl=false, t0ens=t0ens[k], data=true)
         uwerr.(data_orig)
 
-        fig = figure(figsize=(10,6))
+        fig = figure(figsize=(10,7))
         ttime = collect(0:length(data_orig)-1) .* value(a(ens.beta))
         errorbar(ttime, value.(data_orig), err.(data_orig), fmt="s", color="black", mfc="none", capsize=2, label=L"$\mathrm{LMA}$", lw=2, ms=6)
 
@@ -428,12 +428,14 @@ for (k, ens) in enumerate(ensinfo)
         axvline(trec_s1 * value(a(ens.beta)), ls="dashed", color="gray")
 
         legend()
-        xlim(0,3.5)
-        ylabel(L"$\bar\Pi^{(3,3)}(Q^2/4)$")
+        xlim(0,4.0)
+        ylabel(L"$\bar\Pi^{(3,3)}(Q^2/16)$")
         xlabel(L"$t \ [\mathrm{fm}]$")
         tight_layout()
         display(gcf())
-        savefig(joinpath(path_plot, ens.id, "tmr_recostruction_mom$(Qgev[j]*4).pdf"))
+        # savefig(joinpath(path_plot, ens.id, "tmr_recostruction_mom$(Qgev[j]*4).pdf"))
+        savefig(joinpath("/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/new_strategy/ensembles/E250", "tmr_recostruction_paper_0.25GeV.pdf"))
+
         close("all")
     end
 end

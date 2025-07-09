@@ -27,6 +27,7 @@ path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalp
 path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_ID/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/new_strategy/pi88/Q_ID/"
 path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/new_strategy/Q_ID/"
+path_fvc = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_ID/fvc_Linf/"
 
 #======= PHYSICAL CONSTANTS ====================#
 const MPI_ph = uwreal([134.9768, 0.0005], "mpi phys")
@@ -118,7 +119,8 @@ end
 
 ##
 #========= ADD FVE CORRECTIONS ==========#
-fb = BDIO_open(joinpath(path_store_pi, "FVE_HP_Q_ID_non_sub_kernel.bdio"), "r")
+fb = BDIO_open(joinpath(path_fvc, "FVE_HP_Q_ID_non_sub_kernel.bdio"), "r")
+@warn("FVC corrected at Linf")
 fvc = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)
@@ -341,7 +343,7 @@ end
 ALPHAdobs_close(fb)
 
 ## test reading
-fb = BDIO_open(joinpath(path_phys_res, "PI3388_QSD_physRes.bdio"), "r")
+fb = BDIO_open(joinpath(path_phys_res, "PI3388_QID_physRes.bdio"), "r")
 res = []
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

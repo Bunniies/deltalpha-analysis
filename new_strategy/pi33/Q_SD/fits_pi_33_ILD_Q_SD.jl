@@ -28,6 +28,7 @@ path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalp
 path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_SD"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/new_strategy/pi33/Q_SD/ILD/"
 path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/new_strategy/Q_SD"
+path_fvc = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_SD/fvc_Lref"
 
 #======= PHYSICAL CONSTANTS ====================#
 const MPI_ph = uwreal([134.9768, 0.0005], "mpi phys")
@@ -119,7 +120,7 @@ end
 
 ##
 #========= ADD FVE CORRECTIONS ==========#
-fb = BDIO_open(joinpath(path_store_pi, "FVE_HP_Q_SD_sub_kernel.bdio"), "r")
+fb = BDIO_open(joinpath(path_fvc, "fve_Lref_subKernel_QSD_ILD.bdio"), "r")
 fvc = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)
@@ -134,10 +135,17 @@ BDIO_close!(fb)
 
 @info("Adding Finite-Volume Corrections")
 for (k,ens) in enumerate(ensinfo)
-    pi_33_ll_ILD_s1[k] .+= fvc[ens.id]["fvc_pi_ILD"] .+ fvc[ens.id]["fvc_k_ILD"]
-    pi_33_ll_ILD_s2[k] .+= fvc[ens.id]["fvc_pi_ILD"] .+ fvc[ens.id]["fvc_k_ILD"]
-    pi_33_lc_ILD_s1[k] .+= fvc[ens.id]["fvc_pi_ILD"] .+ fvc[ens.id]["fvc_k_ILD"]
-    pi_33_lc_ILD_s2[k] .+= fvc[ens.id]["fvc_pi_ILD"] .+ fvc[ens.id]["fvc_k_ILD"]
+    if ens.kappa_l == ens.kappa_s
+        pi_33_ll_ILD_s1[k] .+= 1.5 * fvc[ens.id]["fvc_pi"] 
+        pi_33_ll_ILD_s2[k] .+= 1.5 * fvc[ens.id]["fvc_pi"] 
+        pi_33_lc_ILD_s1[k] .+= 1.5 * fvc[ens.id]["fvc_pi"] 
+        pi_33_lc_ILD_s2[k] .+= 1.5 * fvc[ens.id]["fvc_pi"] 
+    else
+        pi_33_ll_ILD_s1[k] .+= fvc[ens.id]["fvc_pi"] .+ fvc[ens.id]["fvc_k"]
+        pi_33_ll_ILD_s2[k] .+= fvc[ens.id]["fvc_pi"] .+ fvc[ens.id]["fvc_k"]
+        pi_33_lc_ILD_s1[k] .+= fvc[ens.id]["fvc_pi"] .+ fvc[ens.id]["fvc_k"]
+        pi_33_lc_ILD_s2[k] .+= fvc[ens.id]["fvc_pi"] .+ fvc[ens.id]["fvc_k"]
+    end
 end
 
 
@@ -236,7 +244,7 @@ end
 
 ll = L"${\widehat{\Pi}}^{(3,3)}_{\mathrm{sub, \ ILD}}(Q^2)$"
 plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, nmom=NMOM, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi33_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], nfit=0, f_tot_isov=f_tot_isov, nmom=NMOM, ylab=ll) # nfit=28 used for 2024 proceedings
+plot_chiral_best_fit(fitcat_pi33_ll_s2, path_plot=path_plot, tt=["Set", "2", "LL"], nfit=0, f_tot_isov=f_tot_isov, nmom=NMOM, ylab=ll) # nfit=28 used for 2024 proceedings
 plot_cl_best_fit(fitcat_pi33_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_isov, ylab=ll)
 
 cattot = [vcat(fitcat_pi33_ll_s2[k],fitcat_pi33_lc_s2[k]...) for k in eachindex(fitcat_pi33_lc_s1)]
@@ -349,7 +357,7 @@ end
 ALPHAdobs_close(fb)
 
 ## test reading
-fb = BDIO_open(joinpath(path_phys_res, "PI33_ILD_physRes.bdio"), "r")
+fb = BDIO_open(joinpath(path_phys_res, "Linf/PI33_ILD_physRes.bdio"), "r")
 res = []
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

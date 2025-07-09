@@ -55,8 +55,8 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
         fig = figure(figsize=(10,7.))
         for k_cat in eachindex(fc_lc_s1[q])
 
-            # ww_ll_s1 = get_w_from_fitcat(fc_ll_s1[q], norm=true)
-            # ww_ll_s2 = get_w_from_fitcat(fc_ll_s2[q], norm=true)
+            ww_ll_s1 = get_w_from_fitcat(fc_ll_s1[q], norm=true)
+            ww_ll_s2 = get_w_from_fitcat(fc_ll_s2[q], norm=true)
             ww_lc_s1 = get_w_from_fitcat(fc_lc_s1[q], norm=true)
             ww_lc_s2 = get_w_from_fitcat(fc_lc_s2[q], norm=true)
 
@@ -77,18 +77,18 @@ function plot_cl_all_set(fc_ll_s1, fc_ll_s2, fc_lc_s1, fc_lc_s2; ylab::LaTeXStri
                     # k_mod = k_modaux
                 # end
             
-                # fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod_fit].param
-                # fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod_fit].param
+                fit_param_ll_s1 = fc_ll_s1[q][k_cat].fit[k_mod_fit].param
+                fit_param_ll_s2 = fc_ll_s2[q][k_cat].fit[k_mod_fit].param
                 fit_param_lc_s1 = fc_lc_s1[q][k_cat].fit[k_mod_fit].param
                 fit_param_lc_s2 = fc_lc_s2[q][k_cat].fit[k_mod_fit].param
     
-                # yy_ll_s1  = model(xarr, fit_param_ll_s1)
-                # yy_ll_s2  = model(xarr, fit_param_ll_s2)
+                yy_ll_s1  = model(xarr, fit_param_ll_s1)
+                yy_ll_s2  = model(xarr, fit_param_ll_s2)
                 yy_lc_s1  = model(xarr, fit_param_lc_s1)
                 yy_lc_s2  = model(xarr, fit_param_lc_s2)
                 
-                # plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="#009E73")
-                # plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="#0072B2")
+                plot(xarr[:,1], value.(yy_ll_s1),alpha=ww_ll_s1[k_mod], color="#009E73")
+                plot(xarr[:,1], value.(yy_ll_s2),alpha=ww_ll_s2[k_mod], color="#0072B2")
                 plot(xarr[:,1], value.(yy_lc_s1),alpha=ww_lc_s1[k_mod], color="#D55E00")
                 plot(xarr[:,1], value.(yy_lc_s2),alpha=ww_lc_s2[k_mod], color="#E69F00")
     

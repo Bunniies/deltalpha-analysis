@@ -31,7 +31,7 @@ path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/p
 const path_store_fvc = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_SD/fvc_Lref"
 
 #======= PHYSICAL CONSTANTS ====================#
-const Qgev = [4, 5, 6, 7, 8, 9, 12]   # Q^2 # additional very high values
+const Qgev = [4, 5, 6, 7, 8, 9, 12]  # Q^2 # additional very high values
 # const Qgev = [9.0]
 const Qmgev = 9.0 # Qm^2
 
@@ -46,7 +46,8 @@ enslist = sort([ "H101", "H102", "N101", "C101", "C102", "D150",
 
 ensinfo = EnsInfo.(enslist)
 
-KRNLsub = krnl_dα_qhalf # non-subtracted kernel
+KRNLsub = krnl_dα_qhalf_sub # non-subtracted kernel
+const Wind = Window("ILD") # SD or ILD distance window 
 
 @warn("Always check the kernel that you are using!! \\ It has to match with the one used for the contribution you are considering")
 #============== READ t0 FROM BDIO FILES =================#
@@ -153,18 +154,14 @@ for (k,ens) in enumerate(ensinfo)
 
 
     for (j,q) in enumerate(Qgev)
-        pi_hp_tot = sum(fvc_pi_hp[k][j])
-        k_hp_tot = sum(fvc_k_hp[k][j])
-        pi_hp_tstar = sum(fvc_pi_hp[k][j][1:tvals_mll[1]-1])
+        pi_hp_tot = sum(fvc_pi_hp[k][j] .* Wind(tvals .* value(a(ens.beta))))
+        k_hp_tot = sum(fvc_k_hp[k][j] .* Wind(tvals .* value(a(ens.beta))))
+        pi_hp_tstar = sum(fvc_pi_hp[k][j][1:tvals_mll[1]-1] .* Wind(collect(1:(tvals_mll[1]-1)) .* value(a(ens.beta))))
         
-        pi_mll = sum(fvc_pi_mll[k][j])
-        tmr_combined = vcat(fvc_pi_hp[k][j][1:tvals_mll[1]-1], fvc_pi_mll[k][j])
-        # if length(tmr_combined) != length(fvc_pi_mll[k][j])
-            # println(length(tmr_combined))
-            # println(length(fvc_pi_hp[k][j]))
-            # error("Check the lenght!")
-        # end
-        pi_combined_tot = sum(tmr_combined)
+        pi_mll = sum(fvc_pi_mll[k][j] .* Wind(tvals_mll .* value(a(ens.beta))))
+
+        tmr_combined = vcat(fvc_pi_hp[k][j][1:tvals_mll[1]-1], fvc_pi_mll[k][j] )
+        pi_combined_tot = sum(tmr_combined .* Wind(tvals[1:end-1] .* value(a(ens.beta))))
         
         # store res
         pi_fvc_hp_tot[k][j] = pi_hp_tot
@@ -183,7 +180,7 @@ end
 io = IOBuffer()
 write(io, "FVC at Lref (HP&MLL for pion, HP for kaon)")
 
-fb = ALPHAdobs_create(joinpath(path_store_fvc, "fve_Lref_nonSubKernel_QSD.bdio"), io)
+fb = ALPHAdobs_create(joinpath(path_store_fvc, "fve_Lref_subKernel_QSD_ILD.bdio"), io)
 for (k,ens) in enumerate(ensinfo)
     extra = Dict{String, Any}("Ens" => ens.id)
     data = Dict{String, Array{uwreal}}(
@@ -249,8 +246,8 @@ for (k,ens) in enumerate(ensinfo)
         xlim(0, Int64(T/2))
         tight_layout()
         display(fig)
-        pp = joinpath(path_plot, ens.id, "fvc_hp_mll_1Gev2.pdf")
-        savefig(pp)
+        #pp = joinpath(path_plot, ens.id, "fvc_hp_mll_1Gev2.pdf")
+        #savefig(pp)
         close("all")
 
         res_hp = sum(fvc_pi_hp[k][j])*1e5; uwerr.(res_hp)
@@ -267,50 +264,3 @@ for (k,ens) in enumerate(ensinfo)
 end
 
 
-# function print_uwreal(a::uwreal)
-    # uwerr(a)
-# 
-    # val = value(a)
-    # err_ = err(a)
-# 
-    # if err == 0.0
-        # return string(val)
-    # end
-# 
-    # abs_val = abs(val)
-    # use_sci = abs_val < 1e-5 || abs_val > 1e5
-# 
-    # if use_sci
-        #Scientific notation
-        # exp = floor(Int, log10(abs_val))
-        # scaled_val = val / 10.0^exp
-        # scaled_err = err_ / 10.0^exp
-    # else
-        #Decimal notation
-        # exp = 0
-        # scaled_val = val
-        # scaled_err = err_
-    # end
-# 
-    #Round error to 2 significant digits
-    # rounded_err = round(scaled_err, sigdigits=2)
-    # 
-    #Determine number of decimal places needed
-    # err_digits = -floor(Int, log10(rounded_err))
-    # digits = max(0, err_digits + 1)
-# 
-    #Round value to match
-    # rounded_val = round(scaled_val, digits=digits)
-    # err_in_parens = round(Int, rounded_err * 10^digits)
-# 
-    # val_str = string(round(rounded_val, digits=digits))
-# 
-    # if exp == 0
-        # return "$(val_str)($(err_in_parens))"
-    # else
-        # return "$(val_str)($(err_in_parens))×10^$exp"
-    # end
-# end
-
-print_uwreal.(fvc_pi_hp[1][1])
-print_uwreal.(fvc_pi_hp[1][1].*1e10)

@@ -28,6 +28,7 @@ path_bdio_obs = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalp
 path_store_pi = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_LD/"
 path_plot = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/plots/new_strategy/pi33/Q_LD/"
 path_phys_res = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/physical_results/new_strategy/Q_LD/"
+path_fvc = "/Users/alessandroconigli/MyDrive/postdoc-mainz/projects/deltalpha/PIdata/impr_deriv/new_strategy/Q_LD/fvc_Lref"
 
 #======= PHYSICAL CONSTANTS ====================#
 const MPI_ph = uwreal([134.9768, 0.0005], "mpi phys")
@@ -120,7 +121,7 @@ end
 
 ##
 #========= ADD FVE CORRECTIONS ==========#
-fb = BDIO_open(joinpath(path_store_pi, "FVE_HP_Q_LD_sub_kernel.bdio"), "r")
+fb = BDIO_open(joinpath(path_fvc, "fve_Lref_subKernel_QLD.bdio"), "r")
 fvc = Dict()
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)
@@ -224,7 +225,8 @@ for q in 1:NMOM
             fit_lc_s1 = fit_routine(model, value.(xdata), ydata_lc_s1, n_par_tot_isov[k_mod], pval=false)
             fit_lc_s2 = fit_routine(model, value.(xdata), ydata_lc_s2, n_par_tot_isov[k_mod], pval=false)
 
-            if  "a4" ∈ label_tot_isov[k_mod] #&& Qgev[q].*4 ∈ [9.0, 12.0]
+            if  "a4" ∈ label_tot_isov[k_mod] #&& Qgev[q].*4 ∈ [9.0, 12.0] 
+                # no a4 used in LD
                 # fit_ll_s1.chi2 = 1e6
                 # fit_ll_s2.chi2 = 1e6
                 # fit_lc_s1.chi2 = 1e6
@@ -251,7 +253,7 @@ fit_routine(f_tot_isov[29], value.(xdata), ydata, n_par_tot_isov[28], lineprint=
 
 ll = L"${\bar{\Pi}}^{(3,3)}_{\mathrm{sub}}(Q^2/16)$"
 plot_cl_all_set(fitcat_pi33_ll_s1, fitcat_pi33_ll_s2, fitcat_pi33_lc_s1, fitcat_pi33_lc_s2, nmom=NMOM, path_plot=path_plot, ylab=ll, f_tot_isov=f_tot_isov)
-plot_chiral_best_fit(fitcat_pi33_lc_s1, path_plot=path_plot, tt=["Set", "1", "LC"], nfit=0, f_tot_isov=f_tot_isov, nmom=NMOM, ylab=ll) # nfit=28 used for 2024 proceedings
+plot_chiral_best_fit(fitcat_pi33_ll_s1, path_plot=path_plot, tt=["Set", "1", "LL"], nfit=0, f_tot_isov=f_tot_isov, nmom=NMOM, ylab=ll) # nfit=28 used for 2024 proceedings
 plot_cl_best_fit(fitcat_pi33_ll_s2, nmom=NMOM, path_plot=nothing, tt=["Set", "2", "LL"], f_tot_isov=f_tot_isov, ylab=ll)
 
 cattot = [vcat(fitcat_pi33_ll_s2[k],fitcat_pi33_lc_s2[k]...) for k in eachindex(fitcat_pi33_lc_s1)]
@@ -362,7 +364,7 @@ end
 ALPHAdobs_close(fb)
 
 ## test reading
-fb = BDIO_open(joinpath(path_phys_res, "PI33_LD_physRes.bdio"), "r")
+fb = BDIO_open(joinpath(path_phys_res, "Linf/PI33_LD_physRes.bdio"), "r")
 res = []
 while ALPHAdobs_next_p(fb)
     d = ALPHAdobs_read_parameters(fb)

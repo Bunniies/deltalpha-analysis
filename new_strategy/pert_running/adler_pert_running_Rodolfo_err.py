@@ -37,7 +37,9 @@ qq=-0.0013 # quark condensate
 dqq=0.0007 # quark condensate error
 aZ=0.1183; # central value
 Mz=91.1876
-daZ=0.0007 # error
+# daZ=0.0007 # new error
+daZ=0.0016 # old error
+
 nloops=4;  # perturbative order alphas^5
 mulow=1.273     
 

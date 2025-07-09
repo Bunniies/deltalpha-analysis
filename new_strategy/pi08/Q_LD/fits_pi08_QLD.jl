@@ -222,9 +222,9 @@ end
 ## PLOTS
 #########################
 using Statistics
-ll = L"$\widehat{\Pi}^{(0,8)}(Q^2/16)$"
+ll = L"$\bar{\Pi}^{(0,8)}(Q^2/16)$"
 plot_cl_all_set(fitcat_pi08_ll_s1, fitcat_pi08_ll_s2, fitcat_pi08_lc_s1, fitcat_pi08_lc_s2, path_plot=path_plot, nmom=3, ylab=ll, f_tot_isov=f_tot_dltiso)
-plot_chiral_best_fit(fitcat_pi08_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], f_tot_isov=f_tot_dltiso, ylab=ll)
+plot_chiral_best_fit(fitcat_pi08_lc_s1, path_plot=path_plot, tt=["Set", "1", "LC"], f_tot_isov=f_tot_dltiso, ylab=ll)
 plot_cl_best_fit(fitcat_pi08_lc_s2, path_plot=path_plot, tt=["Set", "2", "LC"], nmom=12, f_tot_isov=f_tot_dltiso, ylab=ll)
 
 cattot = [vcat(fitcat_pi08_lc_s2[k]...) for k in eachindex(fitcat_pi08_lc_s1)]
