@@ -1,3 +1,7 @@
+# perturbative running computed with bootstrap
+# charm and light truncation error included
+# results from this code are used in the paper 
+
 from adlerpy.adler_routines import Particle
 from adlerpy.adler_sm import adler_charm_pert # The charm quark connected contribution to the Adler function
 from adlerpy.adler_sm import adler_bottom_pert # The bottom quark connected contribution to the Adler function
